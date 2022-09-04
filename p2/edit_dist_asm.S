@@ -53,6 +53,92 @@ edit_dist_asm:
 
   # --- STUDENT CODE STARTS HERE ---
 
+  pushl %ebx            # callee-save regs
+  pushl %ecx
+  pushl %edx
+  pushl %esi
+  pushl %edi
+  movl  8(%ebp), %ebx   # link to input interface
+  movl  12(%ebp), %esi
+  xorl  %eax, %eax      # clear eax
+
+  cmpl  $0, %ebx        # nested 4-way brancher
+  je    .r1nul
+  jne   .r1nnul
+.r1nul:
+  cmpl  $0, %esi
+  je    .both           # (L37)
+  jne   .r1only         # (L39)
+.r1nnul:
+  cmpl  $0, %esi
+  je    .r2only         # (L41)
+  jne   .neither        # (L44 onwards)
+
+.both:
+  movl  $0, %eax
+  jmp   .return         # (L38)
+.r1only:
+  pushl NEXT(%esi)      # push args
+  pushl %ebx
+  call  edit_dist_asm   # recursive call
+  add   $8, %esp        # discard args
+  jmp   .returninc      # (L40)
+.r2only:
+  pushl %esi
+  pushl NEXT(%ebx)
+  call  edit_dist_asm
+  add   $8, %esp
+  jmp   .returninc      # (L42)
+.neither:
+  movl  VAL(%ebx), %edi
+  cmpl  VAL(%esi), %edi # (L44)
+  jne   .unequal
+  pushl NEXT(%esi)
+  pushl NEXT(%ebx)
+  call  edit_dist_asm
+  add   $8, %esp
+  jmp   .return         # (L46)
+
+.unequal:
+  pushl %esi
+  pushl NEXT(%ebx)
+  call  edit_dist_asm
+  add   $8, %esp
+  movl  %eax, %edi      # (L49) EDI = insert
+  pushl NEXT(%esi)
+  pushl %ebx
+  call  edit_dist_asm
+  add   $8, %esp
+  movl  %eax, %edx      # (L50) EDX = delete
+  pushl NEXT(%esi)
+  pushl NEXT(%ebx)
+  call  edit_dist_asm
+  add   $8, %esp
+  movl  %eax, %ecx      # (L51) ECX = replace
+
+  cmpl  %edx, %edi
+  ja    .ncondl53       # notice the order
+  cmpl  %ecx, %edi
+  ja    .ncondl53       # (L53)
+  movl  %edi, %eax
+  jmp   .returninc      # (L54)
+.ncondl53:
+  cmpl  %ecx, %edx
+  ja    .ncondl55       # (L55)
+  movl  %edx, %eax
+  jmp   .returninc      # (L56)
+.ncondl55:
+  movl  %ecx, %eax      # (L57)
+
+.returninc:
+  incl  %eax
+.return:
+  popl  %edi            # restore callee-saved regs
+  popl  %esi
+  popl  %edx
+  popl  %ecx
+  popl  %ebx
+
   # --- STUDENT CODE ENDS HERE ---
 
   leave

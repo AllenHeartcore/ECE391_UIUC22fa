@@ -37,5 +37,18 @@
 uint32_t mystery_c(uint32_t x, uint32_t y) {
   //------- YOUR CODE HERE -------
 
+  if (y > 24 || x >= 42) return 0;
+  int32_t edi = 0, esi = 1, edx = 1;
+  while (esi <= x) {
+    edi += esi;
+    esi ++;
+  }
+  esi = 1;
+  while (esi <= y) {
+    edx *= esi;
+    esi ++;
+  }
+  return edx | edi;
+
   //------------------------------
 }
