@@ -113,12 +113,12 @@ mp1_rtc_tasklet:
 mp1_ioctl:
 		pushl	%ebp
 		movl	%esp, %ebp
-		movl	12(%ebp), %eax		# get cmd
+		movl	12(%ebp), %eax		# [eax = cmd]
 		cmpl	$0, %eax		# cmd < 0?
 		jl	.invalid
 		cmpl	$4, %eax		# cmd > 4?
 		jg	.invalid
-		movl	.ioctljtab, %edx
+		lea	.ioctljtab, %edx	# [edx = jtab ptr]
 		movl	(%edx,%eax,4), %edx	# get function addr...
 		jmp	*%edx			# ...and jump there
 	.invalid:
@@ -350,6 +350,7 @@ mp1_ioctl_startgame:
 		movl	$0x00FFFFFF, base_alive
 		movl	$0x00280000, crosshairs_x
 		movl	$0x000C8000, crosshairs_y
+		leave
 		ret
 
 mp1_ioctl_addmissile:

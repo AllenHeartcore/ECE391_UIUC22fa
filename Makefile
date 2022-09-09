@@ -5,10 +5,10 @@ LDFLAGS=-lm
 all: ktest utest
 
 ktest: missile-command.o vga.o
-	$(CC) $^ -o $@ $(LDFLAGS)
+	$(CC) $(LDFLAGS) $^ -o $@
 
 utest: umissile-command.o mp1.o mp1_userspace.o mp1-given.o uvga.o
-	$(CC) -no-pie $^ -o $@ $(LDFLAGS)
+	$(CC) $(LDFLAGS) $^ -o $@ 
 
 mp1.o: mp1.S
 	$(CC) $(CFLAGS) -D_USERSPACE -Wa,--gstabs $^ -c -o $@
