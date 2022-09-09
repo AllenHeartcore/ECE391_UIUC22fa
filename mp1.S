@@ -69,7 +69,6 @@ mp1_poke:
 # Outputs  : none
 # Registers: Standard C calling convention
 
-.code32
 .globl mp1_rtc_tasklet
 mp1_rtc_tasklet:
 		pushl	%ebp
@@ -312,7 +311,7 @@ draw_city:
 		call	draw_pixel		# draw(24, x, *pic, shift=False)
 		addl	$12, %esp
 		incl	%eax
-		incl	%edx
+		incl	%esi
 		decl	%ecx
 		cmpl	$0, %ecx
 		jne	.drawloop
@@ -335,10 +334,14 @@ draw_cities_xhairs:
 		andl	$0x00FF0000, %edx
 		movl	$58, %esi
 		call	draw_city		# 3rd city appears at (58, 24)
+		movl	crosshairs_y, %eax
+		movl	crosshairs_x, %ebx
+		shrl	$16, %eax
+		shrl	$16, %ebx
 		pushl	$0
 		pushl	$'+'
-		pushl	crosshairs_x
-		pushl	crosshairs_y
+		pushl	%ebx
+		pushl	%eax
 		call	draw_pixel		# draw crosshairs
 		addl	$16, %esp
 		leave
@@ -357,13 +360,13 @@ mp1_ioctl_addmissile:
 		pushl	%ebx			# [callee save]
 		pushl	%esi
 		pushl	%edi
-		pushl	%ebp
-		movl	%esp, %ebp
-		push 	%ecx			# [caller save]
-		push 	%edx
+		pushl	%ecx			# [caller save]
+		pushl	%edx
+		pushl	$36
 		call	mp1_malloc
-		popl 	%edx			# [caller restore]
-		popl 	%ecx
+		addl	$4, %esp
+		popl	%edx			# [caller restore]
+		popl	%ecx
 		cmpl	$0, %eax		# malloc failed?
 		je	.mallocfail
 		movl	%eax, %edi		# [edi = "to" addr]
@@ -402,8 +405,6 @@ mp1_ioctl_addmissile:
 		ret
 
 mp1_ioctl_movexhairs:
-		pushl	%ebp
-		movl	%esp, %ebp
 		pushl	%ebx			# [callee save]
 		pushl	%esi
 		pushl	%edi
@@ -467,8 +468,6 @@ mp1_ioctl_movexhairs:
 		ret
 
 mp1_ioctl_getstatus:
-		pushl	%ebp
-		movl	%esp, %ebp
 		pushl	%ebx			# [callee save]
 		pushl	%esi
 		pushl	%edi
@@ -521,8 +520,6 @@ mp1_ioctl_getstatus:
 		ret
 
 mp1_ioctl_endgame:
-		pushl	%ebp
-		movl	%esp, %ebp
 		pushl	%ebx			# [callee save]
 		pushl	%esi
 		pushl	%edi
