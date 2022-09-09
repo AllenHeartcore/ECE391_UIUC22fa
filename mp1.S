@@ -69,6 +69,21 @@ mp1_poke:
 # Outputs  : none
 # Registers: Standard C calling convention
 
+# CALLING HIERARCHY
+# Order | Function
+#    1  | mp1_rtc_tasklet
+#    5  |     update_missiles
+#    4  |         remove_missile
+#    7  |     draw_cities_xhairs
+#    6  |         draw_city
+#    2  | mp1_ioctl
+#    8  |     mp1_ioctl_startgame
+#    9  |     mp1_ioctl_addmissile
+#   10  |     mp1_ioctl_movexhairs
+#   11  |     mp1_ioctl_getstatus
+#   12  |     mp1_ioctl_endgame
+#    3  | draw_pixel
+
 .globl mp1_rtc_tasklet
 mp1_rtc_tasklet:
 		pushl	%ebp
@@ -346,8 +361,6 @@ draw_cities_xhairs:
 		call	draw_city		# 3rd city appears at (58, 24)
 		movl	crosshairs_y, %eax
 		movl	crosshairs_x, %ebx
-		shrl	$16, %eax
-		shrl	$16, %ebx
 		pushl	$0
 		pushl	$'+'
 		pushl	%ebx
@@ -361,8 +374,8 @@ mp1_ioctl_startgame:
 		movl	$0, mp1_missile_list
 		movl	$0, mp1_score
 		movl	$0x00FFFFFF, base_alive
-		movl	$0x00280000, crosshairs_x
-		movl	$0x000C8000, crosshairs_y
+		movl	$40, crosshairs_x
+		movl	$12, crosshairs_y
 		leave
 		ret
 
@@ -418,54 +431,48 @@ mp1_ioctl_movexhairs:
 		pushl	%ebx			# [callee save]
 		pushl	%esi
 		pushl	%edi
-		movl	8(%ebp), %ecx		# eax | ebx | ecx | edx | esi | edi
-		movl	8(%ebp), %edx
-		shrl	$16, %ecx		#             dy
-		andl	$0xFFFF, %edx		#                   dx
-		movl	crosshairs_y, %eax	#  y
-		movl	crosshairs_x, %ebx 	#        x
-		subl	%ecx, %eax		#  y'
-		subl	%edx, %ebx		#        x'
-		cmpl	$0x00000000, %eax
+		movl	8(%ebp), %eax		# eax | ebx | ecx | edx
+		movl	8(%ebp), %ebx
+		shrl	$16, %eax		# dy
+		andl	$0xFFFF, %ebx		#       dx
+		movswl	%ax, %eax		# (a little tricky here...)
+		movswl	%bx, %ebx
+		movl	crosshairs_y, %ecx	#              y
+		movl	crosshairs_x, %edx 	#                    x
+		addl	%ecx, %eax		#  y'
+		addl	%edx, %ebx		#        x'
+		cmpl	$0, %eax
 		jge	.yge0			# ensure y' >= 0
-		movl	$0x00000000, %eax
+		movl	$0, %eax
 	.yge0:
-		cmpl	$0x0018FFFF, %eax
+		cmpl	$24, %eax
 		jle	.yle24			# ensure y' <= 24
-		movl	$0x0018FFFF, %eax
+		movl	$24, %eax
 	.yle24:
-		cmpl	$0x00000000, %ebx
+		cmpl	$0, %ebx
 		jge	.xge0			# ensure x' >= 0
-		movl	$0x00000000, %ebx
+		movl	$0, %ebx
 	.xge0:
-		cmpl	$0x004FFFFF, %ebx
+		cmpl	$79, %ebx
 		jle	.xle79			# ensure x' <= 79
-		movl	$0x004FFFFF, %ebx
-	.xle79:					#  y' |  x' | dy  | dx  |     |
-		movl	%eax, %ecx		#              y'
-		movl	%ebx, %edx		#                    x'
-		movl	crosshairs_y, %esi	#                          y
-		movl	crosshairs_x, %edi	#                                x
-		shrl	$16, %ecx		#              y'H
-		shrl	$16, %edx		#                    x'H
-		shrl	$16, %esi		#                          yH
-		shrl	$16, %edi		#                                xH
-		cmpl	%ecx, %esi
+		movl	$79, %ebx
+	.xle79:					#  y' |  x' |  y  |  x
+		cmpl	%eax, %ecx
 		jne	.redrawxhr
-		cmpl	%edx, %esi
+		cmpl	%ebx, %edx
 		jne	.redrawxhr
 		jmp	.nredrawxhr
 	.redrawxhr:
 		pushl	$0
 		pushl	$' '
-		pushl	%edi
-		pushl	%esi
-		call	draw_pixel		# draw(y'H, x'H, '+', shift=False)
-		addl	$12, %esp
-		pushl	$'+'
 		pushl	%edx
 		pushl	%ecx
 		call	draw_pixel		# draw(y, x, ' ', shift=False)
+		addl	$12, %esp
+		pushl	$'+'
+		pushl	%ebx
+		pushl	%eax
+		call	draw_pixel		# draw(y', x', '+', shift=False)
 		addl	$16, %esp
 	.nredrawxhr:
 		movl	%eax, crosshairs_y	# store new crosshairs
