@@ -167,7 +167,7 @@ remove_missile:
 		movl	%ebx, NEXT(%esi)	# - delete (middle): esi (-> edi) -> ebx
 		jmp	.rmvdone
 	.firstitem:
-		cmpl	$0, NEXT(%edi)
+		cmpl	$0, %ebx
 		je	.finalitem		# prev = esi, next = 0
 		movl	%ebx, mp1_missile_list	# - delete (first): MLIST (-> edi) -> ebx
 		jmp	.rmvdone
@@ -216,16 +216,22 @@ update_missiles:
 	.xle79flg:
 		cmpl	$0, %ecx
 		je	.inrange		# 	Handle OOR missiles
+		pushl	NEXT(%edi)
 		call	remove_missile		# 	remove(y, x, *prev)
+		pushl	%edi
 		jmp	.travnext
 	.inrange:				# STEP 2: exploding?
-		cmpl	$0, EXPLODED(%edi)
-		je	.flying			# 	flying if not exploding
+	#	cmpl	$0, EXPLODED(%edi)
+	#	je	.flying			# 	flying if not exploding
 		movl	DEST_Y(%edi), %ecx	# 	[ecx = dest_y]
-		movl	DEST_X(%edi), %edx	# 	[edx = dest_x]
-		cmpl	%ecx, %eax
+		movl	%eax, %edx		# 	[edx = y]
+		shrl	$16, %edx
+		cmpl	%ecx, %edx
 		jne	.flying			# 	flying if not at dest
-		cmpl	%edx, %ebx
+		movl	DEST_X(%edi), %ecx	# 	[ecx = dest_x]
+		movl	%ebx, %edx		# 	[edx = x]
+		shrl	$16, %edx
+		cmpl	%ecx, %edx
 		jne	.flying
 		pushl	%eax
 		pushl	%ebx			# 	would be useful for removing
@@ -241,7 +247,9 @@ update_missiles:
 		decl	EXPLODED(%edi)
 		cmpl	$0, EXPLODED(%edi)
 		jne	.expcont		# 	otherwise, keep exploding
+		pushl	NEXT(%edi)
 		call	remove_missile		# 	remove(y, x, *prev)
+		popl	%edi
 		jmp	.travnext
 	.expcont:
 		pushl	$1
@@ -285,6 +293,8 @@ update_missiles:
 		addl	$16, %esp
 	.travnext:
 		movl 	%edi, %esi
+		cmpl	$0, %esi
+		je	.travdone
 		movl	NEXT(%esi), %edi	# next element
 		jmp	.traverse
 	.travdone:
@@ -414,8 +424,8 @@ mp1_ioctl_movexhairs:
 		andl	$0xFFFF, %edx		#                   dx
 		movl	crosshairs_y, %eax	#  y
 		movl	crosshairs_x, %ebx 	#        x
-		addl	%ecx, %eax		#  y'
-		addl	%edx, %ebx		#        x'
+		subl	%ecx, %eax		#  y'
+		subl	%edx, %ebx		#        x'
 		cmpl	$0x00000000, %eax
 		jge	.yge0			# ensure y' >= 0
 		movl	$0x00000000, %eax
