@@ -149,12 +149,12 @@ draw_pixel:					# wrapper for "mp1_poke"
 		pushl	%eax			# [callee save]
 		pushl	%ebx
 		pushl	%ecx
-		pushl	%edx			# "mull" and "poke" clobber edx
-		movl	8(%ebp), %eax		# args: (y, x, long_char, shift_flag)
-		movl	12(%ebp), %ebx
-		movl	16(%ebp), %ecx
-		movl	20(%ebp), %edx
-		cmpl	$0, %edx		# shift?
+		pushl	%edx
+		movl	8(%ebp), %eax		# [eax = y]
+		movl	12(%ebp), %ebx		# [ebx = x]
+		movl	16(%ebp), %ecx		# [ecx = long_char]
+		movl	20(%ebp), %edx		# [edx = shift_flag]
+		cmpl	$0, %edx
 		je	.noshift
 		shrl	$16, %eax
 		shrl	$16, %ebx
@@ -171,30 +171,43 @@ draw_pixel:					# wrapper for "mp1_poke"
 		ret
 
 remove_missile:
+		pushl	%ebp
+		movl	%esp, %ebp
+		pushl	%eax			# [callee save]
+		pushl	%ebx
+		pushl	%ecx
+		pushl	%edx
+		pushl	%esi
+		pushl	%edi
+		movl	8(%ebp), %eax		# [eax = y]
+		movl	12(%ebp), %ebx		# [ebx = x]
+		movl	16(%ebp), %ecx		# [ecx = prev] - validity is uncertain
+		movl	20(%ebp), %edx		# [edx = this] - must be valid, so
+		movl	NEXT(%edx), %esi	# [esi = next] - must also be valid
+		movl	mp1_missile_list, %edi	# [edi = head]
 		pushl	$1
 		pushl	$' '
 		pushl	%ebx
 		pushl	%eax
 		call	draw_pixel		# - erase: draw(y, x, ' ', shift=True)
 		addl	$16, %esp
-		movl	NEXT(%edi), %ebx	# 	[ebx = next]
-		cmpl	$0, %esi
-		je	.firstitem
-		movl	%ebx, NEXT(%esi)	# - delete (middle): esi (-> edi) -> ebx
+		cmpl	%edx, %edi
+		je	.headelt		# then "prev" is ignored
+		movl	%esi, NEXT(%ecx)	# - delete (middle): ecx (-> edx) -> esi
 		jmp	.rmvdone
-	.firstitem:
-		movl	%ebx, mp1_missile_list	# - delete (first): MLIST (-> edi) -> ebx
+	.headelt:
+		movl	%esi, mp1_missile_list	# - delete (first): MLIST (-> edx) -> esi
 	.rmvdone:
-		pushl	%eax
-		pushl	%ecx
 		pushl	%edx
-		pushl	%edi
 		call	mp1_free		# - free(*this)
 		addl	$4, %esp
+		popl	%edi
+		popl	%esi
 		popl	%edx
 		popl	%ecx
-		popl	%eax
-		movl	%ebx, %edi		# 	for continuing traversal
+		popl	%ebx
+		popl	%eax			# [callee restore]
+		leave
 		ret
 
 update_missiles:
@@ -203,7 +216,6 @@ update_missiles:
 		pushl	%ebx			# [callee save]
 		pushl	%esi
 		pushl	%edi
-		movl	$0, %esi		# signal of first element
 		movl	mp1_missile_list, %edi	# [esi = prev] [edi = this]
 	.traverse:
 		cmpl	$0, %edi		# last element?
@@ -233,9 +245,12 @@ update_missiles:
 	.xle79flg:
 		cmpl	$0, %ecx
 		je	.inrange		# 	Handle OOR missiles
-	#	pushl	NEXT(%edi)		# 	(save for continuing)
-		call	remove_missile		# 	remove(y, x, *prev)
-	#	pushl	%edi
+		pushl	%edi
+		pushl	%esi
+		pushl	%ebx
+		pushl	%eax
+		call	remove_missile		# 	remove(y, x, *prev, *this)
+		addl	$16, %esp
 		jmp	.travnext
 	.inrange:				# STEP 2: exploding?
 		cmpl	$0, EXPLODED(%edi)
@@ -250,7 +265,6 @@ update_missiles:
 		shrl	$16, %edx
 		cmpl	%ecx, %edx
 		jne	.flying
-	#	pushl	%ebx			# 	would be useful for removing
 		pushl	%ecx
 		pushl	%edx			# 	[caller save]
 		pushl	%edi
@@ -258,17 +272,19 @@ update_missiles:
 		popl	%edi
 		cmpl	$0, %eax
 		je	.silent			# 	notify unless "explode" returns 0
-		call	mp1_notify_user		# 	[clobbering ecx, edx is fine]
+		call	mp1_notify_user
 	.silent:
 		popl	%edx			# 	[caller restore]
 		popl	%ecx
-	#	popl	%ebx
 		decl	EXPLODED(%edi)
 		cmpl	$0, EXPLODED(%edi)
 		jne	.expcont		# 	otherwise, keep exploding
-	#	pushl	NEXT(%edi)
+		pushl	%edi
+		pushl	%esi
+		pushl	%ebx
+		pushl	%eax
 		call	remove_missile		# 	remove(y, x, *prev)
-	#	popl	%edi
+		addl	$16, %esp
 		jmp	.travnext
 	.expcont:
 		pushl	$1
