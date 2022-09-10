@@ -176,22 +176,24 @@ remove_missile:
 		pushl	%ebx
 		pushl	%eax
 		call	draw_pixel		# - erase: draw(y, x, ' ', shift=True)
+		addl	$16, %esp
 		movl	NEXT(%edi), %ebx	# 	[ebx = next]
 		cmpl	$0, %esi
 		je	.firstitem
 		movl	%ebx, NEXT(%esi)	# - delete (middle): esi (-> edi) -> ebx
 		jmp	.rmvdone
 	.firstitem:
-		cmpl	$0, %ebx
-		je	.finalitem		# prev = esi, next = 0
 		movl	%ebx, mp1_missile_list	# - delete (first): MLIST (-> edi) -> ebx
-		jmp	.rmvdone
-	.finalitem:
-		movl	$0, mp1_missile_list	# - delete (final): MLIST (-> edi) -> 0
 	.rmvdone:
+		pushl	%eax
+		pushl	%ecx
+		pushl	%edx
 		pushl	%edi
 		call	mp1_free		# - free(*this)
-		addl	$20, %esp		# 	discard everything
+		addl	$4, %esp
+		popl	%edx
+		popl	%ecx
+		popl	%eax
 		movl	%ebx, %edi		# 	for continuing traversal
 		ret
 
@@ -201,8 +203,8 @@ update_missiles:
 		pushl	%ebx			# [callee save]
 		pushl	%esi
 		pushl	%edi
+		movl	$0, %esi		# signal of first element
 		movl	mp1_missile_list, %edi	# [esi = prev] [edi = this]
-		movl	$0, %esi		# signal of first item
 	.traverse:
 		cmpl	$0, %edi		# last element?
 		je	.travdone
@@ -231,13 +233,13 @@ update_missiles:
 	.xle79flg:
 		cmpl	$0, %ecx
 		je	.inrange		# 	Handle OOR missiles
-		pushl	NEXT(%edi)
+	#	pushl	NEXT(%edi)		# 	(save for continuing)
 		call	remove_missile		# 	remove(y, x, *prev)
-		pushl	%edi
+	#	pushl	%edi
 		jmp	.travnext
 	.inrange:				# STEP 2: exploding?
-	#	cmpl	$0, EXPLODED(%edi)
-	#	je	.flying			# 	flying if not exploding
+		cmpl	$0, EXPLODED(%edi)
+		je	.flying			# 	flying if not exploding
 		movl	DEST_Y(%edi), %ecx	# 	[ecx = dest_y]
 		movl	%eax, %edx		# 	[edx = y]
 		shrl	$16, %edx
@@ -248,8 +250,9 @@ update_missiles:
 		shrl	$16, %edx
 		cmpl	%ecx, %edx
 		jne	.flying
-		pushl	%eax
-		pushl	%ebx			# 	would be useful for removing
+	#	pushl	%ebx			# 	would be useful for removing
+		pushl	%ecx
+		pushl	%edx			# 	[caller save]
 		pushl	%edi
 		call	missile_explode		# 	explode(*this)
 		popl	%edi
@@ -257,18 +260,19 @@ update_missiles:
 		je	.silent			# 	notify unless "explode" returns 0
 		call	mp1_notify_user		# 	[clobbering ecx, edx is fine]
 	.silent:
-		popl	%ebx
-		popl	%eax
+		popl	%edx			# 	[caller restore]
+		popl	%ecx
+	#	popl	%ebx
 		decl	EXPLODED(%edi)
 		cmpl	$0, EXPLODED(%edi)
 		jne	.expcont		# 	otherwise, keep exploding
-		pushl	NEXT(%edi)
+	#	pushl	NEXT(%edi)
 		call	remove_missile		# 	remove(y, x, *prev)
-		popl	%edi
+	#	popl	%edi
 		jmp	.travnext
 	.expcont:
 		pushl	$1
-		pushl	EXPLOSION(%edi)
+		pushl	EXPLOSION
 		pushl	%ebx
 		pushl	%eax
 		call	draw_pixel		# 	draw(y, x, EXPLOSION, shift=True)
