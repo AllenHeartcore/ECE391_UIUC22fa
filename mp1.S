@@ -215,15 +215,21 @@ update_missiles:
 		movl	%esp, %ebp
 		pushl	%ebx			# [callee save]
 		pushl	%esi
-		pushl	%edi
-		movl	mp1_missile_list, %edi	# [esi = prev] [edi = this]
+		pushl	%edi			# 	eax | ebx | ecx | edx | esi | edi
+		movl	mp1_missile_list, %edi	# 	                        prev  this
 	.traverse:
-		cmpl	$0, %edi		# last element?
-		je	.travdone
-		movl	Y(%edi), %eax		# STEP 1: out of range?
-		movl	X(%edi), %ebx		# 	[eax = y] [ebx = x]
-		xorl	%ecx, %ecx		# 	[ecx = OOR flag]
-		cmpl	$0x00000000, %eax
+		cmpl	$0, %edi		# (last element?)
+		je	.travdone		# STEP 0: now exploding?
+		movl	Y(%edi), %eax		# 	 y
+		movl	X(%edi), %ebx		# 	       x
+		cmpl	$0, EXPLODED(%edi)
+		jne	.exploding		# 	(otherwise, update coords)
+		movl	VY(%edi), %ecx		# 	            dy
+		movl	VX(%edi), %edx		# 	                  dx
+		addl	%ecx, %eax		# 	 y'
+		addl	%edx, %ebx		# 	       x'
+		xorl	%ecx, %ecx		# 	            flag
+		cmpl	$0x00000000, %eax	# STEP 1: out of range?
 		jge	.yge0flg		# 	y >= 0?
 		movl	$0x00000000, %eax
 		movl	$1, %ecx
@@ -244,48 +250,47 @@ update_missiles:
 		movl	$1, %ecx
 	.xle79flg:
 		cmpl	$0, %ecx
-		je	.inrange		# 	Handle OOR missiles
+		je	.inrange		# 	(handle OOR cases)
+		pushl	NEXT(%edi)
 		pushl	%edi
 		pushl	%esi
 		pushl	%ebx
 		pushl	%eax
-		call	remove_missile		# 	remove(y, x, *prev, *this)
+		call	remove_missile		# 	remove(y', x', *prev, *this)
 		addl	$16, %esp
-		jmp	.travnext
-	.inrange:				# STEP 2: exploding?
-		cmpl	$0, EXPLODED(%edi)
-		je	.flying			# 	flying if not exploding
-		movl	DEST_Y(%edi), %ecx	# 	[ecx = dest_y]
-		movl	%eax, %edx		# 	[edx = y]
-		shrl	$16, %edx
-		cmpl	%ecx, %edx
-		jne	.flying			# 	flying if not at dest
-		movl	DEST_X(%edi), %ecx	# 	[ecx = dest_x]
-		movl	%ebx, %edx		# 	[edx = x]
-		shrl	$16, %edx
+		popl	%edi			# 	(prevents reading from NUL)
+		jmp	.travnextprm
+	.inrange:				# STEP 2: about to explode?
+		movl	DEST_Y(%edi), %ecx	# 	             y_dest
+		movl	%eax, %edx		# 	                   y'
+		shrl	$16, %edx		# 	                   y'H
 		cmpl	%ecx, %edx
 		jne	.flying
-		pushl	%ecx
-		pushl	%edx			# 	[caller save]
+		movl	DEST_X(%edi), %ecx	# 	             x_dest
+		movl	%ebx, %edx		# 	                   x'
+		shrl	$16, %edx		# 	                   x'H
+		cmpl	%ecx, %edx
+		jne	.flying
+	.exploding:
 		pushl	%edi
 		call	missile_explode		# 	explode(*this)
 		popl	%edi
 		cmpl	$0, %eax
-		je	.silent			# 	notify unless "explode" returns 0
+		je	.expsilent		# 	(notify unless "explode" returns 0)
 		call	mp1_notify_user
-	.silent:
-		popl	%edx			# 	[caller restore]
-		popl	%ecx
+	.expsilent:
 		decl	EXPLODED(%edi)
 		cmpl	$0, EXPLODED(%edi)
-		jne	.expcont		# 	otherwise, keep exploding
+		jne	.expcont		# 	(otherwise, keep exploding)
+		pushl	NEXT(%edi)
 		pushl	%edi
 		pushl	%esi
 		pushl	%ebx
 		pushl	%eax
 		call	remove_missile		# 	remove(y, x, *prev)
 		addl	$16, %esp
-		jmp	.travnext
+		popl	%edi
+		jmp	.travnextprm
 	.expcont:
 		pushl	$1
 		pushl	EXPLOSION
@@ -294,15 +299,11 @@ update_missiles:
 		call	draw_pixel		# 	draw(y, x, EXPLOSION, shift=True)
 		addl	$16, %esp
 		jmp	.travnext
-	.flying:				# STEP 3: flying? (see "movexhairs")
-		movl	VY(%edi), %ecx		# 	eax | ebx | ecx | edx | esi | edi
-		movl	VX(%edi), %edx		# 	            dy    dx
-		addl	%ecx, %eax		# 	 y'
-		addl	%edx, %ebx		# 	       x'
-		movl	Y(%edi), %ecx		# 	             y
-		movl	X(%edi), %edx		# 	                   x
+	.flying:				# STEP 3: flying?
+		movl	Y(%edi), %ecx		# 	 y' |  x' |     |     | prev| this
+		movl	X(%edi), %edx		# 	             y     x
 		movl	%eax, Y(%edi)
-		movl	%ebx, X(%edi)
+		movl	%ebx, X(%edi)		# 	(store new coords)
 		shrl	$16, %eax		# 	 y'H
 		shrl	$16, %ebx		# 	       x'H
 		shrl	$16, %ecx		# 	             yH
@@ -330,7 +331,8 @@ update_missiles:
 		movl 	%edi, %esi
 		cmpl	$0, %esi
 		je	.travdone
-		movl	NEXT(%esi), %edi	# next element
+		movl	NEXT(%esi), %edi
+	.travnextprm:				# (for post-removal cases)
 		jmp	.traverse
 	.travdone:
 		popl	%edi
