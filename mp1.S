@@ -134,6 +134,9 @@ mp1_ioctl:
 		jg	.invalid
 		lea	.ioctljtab, %edx	# [edx = jtab ptr]
 		movl	(%edx,%eax,4), %edx	# get function addr...
+		pushl	%ebx
+		pushl	%esi			# [callee save]
+		pushl	%edi
 		jmp	*%edx			# ...and jump there
 	.invalid:
 		movl	$-1, %eax		# return -1
@@ -293,7 +296,7 @@ update_missiles:
 		jmp	.travnextprm
 	.expcont:
 		pushl	$1
-		pushl	EXPLOSION
+		pushl	$EXPLOSION
 		pushl	%ebx
 		pushl	%eax
 		call	draw_pixel		# 	draw(y, x, EXPLOSION, shift=True)
@@ -398,67 +401,59 @@ mp1_ioctl_startgame:
 		movl	$0x00FFFFFF, base_alive
 		movl	$40, crosshairs_x
 		movl	$12, crosshairs_y
+		popl	%edi
+		popl	%esi
+		popl	%ebx			# [callee restore]
 		leave
 		ret
 
 mp1_ioctl_addmissile:
-		pushl	%ebx			# [callee save]
-		pushl	%esi
-		pushl	%edi
 		pushl	%ecx			# [caller save]
 		pushl	%edx
 		pushl	$36
-		call	mp1_malloc
+		call	mp1_malloc		# eax = malloc(36)
 		addl	$4, %esp
-		popl	%edx			# [caller restore]
-		popl	%ecx
 		cmpl	$0, %eax		# malloc failed?
 		je	.mallocfail
 		movl	%eax, %edi		# [edi = "to" addr]
-		movl	8(%ebp), %esi		# [esi = "from" addr]
-		pushl	%ecx
-		pushl	%edx			# [caller save]
 		pushl	$36
-		pushl	%esi
+		pushl	8(%ebp)			# ["from" addr]
 		pushl	%edi
 		call	mp1_copy_from_user	# copy(to, from, 36)
 		addl	$12, %esp
-		popl	%edx			# [caller restore]
-		popl	%ecx
 		cmpl	$0, %eax		# memcpy failed?
 		jne	.u2kcpyfail
 		movl	mp1_missile_list, %eax
 		movl	%eax, NEXT(%edi)	# update linked list
 		movl	%edi, mp1_missile_list
 		movl	$0, %eax		# return 0
+		popl	%edx
+		popl	%ecx			# [caller restore]
 		popl	%edi
 		popl	%esi
 		popl	%ebx			# [callee restore]
 		leave
 		ret
 	.u2kcpyfail:
-		pushl	%ecx			# [caller save]
-		pushl	%edx			# [we're sure that eax = 0]
-		pushl	%edi
+		pushl	%eax
 		call	mp1_free
 		addl	$4, %esp
-		popl	%edx
-		popl	%ecx			# [caller restore]
 	.mallocfail:
 		movl	$-1, %eax		# return -1
+		popl	%edx
+		popl	%ecx			# [caller restore]
+		popl	%edi
+		popl	%esi
+		popl	%ebx			# [callee restore]
 		leave
 		ret
 
 mp1_ioctl_movexhairs:
-		pushl	%ebx			# [callee save]
-		pushl	%esi
-		pushl	%edi
 		movl	8(%ebp), %eax		# eax | ebx | ecx | edx
 		movl	8(%ebp), %ebx
-		shrl	$16, %eax		# dy
+		sarl	$16, %eax		# dy
 		andl	$0xFFFF, %ebx		#       dx
-		movswl	%ax, %eax		# (a little tricky here...)
-		movswl	%bx, %ebx
+		movswl	%bx, %ebx		# (a little tricky here...)
 		movl	crosshairs_y, %ecx	#              y
 		movl	crosshairs_x, %edx 	#                    x
 		addl	%ecx, %eax		#  y'
@@ -507,9 +502,6 @@ mp1_ioctl_movexhairs:
 		ret
 
 mp1_ioctl_getstatus:
-		pushl	%ebx			# [callee save]
-		pushl	%esi
-		pushl	%edi
 		movl	mp1_score, %ebx		# [ebx = status value]
 		andl	$0x0000FFFF, %ebx	# mask out higher 16 bits
 		movl	base_alive, %ecx	# [ecx = base flags]
@@ -533,7 +525,7 @@ mp1_ioctl_getstatus:
 	.c3down:
 		movl	mp1_score, %ecx		# backup
 		movl	%ebx, mp1_score
-		lea	mp1_score, %esi		# [lea = "from"] (kernel label)
+		lea	mp1_score, %esi		# [esi = "from"] (kernel label)
 		movl	8(%ebp), %edi		# [edi = "to" addr]
 		pushl	%ecx			# [caller save]
 		pushl	%edx
@@ -559,11 +551,7 @@ mp1_ioctl_getstatus:
 		ret
 
 mp1_ioctl_endgame:
-		pushl	%ebx			# [callee save]
-		pushl	%esi
-		pushl	%edi
 		movl	mp1_missile_list, %esi	# similar to ".traverse"
-		movl	NEXT(%esi), %esi	# translate to "struct *missile"
 	.cleanup:
 		cmpl	$0, %esi
 		je	.clupdone
