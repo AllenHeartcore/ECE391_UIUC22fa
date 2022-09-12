@@ -264,17 +264,18 @@ update_missiles:
 		popl	%edi			# 	(prevents reading from NUL)
 		jmp	.travnextprm
 	.inrange:				# STEP 2: about to explode?
-		movl	DEST_Y(%edi), %ecx	# 	             y_dest
+		movl	DEST_Y(%edi), %ecx	# 	             yD
 		movl	%eax, %edx		# 	                   y'
 		shrl	$16, %edx		# 	                   y'H
 		cmpl	%ecx, %edx
 		jne	.flying
-		movl	DEST_X(%edi), %ecx	# 	             x_dest
+		movl	DEST_X(%edi), %ecx	# 	             xD
 		movl	%ebx, %edx		# 	                   x'
 		shrl	$16, %edx		# 	                   x'H
 		cmpl	%ecx, %edx
 		jne	.flying
 	.exploding:
+		pushl	%eax			# 	eax will be overwritten by "explode"
 		pushl	%edi
 		call	missile_explode		# 	explode(*this)
 		popl	%edi
@@ -282,6 +283,7 @@ update_missiles:
 		je	.expsilent		# 	(notify unless "explode" returns 0)
 		call	mp1_notify_user
 	.expsilent:
+		popl	%eax
 		decl	EXPLODED(%edi)
 		cmpl	$0, EXPLODED(%edi)
 		jne	.expcont		# 	(otherwise, keep exploding)
@@ -290,16 +292,22 @@ update_missiles:
 		pushl	%esi
 		pushl	%ebx
 		pushl	%eax
-		call	remove_missile		# 	remove(y, x, *prev)
+		call	remove_missile		# 	remove(y', x', *prev, *this)
 		addl	$16, %esp
 		popl	%edi
 		jmp	.travnextprm
 	.expcont:
+		pushl	$0
+		pushl	$' '
+		pushl	DEST_X(%edi)
+		pushl	DEST_Y(%edi)
+		call	draw_pixel
+		addl	$16, %esp
 		pushl	$1
 		pushl	$EXPLOSION
 		pushl	%ebx
 		pushl	%eax
-		call	draw_pixel		# 	draw(y, x, EXPLOSION, shift=True)
+		call	draw_pixel		# 	draw(y', x', EXPLOSION, shift=True)
 		addl	$16, %esp
 		jmp	.travnext
 	.flying:				# STEP 3: flying?
