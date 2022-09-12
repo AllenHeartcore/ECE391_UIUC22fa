@@ -38,6 +38,7 @@ base_pic:     	    .string "/^^^\\"	# Picture of a live base
 dead_base_pic: 	    .string "xxxxx"	# Picture of a dead base
 crosshairs_x:		.long 0x0	# X-position of the crosshairs
 crosshairs_y:		.long 0x0	# Y-position of the crosshairs
+expretvaccud:		.long 0x0
 
 .text
 
@@ -95,6 +96,7 @@ mp1_rtc_tasklet:
 		pushl	%esi
 		pushl	%edi
 		pushfl
+		movl	$0, expretvaccud	# reset accumulator
 		call	update_missiles
 		call	draw_cities_xhairs
 		popfl
@@ -279,10 +281,7 @@ update_missiles:
 		pushl	%edi
 		call	missile_explode		# 	explode(*this)
 		popl	%edi
-		cmpl	$0, %eax
-		je	.expsilent		# 	(notify unless "explode" returns 0)
-		call	mp1_notify_user
-	.expsilent:
+		addl	%eax, expretvaccud	# 	accumulate return value
 		popl	%eax
 		decl	EXPLODED(%edi)
 		cmpl	$0, EXPLODED(%edi)
@@ -346,6 +345,10 @@ update_missiles:
 	.travnextprm:				# (for post-removal cases)
 		jmp	.traverse
 	.travdone:
+		cmpl	$0, expretvaccud
+		je	.expsilent		# (at least one "explode" returns > 0)
+		call	mp1_notify_user
+	.expsilent:
 		popl	%edi
 		popl	%esi
 		popl	%ebx			# [callee restore]
