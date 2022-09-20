@@ -22,7 +22,7 @@
         - The bottom window's "starting" memory address is fixed at 0
             - So the status bar must locate *before* the main window in the memory
         - The `PresetRowScan` field only applies to the top window
-            - This means that **pixel-level scrolling** is only enabled for the top
+            - This means that **pixel-level scrolling is only enabled for the top**
             - The bottom has an effective `PresetRowScan` value of 0.
 
 2. Changing the Color Palette
@@ -31,9 +31,13 @@
         - `DACData` Register: the palette entry's color values
     - Operations
         - `CLI()`
+            - *Sync single processor*
+        - `spin_lock()`
+            - *Sync multi-processors*
         - `DACAddrWriteMode` <- index value
         - `DACData` <- red value
         - `DACData` <- green value
         - `DACData` <- blue value
-            - *Note: here the internal writing address automatically advances*
+            - *Here the internal writing address automatically advances*
+        - `spin_unlock()`
         - `STI()`
