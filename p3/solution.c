@@ -1,33 +1,61 @@
-// You may add up to 5 elements to this struct.
-// The type of synchronization primitive you may use is SpinLock.
-typedef struct zs_enter_exit_lock{
+#include <linux/spinlock.h>
+#define lock(fd) spin_lock_irqsave(fd->lock, flags)
+#define unlock(fd) spin_unlock_irqrestore(fd->lock, flags)
 
-}zs_lock;
+typedef struct biscuit_juice_lock{
+    spinlock_t* lock;
+    int num_biscuit;
+    int num_juice;
+} fd_lock_t;
+int flags;
 
-
-int zombie_enter(zs_lock* zs) {
-
+void produce_biscuit(fd_lock_t* fd) {
+    lock(fd);
+    fd->num_biscuit++;
+    unlock(fd);
 }
 
-int zombie_exit(zs_lock* zs) {
-
+void consume_biscuit(fd_lock_t* fd) {
+    while (true) {
+        lock(fd);
+        if (fd->num_biscuit > 0) {
+            fd->num_biscuit--;
+            unlock(fd);
+            return;
+        }
+        unlock(fd);
+    }
 }
 
-int scientist_enter(zs_lock* zs) {
-
+int produce_juice(fd_lock_t* fd) {
+    lock(fd);
+    if (fd->num_juice == 4) {
+        unlock(fd);
+        return -1;
+    }
+    fd->num_juice++;
+    unlock(fd);
+    return 0;
 }
 
-int scientist_exit(zs_lock* zs) {
-
+void consume_juice(fd_lock_t* fd) {
+    while (true) {
+        lock(fd);
+        if (fd->num_juice > 0) {
+            fd->num_juice--;
+            unlock(fd);
+            return;
+        }
+        unlock(fd);
+    }
 }
 
-/* 
- * sanitize_lab
- *   DESCRIPTION: Sanitizes the lab, removing all zombie contaminants. 
- *   INPUTS: zs -- pointer to the zombie-scientist lock structure 
- *   OUTPUTS: none
- *   RETURN VALUE: none
- *   SIDE EFFECTS: Must only be called when the lab is empty.
- */
-void sanitize_lab(zs_lock* zs);
-
+int main() {
+    fd_lock_t* fd = (fd_lock_t*) malloc(sizeof(fd_lock_t));
+    fd->lock = (spinlock_t*) malloc(sizeof(spinlock_t));
+    spin_lock_init(fd->lock);       // a better idea is to ...
+    fd->num_biscuit = 0;            // wrap up these inits ...
+    fd->num_juice = 0;              // in a class
+    // perform operations
+    return 0;
+}
