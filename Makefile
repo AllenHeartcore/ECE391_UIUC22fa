@@ -1,4 +1,4 @@
-all: adventure tr mp2photo mp2object
+all: adventure tr
 
 HEADERS=assert.h input.h modex.h photo.h photo_headers.h text.h types.h \
 	world.h Makefile
@@ -28,4 +28,4 @@ clean::
 	rm -f *.o *~ a.out
 
 clear: clean
-	rm -f adventure tr mp2photo mp2object
+	rm -f adventure tr
