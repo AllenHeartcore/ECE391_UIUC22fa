@@ -34,9 +34,11 @@
  */
 
 #include <string.h>
-
+#include "modex.h"
 #include "text.h"
 
+#define BAR_HEIGHT_PADDING 4
+#define BAR_HEIGHT (FONT_HEIGHT + BAR_HEIGHT_PADDING * 2)
 
 /*
  * These font data were read out of video memory during text mode and
@@ -562,3 +564,15 @@ unsigned char font_data[256][16] = {
 	 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
 };
 
+char* build_text_buffer(char* str) {
+	int len = strlen(str);
+	int idxl = (IMAGE_X_DIM / FONT_WIDTH - len) / 2;
+	char* buffer[BAR_HEIGHT * IMAGE_X_DIM];
+	for (int i = 0; i < len; i++) {
+		for (int j = 0; j < FONT_HEIGHT; j++) {
+			buffer[(j + BAR_HEIGHT_PADDING) * IMAGE_X_DIM + (i + idxl)] = \
+				fonts[str[i]][j];
+		}
+	}
+	return buffer;
+}
