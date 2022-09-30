@@ -207,6 +207,8 @@ game_loop ()
 	struct timeval cur_time; /* current time (during tick)      */
 	cmd_t cmd;               /* command issued by input control */
 	int32_t enter_room;      /* player has changed rooms        */
+	char bartext[40]; 	     /* text to display by default      */
+	strncpy(bartext, ">>>", 3);
 
 	/* Record the starting time--assume success. */
 	(void)gettimeofday (&start_time, NULL);
@@ -248,6 +250,15 @@ game_loop ()
 	}
 
 	show_screen ();
+	if (strlen (status_msg) > 0) {
+		show_status(status_msg);
+	} else {
+		//show_status(game_info.where->name);
+		strncpy(bartext + 3, cmd->name, strlen(cmd->name));
+		strncpy(bartext + 40 - strlen(game_info.where->name), \
+			game_info.where->name, strlen(game_info.where->name));
+		show_status(bartext);
+	}
 
 	/*
 	 * Wait for tick.  The tick defines the basic timing of our

@@ -88,16 +88,16 @@ static unsigned short mode_X_seq[NUM_SEQUENCER_REGS] = {
 };
 static unsigned short mode_X_CRTC[NUM_CRTC_REGS] = {
 	0x5F00, 0x4F01, 0x5002, 0x8203, 0x5404, 0x8005, 0xBF06, 0x1F07,
-	0x0008, 0x4109, 0x000A, 0x000B, 0x000C, 0x000D, 0x000E, 0x000F,
+	0x0008, 0x0109, 0x000A, 0x000B, 0x120C, 0xC00D, 0x000E, 0x000F,
 	0x9C10, 0x8E11, 0x8F12, 0x2813, 0x0014, 0x9615, 0xB916, 0xE317,
-	0xFF18
+	0x2818	// StartAddr(0C,0D) = 24 * 200, LineCmp(09:6,07:4,18) = 296
 };
 static unsigned char mode_X_attr[NUM_ATTR_REGS * 2] = {
 	0x00, 0x00, 0x01, 0x01, 0x02, 0x02, 0x03, 0x03,
 	0x04, 0x04, 0x05, 0x05, 0x06, 0x06, 0x07, 0x07,
 	0x08, 0x08, 0x09, 0x09, 0x0A, 0x0A, 0x0B, 0x0B,
 	0x0C, 0x0C, 0x0D, 0x0D, 0x0E, 0x0E, 0x0F, 0x0F,
-	0x10, 0x41, 0x11, 0x00, 0x12, 0x0F, 0x13, 0x00,
+	0x10, 0x61, 0x11, 0x00, 0x12, 0x0F, 0x13, 0x00,	// PPM(10:5) = 1
 	0x14, 0x00, 0x15, 0x00
 };
 static unsigned short mode_X_graphics[NUM_GRAPHICS_REGS] = {
@@ -530,6 +530,12 @@ show_screen ()
 	OUTW (0x03D4, ((target_img & 0x00FF) << 8) | 0x0D);
 }
 
+void show_bar(unsigned char* msg) {
+	unsigned char* buffer = build_text_buffer(msg);
+	// copy_image(buffer, target_img + IMAGE_X_DIM * (IMAGE_Y_DIM - BAR_HEIGHT));
+	copy_image(buffer, target_img - IMAGE_X_DIM * BAR_HEIGHT);
+}
+
 
 /*
  * clear_screens
@@ -576,16 +582,16 @@ clear_screens ()
 int
 draw_vert_line (int x)
 {
-	unsigned char buf[SCROLL_Y_DIM];            // img buffer
-	if (x < 0 || x >= SCROLL_X_DIM) return -1;  // invalid col idx
-	x += show_x;                                // convert to logical col idx
-	(*vert_line_fn) (x, show_y, buf);           // generate img
+	unsigned char buf[SCROLL_Y_DIM];			// img buffer
+	if (x < 0 || x >= SCROLL_X_DIM) return -1;	// invalid col idx
+	x += show_x;								// convert to logical col idx
+	(*vert_line_fn) (x, show_y, buf);			// generate img
 	unsigned char* addr = img3 \
-		+ show_y * SCROLL_X_WIDTH + (x >> 2);   // addr of 1st pix in buffer
-	int p_off = 3 - (x & 3);                    // init plane offset
-	for (int i = 0; i < SCROLL_Y_DIM; i++) {    // for each row
-		addr[p_off * SCROLL_SIZE] = buf[i];     // copy row to build buffer
-		addr += SCROLL_X_WIDTH;                 // advance to next row
+		+ show_y * SCROLL_X_WIDTH + (x >> 2);	// addr of 1st pix in buffer
+	int p_off = 3 - (x & 3);					// init plane offset
+	for (int i = 0; i < SCROLL_Y_DIM; i++) {	// for each row
+		addr[p_off * SCROLL_SIZE] = buf[i];		// copy row to build buffer
+		addr += SCROLL_X_WIDTH;					// advance to next row
 	}
 	return 0;
 }
