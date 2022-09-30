@@ -588,5 +588,3 @@ unsigned char* build_text_buffer(char* str) {
 	}
 	return buffer;
 }
-
-#include <stdio.h>

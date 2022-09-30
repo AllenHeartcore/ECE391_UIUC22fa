@@ -169,6 +169,7 @@ static pthread_t status_thread_id;
 static pthread_mutex_t msg_lock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t  msg_cv = PTHREAD_COND_INITIALIZER;
 static char status_msg[STATUS_MSG_LEN + 1] = {'\0'};
+static char default_msg[STATUS_MSG_LEN + 1] = {'\0'};
 
 
 /*
@@ -207,8 +208,6 @@ game_loop ()
 	struct timeval cur_time; /* current time (during tick)      */
 	cmd_t cmd;               /* command issued by input control */
 	int32_t enter_room;      /* player has changed rooms        */
-	char bartext[40]; 	     /* text to display by default      */
-	strncpy(bartext, ">>>", 3);
 
 	/* Record the starting time--assume success. */
 	(void)gettimeofday (&start_time, NULL);
@@ -251,19 +250,26 @@ game_loop ()
 
 	show_screen ();
 	if (status_msg[0] != '\0') {
-		show_status (status_msg);
+		pthread_mutex_lock(&msg_lock);
+		show_bar(status_msg);
+		pthread_mutex_unlock(&msg_lock);
 	} else {
-		show_status (bartext);
+		char* tcmd = get_typed_command();					// texts
+		char* troom = room_name(game_info.where);
+		int lcmd = strlen(tcmd);							// lengths
+		int lroom = strlen(troom);
+		int lspace = STATUS_MSG_LEN - lcmd - lroom - 5;
+		int ispace;
+		strncpy(default_msg, ">>>", 3);						// build text
+		strncpy(default_msg + 3, tcmd, lcmd);
+		for (ispace = 0; ispace < lspace; ispace++) {
+			strncpy(default_msg + 3 + lcmd + ispace, " ", 1);
+		}
+		strncpy(default_msg + 3 + lcmd + lspace, "[", 1);
+		strncpy(default_msg + 4 + lcmd + lspace, troom, lroom);
+		strncpy(default_msg + 4 + lcmd + lspace + lroom, "]", 1);
+		show_bar(default_msg);
 	}
-	// if (strlen (status_msg) > 0) {
-	// 	show_status(status_msg);
-	// } else {
-	// 	show_status(game_info.where->name);
-	// 	strncpy(bartext + 3, cmd.name, strlen(cmd.name));
-	// 	strncpy(bartext + 40 - strlen(game_info.where->name), 
-	// 		game_info.where->name, strlen(game_info.where->name));
-	// 	show_status(bartext);
-	// }
 
 	/*
 	 * Wait for tick.  The tick defines the basic timing of our
