@@ -561,22 +561,25 @@ unsigned char font_data[256][16] = {
 	 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
 };
 
+unsigned char buffer[BAR_HEIGHT * IMAGE_X_DIM];
+
 unsigned char* build_text_buffer(char* str) {
-	int len = strlen(str), x, y;
+	int len = strlen(str);
+	int y, x, ichr, ifh, ifw, ascii;
 	int hpad = (IMAGE_X_DIM - FONT_WIDTH * len) / 2;		// center align
-	unsigned char buffer[BAR_HEIGHT][IMAGE_X_DIM];
 	for (y = 0; y < BAR_HEIGHT; y++) {
 		for (x = 0; x < IMAGE_X_DIM; x++) {
-			buffer[y][x] = 6;								// init buffer
+			buffer[y * IMAGE_X_DIM + x] = 6;				// init buffer
 		}
 	}
-	for (int ichr = 0; ichr < len; ichr++) {				// every char
-		for (int ifh = 0; ifh < FONT_HEIGHT; ifh++) {		// every vpixel
-			for (int ifw = 0; ifw < FONT_WIDTH; ifw++) {	// every hpixel
+	for (ichr = 0; ichr < len; ichr++) {					// every char
+		for (ifh = 0; ifh < FONT_HEIGHT; ifh++) {			// every vpixel
+			for (ifw = 0; ifw < FONT_WIDTH; ifw++) {		// every hpixel
 				y = VPAD + ifh;
 				x = hpad + ifw + ichr * FONT_WIDTH;
-				if (fonts[str[ichr]][ifh] & (0x80 >> ifw)) {
-					buffer[y][x] = 52;
+				ascii = (int) str[ichr];
+				if (font_data[ascii][ifh] & (0x80 >> ifw)) {
+					buffer[y * IMAGE_X_DIM + x] = 52;
 				}
 			}
 		}

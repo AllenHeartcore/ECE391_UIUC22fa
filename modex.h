@@ -126,6 +126,7 @@ extern void set_view_window (int scr_x, int scr_y);
 
 /* show the logical view window on the monitor */
 extern void show_screen ();
+extern void show_bar (char* msg);
 
 /* clear the video memory in mode X */
 extern void clear_screens ();

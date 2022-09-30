@@ -250,15 +250,20 @@ game_loop ()
 	}
 
 	show_screen ();
-	if (strlen (status_msg) > 0) {
-		show_status(status_msg);
-	} else {
-		//show_status(game_info.where->name);
-		strncpy(bartext + 3, cmd->name, strlen(cmd->name));
-		strncpy(bartext + 40 - strlen(game_info.where->name), \
-			game_info.where->name, strlen(game_info.where->name));
-		show_status(bartext);
-	}
+	char* msg_test;
+	msg_test[0] = 'abc\0';
+	show_bar(msg_test);
+	//show_bar("");
+	//show_status(status_msg);
+	// if (strlen (status_msg) > 0) {
+	// 	show_status(status_msg);
+	// } else {
+	// 	show_status(game_info.where->name);
+	// 	//strncpy(bartext + 3, cmd.name, strlen(cmd.name));
+	// 	//strncpy(bartext + 40 - strlen(game_info.where->name), 
+	// 	//	game_info.where->name, strlen(game_info.where->name));
+	// 	//show_status(bartext);
+	// }
 
 	/*
 	 * Wait for tick.  The tick defines the basic timing of our
@@ -731,6 +736,7 @@ show_status (const char* s)
 	/* Copy the new message under the protection of msg_lock. */
 	strncpy (status_msg, s, STATUS_MSG_LEN);
 	status_msg[STATUS_MSG_LEN] = '\0';
+	show_bar(status_msg);
 
 	/*
 	 * Wake up the status message helper thread.  Note that we still hold
