@@ -250,11 +250,11 @@ game_loop ()
 	}
 
 	show_screen ();
-	char* msg_test;
-	msg_test[0] = '\0';
-	show_bar(msg_test);
-	//show_bar("");
-	//show_status(status_msg);
+	if (status_msg[0] != '\0') {
+		show_status (status_msg);
+	} else {
+		show_status (bartext);
+	}
 	// if (strlen (status_msg) > 0) {
 	// 	show_status(status_msg);
 	// } else {

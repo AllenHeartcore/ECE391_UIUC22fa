@@ -562,11 +562,11 @@ unsigned char font_data[256][16] = {
 };
 
 // @@ CHECKPOINT 1
-unsigned char buffer[BAR_HEIGHT * IMAGE_X_DIM];
+unsigned char buffer[BAR_SIZE];
 
 unsigned char* build_text_buffer(char* str) {
 	int len = strlen(str);
-	int y, x, ichr, ifh, ifw, ascii;
+	int y, x, ichr, ifh, ifw, ascii, idx;
 	int hpad = (IMAGE_X_DIM - FONT_WIDTH * len) / 2;		// center align
 	for (y = 0; y < BAR_HEIGHT; y++) {
 		for (x = 0; x < IMAGE_X_DIM; x++) {
@@ -580,9 +580,9 @@ unsigned char* build_text_buffer(char* str) {
 				y = VPAD + ifh;
 				x = hpad + ifw + ichr * FONT_WIDTH;
 				if (font_data[ascii][ifh] & (0x80 >> ifw)) {
-					//printf("%d %d %d %d\n", ichr, y, x, y * IMAGE_X_DIM + x);
-					buffer[y * IMAGE_X_DIM + x] = 52;
-				}
+					idx = (y * IMAGE_X_DIM + x) / 4;		// # position in plane
+					buffer[BAR_PAGE_SIZE * (x % 4) + idx] = 52;
+				}											// # plane ^
 			}
 		}
 	}

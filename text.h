@@ -41,7 +41,8 @@
 #define FONT_HEIGHT 16
 #define VPAD 4					// bar's vertical padding
 #define BAR_HEIGHT (FONT_HEIGHT + VPAD * 2)
-#define BAR_SIZE (BAR_HEIGHT * IMAGE_X_WIDTH)
+#define BAR_SIZE (BAR_HEIGHT * IMAGE_X_DIM)
+#define BAR_PAGE_SIZE (BAR_HEIGHT * IMAGE_X_WIDTH)
 
 /* Standard VGA text font. */
 extern unsigned char font_data[256][16];

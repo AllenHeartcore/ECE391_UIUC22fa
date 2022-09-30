@@ -306,6 +306,7 @@ set_mode_X (void (*horiz_fill_fn) (int, int, unsigned char[SCROLL_X_DIM]),
 		build[BUILD_BUF_SIZE + MEM_FENCE_WIDTH + i] = MEM_FENCE_MAGIC;
 	}
 
+	// @@ CHECKPOINT 1
 	/* One display page goes at the start of video memory. */
 	target_img = 0x0800;
 
@@ -538,8 +539,8 @@ void show_bar(char* msg) {
 	unsigned char* buffer = build_text_buffer(msg);
 	int i;
 	for (i = 0; i < 4; i++) {
-		SET_WRITE_MASK(1 << (i + 8));
-		copy_bar(buffer + ((4 - i) & 3) * BAR_SIZE + (i > 0), 0x0000);
+		SET_WRITE_MASK(0x100 << i);
+		copy_bar(buffer + i * BAR_PAGE_SIZE, 0x0000);
 	}	// ^ `p_off` is set to 0
 }
 
