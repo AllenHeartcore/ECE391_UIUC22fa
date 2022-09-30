@@ -82,6 +82,7 @@
 #define NUM_GRAPHICS_REGS       9
 #define NUM_ATTR_REGS          22
 
+// @@ CHECKPOINT 1
 /* VGA register settings for mode X */
 static unsigned short mode_X_seq[NUM_SEQUENCER_REGS] = {
 	0x0100, 0x2101, 0x0F02, 0x0003, 0x0604
@@ -142,6 +143,7 @@ static void fill_palette_text ();
 static void write_font_data ();
 static void set_text_mode_3 (int clear_scr);
 static void copy_image (unsigned char* img, unsigned short scr_addr);
+static void copy_bar (unsigned char* dest, unsigned short src);
 
 
 /*
@@ -305,7 +307,7 @@ set_mode_X (void (*horiz_fill_fn) (int, int, unsigned char[SCROLL_X_DIM]),
 	}
 
 	/* One display page goes at the start of video memory. */
-	target_img = 0x0000;
+	target_img = 0x0800;
 
 	/* Map video memory and obtain permission for VGA port access. */
 	if (open_memory_and_ports () == -1)
@@ -530,10 +532,15 @@ show_screen ()
 	OUTW (0x03D4, ((target_img & 0x00FF) << 8) | 0x0D);
 }
 
-void show_bar (char* msg) {
+// @@ CHECKPOINT 1
+// A similar "bar" version for showing 24 * 320 bytes
+void show_bar(char* msg) {
 	unsigned char* buffer = build_text_buffer(msg);
-	// copy_image(buffer, target_img + IMAGE_X_DIM * (IMAGE_Y_DIM - BAR_HEIGHT));
-	copy_image(buffer, target_img);
+	int i;
+	for (i = 0; i < 4; i++) {
+		SET_WRITE_MASK(1 << (i + 8));
+		copy_bar(buffer + ((4 - i) & 3) * BAR_SIZE + (i > 0), 0x0000);
+	}	// ^ `p_off` is set to 0
 }
 
 
@@ -1007,6 +1014,18 @@ copy_image (unsigned char* img, unsigned short scr_addr)
 	  : /* no outputs */
 	  : "S" (img), "D" (mem_image + scr_addr)
 	  : "eax", "ecx", "memory"
+	);
+}
+
+// @@ CHECKPOINT 1
+// A similar "bar" version for copying 24 * 320 bytes
+static void copy_bar (unsigned char* dest, unsigned short src) {
+	asm volatile (
+		"cld;"
+	   	"movl $1920, %%ecx;"					// 24 * 320 / 4 (long)
+	   	"rep movsb"
+	  : : "S" (dest), "D" (mem_image + src)		// removing `mem_image`...
+	  : "eax", "ecx", "memory"					// ...gives a segfault
 	);
 }
 

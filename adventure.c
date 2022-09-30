@@ -251,7 +251,7 @@ game_loop ()
 
 	show_screen ();
 	char* msg_test;
-	msg_test[0] = 'abc\0';
+	msg_test[0] = '\0';
 	show_bar(msg_test);
 	//show_bar("");
 	//show_status(status_msg);
@@ -259,10 +259,10 @@ game_loop ()
 	// 	show_status(status_msg);
 	// } else {
 	// 	show_status(game_info.where->name);
-	// 	//strncpy(bartext + 3, cmd.name, strlen(cmd.name));
-	// 	//strncpy(bartext + 40 - strlen(game_info.where->name), 
-	// 	//	game_info.where->name, strlen(game_info.where->name));
-	// 	//show_status(bartext);
+	// 	strncpy(bartext + 3, cmd.name, strlen(cmd.name));
+	// 	strncpy(bartext + 40 - strlen(game_info.where->name), 
+	// 		game_info.where->name, strlen(game_info.where->name));
+	// 	show_status(bartext);
 	// }
 
 	/*
