@@ -317,3 +317,6 @@ static void tuxctl_ldisc_data_callback(struct tty_struct *tty)
 		saved[j] = packet[i+j];
 }
 
+void tuxctl_handle_packet(struct tty_struct *tty, unsigned char *packet) {
+	
+}
