@@ -248,6 +248,7 @@ game_loop ()
 		enter_room = 0;
 	}
 
+	// @@ CHECKPOINT 1
 	show_screen ();
 	if (status_msg[0] != '\0') {
 		pthread_mutex_lock(&msg_lock);
