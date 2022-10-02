@@ -75,15 +75,6 @@ struct image_t {
 	uint8_t*       img;                 /* pixel data               */
 };
 
-// @@ CHECKPOINT 2: octree struct & func support
-struct octree_node_t {
-	uint32_t sum_r, sum_g, sum_b, count;	// for calculating the average
-	uint16_t* affiliates; // index array of pixels that belong to this node
-}
-int cmpfunc(const void* node_a, const void* node_b) {	// decr order
-	return (*(octree_node_t*)node_b)->count - (*(octree_node_t*)node_a)->count;
-}											// ^ note the ptrs here!
-
 
 /* file-scope variables */
 
@@ -326,9 +317,6 @@ prep_room (const room_t* r)
 {
 	/* Record the current room. */
 	cur_room = r;
-	// @@ CHECKPOINT 2: load optimized palette
-	OUTB(0x3C8, 64);						// starting at palette #64,
-	REP_OUTSB(0x3C9, r->palette, 192 * 3);	// write 192 RGB triplets
 }
 
 
@@ -456,28 +444,6 @@ read_photo (const char* fname)
 	return NULL;
 	}
 
-	// @@ CHECKPOINT 2: prepare for octree algrm
-	uint8_t r, g, b, i, j, idx;
-	octree_node_t* octree[4096];					// 16 ^ 3
-	octree_node_t* octree64[64];					// 4 ^ 3
-	for (i = 0; i < 4096; i++) {
-		octree[i]->sum_r = 0;						// init sums
-		octree[i]->sum_g = 0;
-		octree[i]->sum_b = 0;
-		octree[i]->count = 0;
-		octree[i]->affiliates = malloc(p->hdr.width \
-			* p->hdr.height * sizeof(uint16_t));	// index record
-	}
-	for (i = 0; i < 64; i++) {
-		octree64[i]->sum_r = 0;
-		octree64[i]->sum_g = 0;
-		octree64[i]->sum_b = 0;
-		octree64[i]->count = 0;
-		octree64[i]->affiliates = malloc(p->hdr.width \
-			* p->hdr.height * sizeof(uint16_t));
-	}
-	bool covered[p->hdr.width * p->hdr.height] = {false};	// coverage flags
-
 	/*
 	 * Loop over rows from bottom to top.  Note that the file is stored
 	 * in this order, whereas in memory we store the data in the reverse
@@ -510,59 +476,16 @@ read_photo (const char* fname)
 		 * the game puts up a photo, you should then change the palette
 		 * to match the colors needed for that photo.
 		 */
-		// @@ CHECKPOINT 2: octree algrm
-		r = (pixel >> 11) & 0x1F << 1;							// 5:6:5 to 6:6:6
-		g = (pixel >> 5) & 0x3F;
-		b = pixel & 0x1F << 1;
-		idx = (r >> 2) * 256 + (g >> 2) * 16 + (b >> 2);		// 4:4:4 index
-		octree[idx]->sum_r += r;
-		octree[idx]->sum_g += g;
-		octree[idx]->sum_b += b;
-		octree[idx]->affiliates[octree[idx]->count] = p->hdr.width * y + x;
-		octree[idx]->count++;
+		p->img[p->hdr.width * y + x] = (((pixel >> 14) << 4) |
+						(((pixel >> 9) & 0x3) << 2) |
+						((pixel >> 3) & 0x3));
 	}
-	}
-
-	qsort(octree, 4096, sizeof(octree_node_t*) , cmpfunc);		// sort by count
-	for (i = 0; i < 128; i++) {
-		if (octree[i]->count == 0) break;
-		p->palette[i][0] = octree[i]->sum_r / octree[i]->count;	// set palette
-		p->palette[i][1] = octree[i]->sum_g / octree[i]->count;
-		p->palette[i][2] = octree[i]->sum_b / octree[i]->count;
-		for (j = 0; j < octree[i]->count; j++) {
-			p->img[octree[i]->affiliates[j]] = i + 64;			// set mapping
-			covered[octree[i]->affiliates[j]] = true;			// set flag
-		}
-	}
-
-	for (y = p->hdr.height; y-- > 0; ) {						// second go
-	for (x = 0; p->hdr.width > x; x++) {
-		if (covered[p->hdr.width * y + x]) continue;			// skip covered
-		r = (p->img[p->hdr.width * y + x] >> 11) & 0x1F << 1;
-		g = (p->img[p->hdr.width * y + x] >> 5) & 0x3F;			// no sanity check
-		b = p->img[p->hdr.width * y + x] & 0x1F << 1;
-		idx = (r >> 4) * 16 + (g >> 4) * 4 + (b >> 4);			// 2:2:2 index
-		octree64[idx]->sum_r += r;
-		octree64[idx]->sum_g += g;
-		octree64[idx]->sum_b += b;
-		octree64[idx]->affiliates[octree64[idx]->count] = p->hdr.width * y + x;
-		octree64[idx]->count++;
-	}
-	}
-
-	for (i = 0; i < 64; i++) {									// no sort
-		if (octree64[i]->count == 0) continue;					// not "break"
-		p->palette[i + 128][0] = octree64[i]->sum_r / octree64[i]->count;
-		p->palette[i + 128][1] = octree64[i]->sum_g / octree64[i]->count;
-		p->palette[i + 128][2] = octree64[i]->sum_b / octree64[i]->count;
-		for (j = 0; j < octree64[i]->count; j++) {
-			p->img[octree64[i]->affiliates[j]] = i + 192;		// note the offset!
-		}
 	}
 
 	/* All done.  Return success. */
 	(void)fclose (in);
 	return p;
 }
+
 
 

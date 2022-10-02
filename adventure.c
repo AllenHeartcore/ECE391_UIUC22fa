@@ -255,8 +255,8 @@ game_loop ()
 		show_bar(status_msg);
 		pthread_mutex_unlock(&msg_lock);
 	} else {
-		char* tcmd = get_typed_command();					// texts
-		char* troom = room_name(game_info.where);
+		const char* tcmd = get_typed_command();					// texts
+		const char* troom = room_name(game_info.where);
 		int lcmd = strlen(tcmd);							// lengths
 		int lroom = strlen(troom);
 		int lspace = STATUS_MSG_LEN - lcmd - lroom - 5;

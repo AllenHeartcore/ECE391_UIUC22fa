@@ -8,3 +8,4 @@
 | Buffer | 8 mins | 40 mins | Scattered font | Change array indexing from linear to plane-based |
 | Msg | 1 min | 30 mins | "Deref. ptr to incomplete type"<br>when reading room name | Turn from `game_info.where->name`<br>to `room_name(game_info.where)` |
 | Sync | 5 mins | 45 mins| Ignored status message | Turn from `show_status(status_msg)`<br>to `show_bar(status_msg)` (oh man)<br>Also, add locks before & after the read |
+| GCC | 2 mins | 2 mins | "Discards qualifiers from ptr" | Add `const` before user-defined `char`s |
