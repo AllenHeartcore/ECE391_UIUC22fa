@@ -79,7 +79,6 @@ struct image_t {
 typedef struct octree_node_t {
 	uint16_t node_id;
 	uint32_t sum_r, sum_g, sum_b, count;	// for calculating the average
-	// uint32_t* affiliates; // index array of pixels that belong to this node
 } octree_node_t;
 
 int cmpfunc(const void* node_a, const void* node_b) {	// decr order
@@ -471,11 +470,6 @@ read_photo (const char* fname)
 		octree[i].sum_g = 0;
 		octree[i].sum_b = 0;
 		octree[i].count = 0;
-		// octree[i].affiliates = malloc(p->hdr.width \
-		// 	* p->hdr.height * sizeof(uint32_t));				// index record
-		// if (octree[i].affiliates == NULL) {
-		// 	printf("%d %d malloc failed\n", p->hdr.width, p->hdr.height);
-		// }
 	}
 	for (i = 0; i < 64; i++) {
 		octree64[i].node_id = i;
@@ -483,8 +477,6 @@ read_photo (const char* fname)
 		octree64[i].sum_g = 0;
 		octree64[i].sum_b = 0;
 		octree64[i].count = 0;
-		// octree64[i].affiliates = malloc(p->hdr.width \
-		// 	* p->hdr.height * sizeof(uint32_t));
 	}
 	for (i = 0; i < p->hdr.width * p->hdr.height; i++) {
 		covered[i] = 0;
@@ -525,7 +517,6 @@ read_photo (const char* fname)
 
 		// @@ CHECKPOINT 2: octree algrm
 		idxi = p->hdr.width * y + x;
-		//if (p->hdr.width == 320) printf("%d ", idxi);
 		r = ((pixel >> 11) & 0x1F) << 1;						// 5:6:5 to 6:6:6
 		g = (pixel >> 5) & 0x3F;
 		b = (pixel & 0x1F) << 1;
@@ -533,45 +524,25 @@ read_photo (const char* fname)
 		octree[idxt].sum_r += r;
 		octree[idxt].sum_g += g;
 		octree[idxt].sum_b += b;
-		//octree[idxt].affiliates[octree[idxt].count] = idxi;
 		octree[idxt].count++;
 		img_raw[idxi] = pixel;									// for the 2nd go
 		affiliation[idxi] = idxt;
-		//if (p->hdr.width == 320) printf("\n");
 	}
 	}
 
 	qsort(octree, 4096, sizeof(octree_node_t) , cmpfunc);		// sort by count
 	for (i = 0; i < 128; i++) {
-		// if (p->hdr.width == 320) printf("%d %d\n", i, octree[i].count);
 		if (octree[i].count == 0) break;
 		p->palette[i][0] = octree[i].sum_r / octree[i].count;	// set palette
 		p->palette[i][1] = octree[i].sum_g / octree[i].count;
 		p->palette[i][2] = octree[i].sum_b / octree[i].count;
-		// for (j = 0; j < octree[i].count; j++) {
-		// 	p->img[octree[i].affiliates[j]] = i + 64;			// set mapping
-		// 	covered[octree[i].affiliates[j]] = 1;				// set flag
-		// 	//if (p->hdr.width == 320) printf("%d ", octree[i].affiliates[j]);
-		// }
 		for (j = 0; j < p->hdr.width * p->hdr.height; j++) {
 			if (affiliation[j] == octree[i].node_id) {
 				p->img[j] = i + 64;
 				covered[j] = 1;
 			}
 		}
-		//if (p->hdr.width == 320) printf("\n");
-		//if (p->hdr.width == 320) printf("%02x %02x %02x %4d\n", p->palette[i][0], p->palette[i][1], p->palette[i][2], octree[i].count);
 	}
-	// if (p->hdr.width == 320) {
-	// 	for (y = 0; y < p->hdr.height; y++) {
-	// 		printf("%3d: ", y);
-	// 		for (x = 0; x < p->hdr.width; x++) {
-	// 			idxi = p->hdr.width * y + x;
-	// 			printf("%d", covered[idxi]);
-	// 		}
-	// 		printf("\n");
-	// 	}
-	// }
 
 	for (y = p->hdr.height; y-- > 0; ) {						// 2nd go
 	for (x = 0; p->hdr.width > x; x++) {
@@ -584,7 +555,6 @@ read_photo (const char* fname)
 		octree64[idxt].sum_r += r;
 		octree64[idxt].sum_g += g;
 		octree64[idxt].sum_b += b;
-		// octree64[idxt].affiliates[octree64[idxt].count] = idxi;
 		octree64[idxt].count++;
 		affiliation[idxi] = idxt + 4096;						// prevent collision
 	}
@@ -595,9 +565,6 @@ read_photo (const char* fname)
 		p->palette[i + 128][0] = octree64[i].sum_r / octree64[i].count;
 		p->palette[i + 128][1] = octree64[i].sum_g / octree64[i].count;
 		p->palette[i + 128][2] = octree64[i].sum_b / octree64[i].count;
-		// for (j = 0; j < octree64[i].count; j++) {
-		// 	p->img[octree64[i].affiliates[j]] = i + 192;		// note the offset!
-		// }
 		for (j = 0; j < p->hdr.width * p->hdr.height; j++) {
 			if (affiliation[j] == octree64[i].node_id + 4096) {
 				p->img[j] = i + 192;
@@ -605,24 +572,7 @@ read_photo (const char* fname)
 		}
 	}
 
-	// if (p->hdr.width == 320) {
-	// 	for (y = 0; y < p->hdr.height; y++) {
-	// 		for (x = 0; x < p->hdr.width; x++) {
-	// 			idxi = p->hdr.width * y + x;
-	// 			printf("%3d %3d %3d | %04x %02x %02x %02x | %02x %02x %02x\n", y, x, p->img[idxi], img_raw[idxi], \
-	// 				((img_raw[idxi] >> 11) & 0x1F) << 1, (img_raw[idxi] >> 5) & 0x3F, (img_raw[idxi] & 0x1F) << 1, \
-	// 				p->palette[p->img[idxi]-64][0], p->palette[p->img[idxi]-64][1], p->palette[p->img[idxi]-64][2]);
-	// 		}
-	// 	}
-	// }
-
-	// printf("%d %d Done.\n", p->hdr.width, p->hdr.height);
-	// for (i = 0; i < 4096; i++) free(octree[i].affiliates);		// SegFault otherwise
-	// for (i = 0; i < 64; i++) free(octree64[i].affiliates);
-
 	/* All done.  Return success. */
 	(void)fclose (in);
 	return p;
 }
-
-#include <stdio.h>
