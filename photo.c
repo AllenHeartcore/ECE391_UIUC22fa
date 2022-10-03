@@ -458,15 +458,16 @@ read_photo (const char* fname)
 
 	// @@ CHECKPOINT 2: prepare for octree algrm
 	uint8_t r, g, b;
-	uint32_t i, j, idxi, idxt;									// image/tree indices
+	uint32_t i, idxi, idxt;										// image/tree indices
 	octree_node_t octree[4096];									// 16 ^ 3
 	octree_node_t octree64[64];									// 4 ^ 3
 	uint16_t img_raw[p->hdr.width * p->hdr.height];				// raw pixels
 	uint16_t affiliation[p->hdr.width * p->hdr.height];			// node affiliation
 	uint8_t covered[p->hdr.width * p->hdr.height];				// coverage flags
+	uint16_t mapping[4096];										// qsort mapping table
 	for (i = 0; i < 4096; i++) {
 		octree[i].node_id = i;
-		octree[i].sum_r = 0;									// init sums
+		octree[i].sum_r = 0;
 		octree[i].sum_g = 0;
 		octree[i].sum_b = 0;
 		octree[i].count = 0;
@@ -530,17 +531,20 @@ read_photo (const char* fname)
 	}
 	}
 
-	qsort(octree, 4096, sizeof(octree_node_t) , cmpfunc);		// sort by count
-	for (i = 0; i < 128; i++) {
-		if (octree[i].count == 0) break;
-		p->palette[i][0] = octree[i].sum_r / octree[i].count;	// set palette
-		p->palette[i][1] = octree[i].sum_g / octree[i].count;
-		p->palette[i][2] = octree[i].sum_b / octree[i].count;
-		for (j = 0; j < p->hdr.width * p->hdr.height; j++) {
-			if (affiliation[j] == octree[i].node_id) {
-				p->img[j] = i + 64;
-				covered[j] = 1;
-			}
+	qsort(octree, 4096, sizeof(octree_node_t), cmpfunc);		// sort by count
+	for (i = 0; i < 4096; i++) {								// i is "ranking"
+		mapping[octree[i].node_id] = i;							// quick b-traverse
+		if (octree[i].count == 0) continue;
+		if (i < 128) {
+			p->palette[i][0] = octree[i].sum_r / octree[i].count;	// set palette
+			p->palette[i][1] = octree[i].sum_g / octree[i].count;
+			p->palette[i][2] = octree[i].sum_b / octree[i].count;
+		}
+	}
+	for (i = 0; i < p->hdr.width * p->hdr.height; i++) {
+		if (mapping[affiliation[i]] < 128) {					// acquire ranking
+			p->img[i] = mapping[affiliation[i]] + 64;
+			covered[i] = 1;
 		}
 	}
 
@@ -556,7 +560,7 @@ read_photo (const char* fname)
 		octree64[idxt].sum_g += g;
 		octree64[idxt].sum_b += b;
 		octree64[idxt].count++;
-		affiliation[idxi] = idxt + 4096;						// prevent collision
+		p->img[idxi] = idxt + 192;
 	}
 	}
 
@@ -565,11 +569,6 @@ read_photo (const char* fname)
 		p->palette[i + 128][0] = octree64[i].sum_r / octree64[i].count;
 		p->palette[i + 128][1] = octree64[i].sum_g / octree64[i].count;
 		p->palette[i + 128][2] = octree64[i].sum_b / octree64[i].count;
-		for (j = 0; j < p->hdr.width * p->hdr.height; j++) {
-			if (affiliation[j] == octree64[i].node_id + 4096) {
-				p->img[j] = i + 192;
-			}
-		}
 	}
 
 	/* All done.  Return success. */
