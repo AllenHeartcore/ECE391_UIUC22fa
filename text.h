@@ -39,7 +39,7 @@
 /* The default VGA text mode font is 8x16 pixels. */
 #define FONT_WIDTH   8
 #define FONT_HEIGHT 16
-#define VPAD 4					                    // vert padding
+#define VPAD 1					                    // vert padding
 #define BAR_HEIGHT (FONT_HEIGHT + VPAD * 2)         // 24
 #define BAR_SIZE (BAR_HEIGHT * IMAGE_X_DIM)         // 24 * 320
 #define BAR_PAGE_SIZE (BAR_HEIGHT * IMAGE_X_WIDTH)  // 24 * 80

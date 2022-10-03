@@ -71,6 +71,8 @@ extern uint32_t photo_height (const photo_t* p);
 /* Get width of room photo in pixels. */
 extern uint32_t photo_width (const photo_t* p);
 
+extern void fill_palette_optim (unsigned char* palette);
+
 /* 
  * Prepare room for display (record pointer for use by callbacks, set up
  * VGA palette, etc.). 

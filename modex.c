@@ -89,9 +89,9 @@ static unsigned short mode_X_seq[NUM_SEQUENCER_REGS] = {
 };
 static unsigned short mode_X_CRTC[NUM_CRTC_REGS] = {
 	0x5F00, 0x4F01, 0x5002, 0x8203, 0x5404, 0x8005, 0xBF06, 0x1F07,
-	0x0008, 0x0109, 0x000A, 0x000B, 0x120C, 0xC00D, 0x000E, 0x000F,
+	0x0008, 0x0109, 0x000A, 0x000B, 0x0E0C, 0x100D, 0x000E, 0x000F,
 	0x9C10, 0x8E11, 0x8F12, 0x2813, 0x0014, 0x9615, 0xB916, 0xE317,
-	0x6018	// StartAddr(0C,0D) = 24 * 200, LineCmp(09:6,07:4,18) = 176 * 2
+	0x6C18	// StartAddr(0C,0D) = 18 * 200, LineCmp(09:6,07:4,18) = 182 * 2
 };
 static unsigned char mode_X_attr[NUM_ATTR_REGS * 2] = {
 	0x00, 0x00, 0x01, 0x01, 0x02, 0x02, 0x03, 0x03,
@@ -873,6 +873,13 @@ fill_palette_mode_x ()
 
 	/* Write all 64 colors from array. */
 	REP_OUTSB (0x03C9, palette_RGB, 64 * 3);
+}
+
+
+// @@ CHECKPOINT 2: load optimized palette (callee)
+void fill_palette_optim (unsigned char* palette) {
+	OUTB (0x03C8, 0x40);					// starting at palette #64,
+	REP_OUTSB (0x03C9, palette, 192 * 3);	// write 192 RGB triplets
 }
 
 
