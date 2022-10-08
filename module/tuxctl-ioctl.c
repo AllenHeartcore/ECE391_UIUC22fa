@@ -29,6 +29,8 @@
 #define debug(str, ...) \
 	printk(KERN_DEBUG "%s: " str, __FUNCTION__, ## __VA_ARGS__)
 
+static uint8_t acknowledged = 1;
+static unsigned long* arg_store;
 unsigned char LEDS[16] = {0b11100111, 0b00000110, 0b11001011, 0b10001111,\
 						  0b00101110, 0b10101101, 0b11101101, 0b10100110,\
 						  0b11101111, 0b10101111, 0b11101110, 0b01101101,\
@@ -49,7 +51,18 @@ void tuxctl_handle_packet (struct tty_struct* tty, unsigned char* cmd)
     b = cmd[1]; /* values when printing them. */
     c = cmd[2];
 
-    /*printk("cmd : %x %x %x\n", a, b, c); */
+	switch (a) {
+	case MTCP_POLL_OK:
+		* arg_store = (b & 0x0F) \				// _ _ _ _ C B A S
+					| ((c & 0x09) << 4) \		// > _ _ ^ C B A S
+					| ((c & 0x02) << 6) \		// > < _ ^ C B A S
+					| ((c & 0x04) << 5);		// > < v ^ C B A S
+	case MTCP_ACK:								// ctrl flow continues
+		acknowledged = 1;						// "responded"
+		return;
+	default:
+		return -EINVAL;
+	}
 }
 
 /******** IMPORTANT NOTE: READ THIS BEFORE IMPLEMENTING THE IOCTLS ************
@@ -59,7 +72,7 @@ void tuxctl_handle_packet (struct tty_struct* tty, unsigned char* cmd)
  * 9600 BAUD. At this rate, a byte takes approximately 1 millisecond to       *
  * transmit; this means that there will be about 9 milliseconds between       *
  * the time you request that the low-level serial driver send the             *
- * 6-byte SET_LEDS cmd and the time the 3-byte ACK cmd finishes         *
+ * 6-byte SET_LEDS cmd and the time the 3-byte ACK cmd finishes               *
  * arriving. This is far too long a time for a system call to take. The       *
  * ioctls should return immediately with success if their parameters are      *
  * valid.                                                                     *
@@ -69,47 +82,35 @@ int
 tuxctl_ioctl (struct tty_struct* tty, struct file* file, 
 	      unsigned cmd, unsigned long arg)
 {
+	if (acknowledged == 0) return 0;			// overload protection
+	int put_result;
     switch (cmd) {
-	case TUX_INIT:
-		unsigned char cmd[1] = {MTCP_RESET_DEV};
-		if (tuxctl_ldisc_put(tty, cmd, 1) != 0) return -EINVAL;
-		unsigned char resp[3];
-		tuxctl_ldisc_get(tty, resp, 3);
-		if (resp[0] != MTCP_RESET) return -EINVAL;
-		return 0;
+	case TUX_INIT:		// turn on BIOC, set LED to user mode, turn off LEDs
+		unsigned char cmd[4] = {MTCP_BIOC_ON, MTCP_LED_USR, MTCP_LED_SET, 0};
+		put_result = tuxctl_ldisc_put(tty, cmd, 4);
+		break;
 	case TUX_BUTTONS:
-		if (arg == 0) return -EINVAL;
-		unsigned char cmd[1] = {MTCP_POLL};		// !! interrupt driven?
-		if (tuxctl_ldisc_put(tty, cmd, 1) != 0) return -EINVAL;
-		unsigned char resp[3];
-		tuxctl_ldisc_get(tty, resp, 3);
-		if (resp[0] != MTCP_POLL_OK) return -EINVAL;
-		return (resp[1] & 0x0F) \				// _ _ _ _ C B A S
-			| ((resp[2] & 0x09) << 4) \			// > _ _ ^ C B A S
-			| ((resp[2] & 0x02) << 6) \			// > < _ ^ C B A S
-			| ((resp[2] & 0x04) << 5);			// > < v ^ C B A S
-	case TUX_SET_LED:
-		unsigned char dps = (arg & 0x0F000000) >> 24;
-		unsigned char flag = (arg & 0x000F0000) >> 16;
-		unsigned char cmd[6] = {MTCP_LED_SET, flag, 0, 0, 0, 0};
-		int led, packet_ptr = 2;				// Example: (LED2 in the 2nd position)
-		for (led = 0; led < 4; led++) {			// cmd[3] = LEDS[(arg >> 8) & 0b1111]
-			if (flag & (1 << led)) {			// cmd[3] |= (dps & 0b0100) << 2
-				cmd[packet_ptr] = LEDS[(arg >> (led * 4)) & 0x0F];
-				cmd[packet_ptr] |= (dps & (1 << led)) << (4 - led);
-				packet_ptr++;
-			}
+		if (arg == 0) return -EINVAL;			// invalid ptr
+		arg_store = (unsigned long*) arg;		// forced cast to ptr
+		unsigned char cmd[1] = {MTCP_POLL};
+		put_result = tuxctl_ldisc_put(tty, cmd, 1);
+		break;
+	case TUX_SET_LED:							// const len packet
+		unsigned char cmd[6] = {MTCP_LED_SET, 0x0F, 0, 0, 0, 0};
+		int led;
+		for (led = 0; led < 4; led++) {
+			if (arg & (0x00010000 << led))		// if LED is on
+				cmd[led + 2] = LEDS[(arg >> (led * 4)) & 0x0F];
+			if (arg & (0x01000000 << led))		// if dp is on
+				cmd[led + 2] |= 0x10;
 		}
-		if (tuxctl_ldisc_put(tty, cmd, packet_ptr) != 0) return -EINVAL;
-		unsigned char resp[3];					// !! immediate return,
-		tuxctl_ldisc_get(tty, resp, 3);			//    or wait for response?
-		if (resp[0] != MTCP_LED_SET_OK) return -EINVAL;
-		return 0;
-	case TUX_LED_ACK:
-	case TUX_LED_REQUEST:
-	case TUX_READ_LED:
+		put_result = tuxctl_ldisc_put(tty, cmd, 6);
+		break;
 	default:
 	    return -EINVAL;
     }
+	if (put_result != 0) return -EINVAL;
+	acknowledged = 0;							// "not responded yet"
+	return 0;
 }
 
