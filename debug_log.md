@@ -19,3 +19,6 @@
 | DType | 20 mins | 60 mins | `covered` fails to mark lower half of image | Change `octree[i]->affiliates` to `uint32_t`<br>(OVERRIDEN by latter changes) |
 | Array | 10 mins | 30 mins | Misplaced image parts and<br>(more) accidential SegFaults | Turned to a unified `affiliation` array<br>to prevent excessive memory usage |
 | Array | 5 mins | 20 mins | Noisy image & rare colors | Record the `node_id` in each node<br>so that it preserves after sorting |
+| Tux | 5 mins | 20 mins | Polling buttons | Reserve a global `buttons` var;<br>Add handler for `MTCP_BIOC_EVENT` |
+| C90 | 2 mins | 30 mins | ISO C90 forbids mixed<br>declarations and code | Pack `case`s up as helper functions |
+| Tux | 3 mins | 50 mins | `EINVAL` when sending command | Compile and install the driver first |

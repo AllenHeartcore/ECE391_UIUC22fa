@@ -12,3 +12,12 @@
 
 #endif
 
+void tuxctl_handle_ack (void);
+void tuxctl_handle_bioc_event (unsigned resp1, unsigned resp2);
+void tuxctl_handle_reset (struct tty_struct* tty);
+void tuxctl_handle_packet (struct tty_struct* tty, unsigned char* cmd);
+int tuxctl_ioctl_init (struct tty_struct* tty);
+int tuxctl_ioctl_buttons (unsigned long* ptr);
+int tuxctl_ioctl_set_led (struct tty_struct* tty, unsigned long arg);
+int tuxctl_ioctl (struct tty_struct* tty, struct file* file, \
+                  unsigned cmd, unsigned long arg);

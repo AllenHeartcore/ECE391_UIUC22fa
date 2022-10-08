@@ -53,15 +53,17 @@
 #include <termio.h>
 #include <termios.h>
 #include <unistd.h>
+#include <sys/ioctl.h>
 
 #include "assert.h"
 #include "input.h"
+#include "module/tuxctl-ioctl.h"
 
 /* set to 1 and compile this file by itself to test functionality */
-#define TEST_INPUT_DRIVER 0
+#define TEST_INPUT_DRIVER 1
 
 /* set to 1 to use tux controller; otherwise, uses keyboard input */
-#define USE_TUX_CONTROLLER 0
+#define USE_TUX_CONTROLLER 1
 
 
 /* stores original terminal settings */
@@ -296,6 +298,8 @@ shutdown_input ()
 }
 
 
+static int fd;
+
 /*
  * display_time_on_tux
  *   DESCRIPTION: Show number of elapsed seconds as minutes:seconds
@@ -308,9 +312,12 @@ shutdown_input ()
 void
 display_time_on_tux (int num_seconds)
 {
-#if (USE_TUX_CONTROLLER != 0)
-#error "Tux controller code is not operational yet."
-#endif
+	int min, sec;
+	min = num_seconds / 60;
+	sec = num_seconds % 60;
+	min = (min / 10) * 16 + min % 10;	// convert to hex
+	sec = (sec / 10) * 16 + sec % 10;
+	ioctl(fd, TUX_SET_LED, 0x020F0000 | (min << 8) | sec);
 }
 
 
@@ -331,15 +338,24 @@ main ()
 	return 3;
 	}
 
-	init_input ();
-	while (1) {
-		while ((cmd = get_command ()) == last_cmd);
-	last_cmd = cmd;
-	printf ("command issued: %s\n", cmd_name[cmd]);
-	if (cmd == CMD_QUIT)
-		break;
-	display_time_on_tux (83);
+	fd = open("/dev/ttyS0", O_RDWR | O_NOCTTY);
+	if (fd == -1) perror("open_port: Unable to open /dev/ttyS0 - ");
+	else {
+		int ldisc_num = N_MOUSE;
+		ioctl(fd, TIOCSETD, &ldisc_num);
+		ioctl(fd, TUX_INIT, 0);					// init
 	}
+
+	init_input ();
+	display_time_on_tux (83);
+	// while (1) {
+	// 	while ((cmd = get_command ()) == last_cmd);
+	// last_cmd = cmd;
+	// printf ("command issued: %s\n", cmd_name[cmd]);
+	// if (cmd == CMD_QUIT)
+	// 	break;
+	// display_time_on_tux (83);
+	// }
 	shutdown_input ();
 	return 0;
 }

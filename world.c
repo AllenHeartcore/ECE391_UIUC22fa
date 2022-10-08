@@ -891,7 +891,6 @@ build_world ()
 
 	/* Set up the room. */
 		room[which].name = room_data[idx].name;
-	printf("Processing %s\n", room_data[idx].filename);
 	room[which].view = read_photo (room_data[idx].filename);
 	if (NULL == room[which].view) {
 		fprintf (stderr, "Can't read room photo %s.\n",
