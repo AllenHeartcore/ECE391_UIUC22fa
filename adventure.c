@@ -134,6 +134,7 @@ static const typed_cmd_t cmd_list[] = {
 /* local functions--see function headers for details */
 
 static void cancel_status_thread (void* ignore);
+static void cancel_tux_thread (void* ignore);
 static game_condition_t game_loop (void);
 static int32_t handle_typing (void);
 static void init_game (void);
@@ -143,6 +144,7 @@ static void move_photo_right (void);
 static void move_photo_up (void);
 static void redraw_room (void);
 static void* status_thread (void* ignore);
+static void* tux_thread (void* ignore);
 static int time_is_after (struct timeval* t1, struct timeval* t2);
 
 
@@ -166,6 +168,7 @@ static game_info_t game_info; /* game information */
  * condition variable msg_cv (while holding the msg_lock).
  */
 static pthread_t status_thread_id;
+static pthread_t tux_thread_id;
 static pthread_mutex_t msg_lock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t  msg_cv = PTHREAD_COND_INITIALIZER;
 static char status_msg[STATUS_MSG_LEN + 1] = {'\0'};
@@ -185,6 +188,11 @@ static void
 cancel_status_thread (void* ignore)
 {
 	(void)pthread_cancel (status_thread_id);
+}
+
+// @@ CHECKPOINT 2: Tux thread (cancel)
+static void cancel_tux_thread (void *ignore) {
+	(void)pthread_cancel (tux_thread_id);
 }
 
 
@@ -703,21 +711,27 @@ status_thread (void* ignore)
 	return NULL;
 }
 
-// @@ CHECKPOINT 2: Tux thread
+// @@ CHECKPOINT 2: Tux thread (body)
 static void* tux_thread (void* ignore) {
-	/* Initialize the Tux controller. */
-	tux_init ();
-
-	/* Loop forever, updating the Tux's LEDs. */
+	struct timespec ts;
 	while (1) {
-	/* Update the Tux's LEDs. */
-	tux_set_leds (leds);
-
-	/* Wait for 1/10 of a second. */
-	usleep (100000);
+		(void)pthread_mutex_lock (&msg_lock);
+		while ('\0' == status_msg[0]) {
+			pthread_cond_wait (&msg_cv, &msg_lock);
+		}
+		do {
+			clock_gettime (CLOCK_REALTIME, &ts);
+			if (500000000 <= ts.tv_nsec) {
+				ts.tv_sec += 2;
+				ts.tv_nsec -= 500000000;
+			} else {
+				ts.tv_sec += 1;
+				ts.tv_nsec += 500000000;
+			}
+		} while (ETIMEDOUT != pthread_cond_timedwait (&msg_cv, &msg_lock, &ts));
+		status_msg[0] = '\0';
+		(void)pthread_mutex_unlock (&msg_lock);
 	}
-
-	/* This code never executes--the thread should always be cancelled. */
 	return NULL;
 }
 
@@ -806,6 +820,12 @@ main ()
 	}
 	push_cleanup (cancel_status_thread, NULL); {
 
+	// @@ CHECKPOINT 2: Tux thread (create)
+	if (0 != pthread_create (&tux_thread_id, NULL, tux_thread, NULL)) {
+	PANIC ("failed to create tux thread");
+	}
+	push_cleanup (cancel_tux_thread, NULL); {
+
 	/* Start mode X. */
 	if (0 != set_mode_X (fill_horiz_buffer, fill_vert_buffer)) {
 		PANIC ("cannot initialize mode X");
@@ -821,6 +841,8 @@ main ()
 		game = game_loop ();
 
 		} pop_cleanup (1);
+
+	} pop_cleanup (1);
 
 	} pop_cleanup (1);
 

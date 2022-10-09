@@ -29,10 +29,10 @@
 #define debug(str, ...) \
 	printk(KERN_DEBUG "%s: " str, __FUNCTION__, ## __VA_ARGS__)
 
-static bool acknowledged = 1;
+static bool acknowledged = 1;								// overload protection
 static unsigned char buttons;
 static spinlock_t lock;										// for concurrent R/W
-static int irqsave;
+static int irqsaved;
 static unsigned char LEDs[4];
 const unsigned char LED_lookup[16] = {0xE7, 0x06, 0xCB, 0x8F, 0x2E, 0xAD, 0xED, 0xA6,\
 									  0xEF, 0xAF, 0xEE, 0x6D, 0xE1, 0x4F, 0xE9, 0xE8};
@@ -40,24 +40,21 @@ const unsigned char LED_lookup[16] = {0xE7, 0x06, 0xCB, 0x8F, 0x2E, 0xAD, 0xED, 
 /************************ Protocol Implementation *************************/
 // @@ CHECKPOINT 2: Tux "receiver"
 
-void tuxctl_handle_ack (void) {
+void tuxctl_handle_ack () {
 	acknowledged = 1;
 }
 
 void tuxctl_handle_bioc_event (unsigned resp1, unsigned resp2) {
-	spin_lock_irqsave(&lock, irqsave);
-	if (resp1 == 0x80 || resp2 == 0x80) {					// default case
+	spin_lock_irqsave(&lock, irqsaved);
+	if (resp1 == 0x8F && resp2 == 0x8F) {					// released if "8F 8F"
 		buttons = 0xFF;
-	} else {
-		buttons = (resp1 & 0x0F);							// _ _ _ _ C B A S
-		buttons |= ((resp2 & 0x09) << 4);					// > _ _ ^ C B A S
-		buttons |= ((resp2 & 0x02) << 5);					// > < _ ^ C B A S
-		buttons |= ((resp2 & 0x04) << 3);					// > < v ^ C B A S
+	} else if (resp1 != 0x80 || resp2 != 0x80) {			// pressed if not "80 80"
+		buttons = resp1 & 0x0F;								// _ _ _ _ C B A S
+		buttons |= (resp2 & 0x09) << 4;						// > _ _ ^ C B A S
+		buttons |= (resp2 & 0x02) << 5;						// > < _ ^ C B A S
+		buttons |= (resp2 & 0x04) << 3;						// > < v ^ C B A S
 	}
-	spin_unlock_irqrestore(&lock, irqsave);
-	if (resp1 != 0x80 || resp2 != 0x80) {
-		printk("Buttons: %x %x -> %x\n", resp1, resp2, buttons);
-	}
+	spin_unlock_irqrestore(&lock, irqsaved);				// retain otherwise
 }
 
 void tuxctl_handle_reset (struct tty_struct* tty) {
@@ -81,14 +78,10 @@ void tuxctl_handle_packet (struct tty_struct* tty, unsigned char* cmd)
     b = cmd[1]; /* values when printing them. */
     c = cmd[2];
 	switch (a) {											// some kind of dispatcher
-	case MTCP_ACK:
-		tuxctl_handle_ack();
-	case MTCP_BIOC_EVENT:
-		tuxctl_handle_bioc_event(b, c);
-	case MTCP_RESET:
-		tuxctl_handle_reset(tty);	
-	default:
-		return;
+	case MTCP_ACK:			tuxctl_handle_ack();
+	case MTCP_BIOC_EVENT:	tuxctl_handle_bioc_event(b, c);
+	case MTCP_RESET:		tuxctl_handle_reset(tty);	
+	default:				return;
 	}
 }
 
@@ -109,15 +102,17 @@ void tuxctl_handle_packet (struct tty_struct* tty, unsigned char* cmd)
 
 int tuxctl_ioctl_init (struct tty_struct* tty) {
 	unsigned char cmd[4] = {MTCP_BIOC_ON, MTCP_LED_USR, MTCP_LED_SET, 0};
-	if (!acknowledged) return 0;							// overload protection
-	tuxctl_ldisc_put(tty, cmd, 4);
-	acknowledged = 0;										// "no response yet"
+	if (!acknowledged) return 0;							// turn on BIOC + ...
+	tuxctl_ldisc_put(tty, cmd, 4);							// set LEDs to user mode + ...
+	acknowledged = 0;										// turn off LEDs
 	return 0;
 }
 
 int tuxctl_ioctl_buttons (unsigned long* ptr) {
 	if (!ptr) return -EINVAL;								// invalid ptr
+	spin_lock_irqsave(&lock, irqsaved);
 	*ptr = (unsigned long) buttons;							// copy to user
+	spin_unlock_irqrestore(&lock, irqsaved);
 	return 0;
 }
 
@@ -140,13 +135,9 @@ int tuxctl_ioctl_set_led (struct tty_struct* tty, unsigned long arg) {
 int tuxctl_ioctl (struct tty_struct* tty, struct file* file, 
 	      unsigned cmd, unsigned long arg) {
 	switch (cmd) {
-	case TUX_INIT:				// turn on BIOC + set LED to user mode + turn off LEDs
-		return tuxctl_ioctl_init(tty);
-	case TUX_BUTTONS:
-		return tuxctl_ioctl_buttons((unsigned long*) arg);
-	case TUX_SET_LED:
-		return tuxctl_ioctl_set_led(tty, arg);
-	default:
-	    return -EINVAL;
+	case TUX_INIT:			return tuxctl_ioctl_init(tty);
+	case TUX_BUTTONS:		return tuxctl_ioctl_buttons((unsigned long*) arg);
+	case TUX_SET_LED:		return tuxctl_ioctl_set_led(tty, arg);
+	default:				return -EINVAL;
     }
 }

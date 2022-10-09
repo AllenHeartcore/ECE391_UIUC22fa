@@ -16,6 +16,7 @@
 | Tux | 3 mins | 50 mins | `EINVAL` when sending command | Compile and install the driver first |
 | Tux | 3 mins | 90 mins | Receive no response packet | Add an infinite loop in the test |
 | Tux | 5 mins | 60 mins | Erroneous button mapping | `BIOC_EVENT` returns `80 80` when idle!<br>Map this case to `FF` by default |
+| Tux | 5 mins | 40 mins | Button status no available to user | Retain button status if `BIOC_EVENT`<br>sends `80 80` to avoid transient signals |
 | **CKPT 2-2** |
 | GCC | 2 mins | 50 mins | "Deref. ptr to incomplete type"<br>when quoting from `modex.c` | Define `fill_palette_optim` non-`static`ly,<br>`extern` it in `photo.h`, and call it in `photo.c` |
 | Array | 5 mins | 15 mins | Faulty `octree` index | Wrap an extra parenthesis around<br>`(pixel >> 11) & 0x1F` before `<< 1` |

@@ -88,6 +88,7 @@ int
 init_input ()
 {
 	struct termios tio_new;
+	int ldisc_num = N_MOUSE;
 
 	/*
 	 * Set non-blocking mode so that stdin can be read without blocking
@@ -118,6 +119,14 @@ init_input ()
 	if (tcsetattr (fileno (stdin), TCSANOW, &tio_new) != 0) {
 	perror ("tcsetattr to set stdin terminal settings");
 	return -1;
+	}
+
+	// @@ CHECKPOINT 2: Tux thread (init)
+	fd = open("/dev/ttyS0", O_RDWR | O_NOCTTY);
+	if (fd == -1) perror("open_port: Unable to open /dev/ttyS0 - ");
+	else {
+		ioctl(fd, TIOCSETD, &ldisc_num);
+		ioctl(fd, TUX_INIT, 0);
 	}
 
 	/* Return success. */
@@ -300,17 +309,7 @@ shutdown_input ()
 }
 
 
-// @@ CHECKPOINT 2: Tux input support
-
-void tux_init () {
-	int ldisc_num = N_MOUSE;
-	fd = open("/dev/ttyS0", O_RDWR | O_NOCTTY);
-	if (fd == -1) perror("open_port: Unable to open /dev/ttyS0 - ");
-	else {
-		ioctl(fd, TIOCSETD, &ldisc_num);
-		ioctl(fd, TUX_INIT, 0);
-	}
-}
+// @@ CHECKPOINT 2: Tux thread (helpers)
 
 cmd_t get_command_from_tux () {
 	int buttons;
@@ -367,14 +366,17 @@ main ()
 	init_input ();
 	start_time = clock ();
 	while (1) {
-		// while ((cmd = get_command ()) == last_cmd);
-		// last_cmd = cmd;
-		// printf ("command issued: %s\n", cmd_name[cmd]);
-		// if (cmd == CMD_QUIT)
-		// 	break;
+#if (USE_TUX_CONTROLLER == 0)
+		while ((cmd = get_command ()) == last_cmd);
+		last_cmd = cmd;
+		printf ("command issued: %s\n", cmd_name[cmd]);
+		if (cmd == CMD_QUIT)
+			break;
+#else
 		display_time_on_tux ((clock () - start_time) / CLOCKS_PER_SEC * 3);
-		// cmd = get_command_from_tux ();
-		// printf("command issued: %s\n", cmd_name[cmd]);
+		cmd = get_command_from_tux ();
+		printf("command issued: %s\n", cmd_name[cmd]);
+#endif
 	}
 	shutdown_input ();
 	return 0;
