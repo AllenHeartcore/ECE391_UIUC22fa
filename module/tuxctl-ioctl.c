@@ -40,21 +40,19 @@ const unsigned char LED_lookup[16] = {0xE7, 0x06, 0xCB, 0x8F, 0x2E, 0xAD, 0xED, 
 /************************ Protocol Implementation *************************/
 // @@ CHECKPOINT 2: Tux "receiver"
 
-void tuxctl_handle_ack () {
+void tuxctl_handle_ack (void) {
 	acknowledged = 1;
 }
 
 void tuxctl_handle_bioc_event (unsigned resp1, unsigned resp2) {
-	spin_lock_irqsave(&lock, irqsaved);
-	if (resp1 == 0x8F && resp2 == 0x8F) {					// released if "8F 8F"
-		buttons = 0xFF;
-	} else if (resp1 != 0x80 || resp2 != 0x80) {			// pressed if not "80 80"
+	if (resp1 != 0x80 || resp2 != 0x80) {					// valid if not "80 80"
+		spin_lock_irqsave(&lock, irqsaved);
 		buttons = resp1 & 0x0F;								// _ _ _ _ C B A S
 		buttons |= (resp2 & 0x09) << 4;						// > _ _ ^ C B A S
 		buttons |= (resp2 & 0x02) << 5;						// > < _ ^ C B A S
 		buttons |= (resp2 & 0x04) << 3;						// > < v ^ C B A S
+		spin_unlock_irqrestore(&lock, irqsaved);
 	}
-	spin_unlock_irqrestore(&lock, irqsaved);				// retain otherwise
 }
 
 void tuxctl_handle_reset (struct tty_struct* tty) {
@@ -105,6 +103,8 @@ int tuxctl_ioctl_init (struct tty_struct* tty) {
 	if (!acknowledged) return 0;							// turn on BIOC + ...
 	tuxctl_ldisc_put(tty, cmd, 4);							// set LEDs to user mode + ...
 	acknowledged = 0;										// turn off LEDs
+	buttons = 0xFF;
+	lock = SPIN_LOCK_UNLOCKED;
 	return 0;
 }
 

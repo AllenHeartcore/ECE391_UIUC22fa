@@ -61,10 +61,10 @@
 #include "module/tuxctl-ioctl.h"
 
 /* set to 1 and compile this file by itself to test functionality */
-#define TEST_INPUT_DRIVER 1
+#define TEST_INPUT_DRIVER 0
 
 /* set to 1 to use tux controller; otherwise, uses keyboard input */
-#define USE_TUX_CONTROLLER 1
+#define USE_TUX_CONTROLLER 0
 
 
 /* stores original terminal settings */
@@ -88,7 +88,6 @@ int
 init_input ()
 {
 	struct termios tio_new;
-	int ldisc_num = N_MOUSE;
 
 	/*
 	 * Set non-blocking mode so that stdin can be read without blocking
@@ -121,13 +120,7 @@ init_input ()
 	return -1;
 	}
 
-	// @@ CHECKPOINT 2: Tux thread (init)
-	fd = open("/dev/ttyS0", O_RDWR | O_NOCTTY);
-	if (fd == -1) perror("open_port: Unable to open /dev/ttyS0 - ");
-	else {
-		ioctl(fd, TIOCSETD, &ldisc_num);
-		ioctl(fd, TUX_INIT, 0);
-	}
+	init_tux ();
 
 	/* Return success. */
 	return 0;
@@ -309,7 +302,17 @@ shutdown_input ()
 }
 
 
-// @@ CHECKPOINT 2: Tux thread (helpers)
+// @@ CHECKPOINT 2: Tux I/O (helpers)
+
+void init_tux () {
+	int ldisc_num = N_MOUSE;
+	fd = open("/dev/ttyS0", O_RDWR | O_NOCTTY);
+	if (fd == -1) perror("open_port: Unable to open /dev/ttyS0 - ");
+	else {
+		ioctl(fd, TIOCSETD, &ldisc_num);
+		ioctl(fd, TUX_INIT, 0);
+	}
+}
 
 cmd_t get_command_from_tux () {
 	int buttons;
@@ -373,9 +376,8 @@ main ()
 		if (cmd == CMD_QUIT)
 			break;
 #else
-		display_time_on_tux ((clock () - start_time) / CLOCKS_PER_SEC * 3);
+		// display_time_on_tux ((clock () - start_time) / CLOCKS_PER_SEC);
 		cmd = get_command_from_tux ();
-		printf("command issued: %s\n", cmd_name[cmd]);
 #endif
 	}
 	shutdown_input ();
