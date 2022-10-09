@@ -703,6 +703,24 @@ status_thread (void* ignore)
 	return NULL;
 }
 
+// @@ CHECKPOINT 2: Tux thread
+static void* tux_thread (void* ignore) {
+	/* Initialize the Tux controller. */
+	tux_init ();
+
+	/* Loop forever, updating the Tux's LEDs. */
+	while (1) {
+	/* Update the Tux's LEDs. */
+	tux_set_leds (leds);
+
+	/* Wait for 1/10 of a second. */
+	usleep (100000);
+	}
+
+	/* This code never executes--the thread should always be cancelled. */
+	return NULL;
+}
+
 
 /*
  * time_is_after

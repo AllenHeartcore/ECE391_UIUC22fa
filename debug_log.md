@@ -10,6 +10,12 @@
 | Msg | 1 min | 30 mins | "Deref. ptr to incomplete type"<br>when reading room name | Turn from `game_info.where->name`<br>to `room_name(game_info.where)` |
 | Sync | 5 mins | 45 mins | Ignored status message | Turn from `show_status(status_msg)`<br>to `show_bar(status_msg)` (oh man)<br>Also, add locks before & after the read |
 | GCC | 2 mins | 2 mins | "Discards qualifiers from ptr" | Add `const` before user-defined `char`s |
+| **CKPT 2-1** |
+| Tux | 5 mins | 20 mins | Polling buttons | Reserve a global `buttons` var;<br>Add handler for `MTCP_BIOC_EVENT` |
+| C90 | 2 mins | 30 mins | ISO C90 forbids mixed<br>declarations and code | Pack `case`s up as helper functions |
+| Tux | 3 mins | 50 mins | `EINVAL` when sending command | Compile and install the driver first |
+| Tux | 3 mins | 90 mins | Receive no response packet | Add an infinite loop in the test |
+| Tux | 5 mins | 60 mins | Erroneous button mapping | `BIOC_EVENT` returns `80 80` when idle!<br>Map this case to `FF` by default |
 | **CKPT 2-2** |
 | GCC | 2 mins | 50 mins | "Deref. ptr to incomplete type"<br>when quoting from `modex.c` | Define `fill_palette_optim` non-`static`ly,<br>`extern` it in `photo.h`, and call it in `photo.c` |
 | Array | 5 mins | 15 mins | Faulty `octree` index | Wrap an extra parenthesis around<br>`(pixel >> 11) & 0x1F` before `<< 1` |
@@ -19,6 +25,3 @@
 | DType | 20 mins | 60 mins | `covered` fails to mark lower half of image | Change `octree[i]->affiliates` to `uint32_t`<br>(OVERRIDEN by latter changes) |
 | Array | 10 mins | 30 mins | Misplaced image parts and<br>(more) accidential SegFaults | Turned to a unified `affiliation` array<br>to prevent excessive memory usage |
 | Array | 5 mins | 20 mins | Noisy image & rare colors | Record the `node_id` in each node<br>so that it preserves after sorting |
-| Tux | 5 mins | 20 mins | Polling buttons | Reserve a global `buttons` var;<br>Add handler for `MTCP_BIOC_EVENT` |
-| C90 | 2 mins | 30 mins | ISO C90 forbids mixed<br>declarations and code | Pack `case`s up as helper functions |
-| Tux | 3 mins | 50 mins | `EINVAL` when sending command | Compile and install the driver first |

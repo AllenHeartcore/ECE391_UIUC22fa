@@ -50,10 +50,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/io.h>
+#include <sys/ioctl.h>
 #include <termio.h>
 #include <termios.h>
+#include <time.h>
 #include <unistd.h>
-#include <sys/ioctl.h>
 
 #include "assert.h"
 #include "input.h"
@@ -68,6 +69,7 @@
 
 /* stores original terminal settings */
 static struct termios tio_orig;
+static int fd;
 
 
 /*
@@ -264,11 +266,11 @@ get_command ()
 	}
 #else /* USE_TUX_CONTROLLER */
 	/* Tux controller mode; still need to support typed commands. */
-	if (valid_typing (ch)) {
-		typed_a_char (ch);
-	} else if (10 == ch || 13 == ch) {
-		pushed = CMD_TYPED;
-	}
+		if (valid_typing (ch)) {
+			typed_a_char (ch);
+		} else if (10 == ch || 13 == ch) {
+			pushed = CMD_TYPED;
+		}
 #endif /* USE_TUX_CONTROLLER */
 	}
 
@@ -298,7 +300,32 @@ shutdown_input ()
 }
 
 
-static int fd;
+// @@ CHECKPOINT 2: Tux input support
+
+void tux_init () {
+	int ldisc_num = N_MOUSE;
+	fd = open("/dev/ttyS0", O_RDWR | O_NOCTTY);
+	if (fd == -1) perror("open_port: Unable to open /dev/ttyS0 - ");
+	else {
+		ioctl(fd, TIOCSETD, &ldisc_num);
+		ioctl(fd, TUX_INIT, 0);
+	}
+}
+
+cmd_t get_command_from_tux () {
+	int buttons;
+	ioctl(fd, TUX_BUTTONS, &buttons);			// > < v ^ C B A S
+	switch (buttons) {							// active low
+		case 0xFD: return CMD_MOVE_LEFT;
+		case 0xFB: return CMD_ENTER;
+		case 0xF7: return CMD_MOVE_RIGHT;
+		case 0xEF: return CMD_UP;
+		case 0xDF: return CMD_DOWN;
+		case 0xBF: return CMD_LEFT;
+		case 0x7F: return CMD_RIGHT;
+		default: return CMD_NONE;
+	}
+}
 
 /*
  * display_time_on_tux
@@ -309,15 +336,13 @@ static int fd;
  *   RETURN VALUE: none
  *   SIDE EFFECTS: changes state of controller's display
  */
-void
-display_time_on_tux (int num_seconds)
-{
+void display_time_on_tux (int num_seconds) {
 	int min, sec;
 	min = num_seconds / 60;
 	sec = num_seconds % 60;
-	min = (min / 10) * 16 + min % 10;	// convert to hex
+	min = (min / 10) * 16 + min % 10;			// convert to hex
 	sec = (sec / 10) * 16 + sec % 10;
-	ioctl(fd, TUX_SET_LED, 0x020F0000 | (min << 8) | sec);
+	ioctl(fd, TUX_SET_LED, 0x040F0000 | (min << 8) | sec);
 }
 
 
@@ -327,6 +352,7 @@ main ()
 {
 	cmd_t last_cmd = CMD_NONE;
 	cmd_t cmd;
+	time_t start_time;
 	static const char* const cmd_name[NUM_COMMANDS] = {
 		"none", "right", "left", "up", "down",
 	"move left", "enter", "move right", "typed command", "quit"
@@ -338,24 +364,18 @@ main ()
 	return 3;
 	}
 
-	fd = open("/dev/ttyS0", O_RDWR | O_NOCTTY);
-	if (fd == -1) perror("open_port: Unable to open /dev/ttyS0 - ");
-	else {
-		int ldisc_num = N_MOUSE;
-		ioctl(fd, TIOCSETD, &ldisc_num);
-		ioctl(fd, TUX_INIT, 0);					// init
-	}
-
 	init_input ();
-	display_time_on_tux (83);
-	// while (1) {
-	// 	while ((cmd = get_command ()) == last_cmd);
-	// last_cmd = cmd;
-	// printf ("command issued: %s\n", cmd_name[cmd]);
-	// if (cmd == CMD_QUIT)
-	// 	break;
-	// display_time_on_tux (83);
-	// }
+	start_time = clock ();
+	while (1) {
+		// while ((cmd = get_command ()) == last_cmd);
+		// last_cmd = cmd;
+		// printf ("command issued: %s\n", cmd_name[cmd]);
+		// if (cmd == CMD_QUIT)
+		// 	break;
+		display_time_on_tux ((clock () - start_time) / CLOCKS_PER_SEC * 3);
+		// cmd = get_command_from_tux ();
+		// printf("command issued: %s\n", cmd_name[cmd]);
+	}
 	shutdown_input ();
 	return 0;
 }

@@ -31,9 +31,11 @@
 
 static bool acknowledged = 1;
 static unsigned char buttons;
+static spinlock_t lock;										// for concurrent R/W
+static int irqsave;
 static unsigned char LEDs[4];
-unsigned char LED_lookup[16] = {0xE7, 0x06, 0xCB, 0x8F, 0x2E, 0xAD, 0xED, 0xA6,\
-								0xEF, 0xAF, 0xEE, 0x6D, 0xE1, 0x4F, 0xE9, 0xE8};
+const unsigned char LED_lookup[16] = {0xE7, 0x06, 0xCB, 0x8F, 0x2E, 0xAD, 0xED, 0xA6,\
+									  0xEF, 0xAF, 0xEE, 0x6D, 0xE1, 0x4F, 0xE9, 0xE8};
 
 /************************ Protocol Implementation *************************/
 // @@ CHECKPOINT 2: Tux "receiver"
@@ -43,10 +45,19 @@ void tuxctl_handle_ack (void) {
 }
 
 void tuxctl_handle_bioc_event (unsigned resp1, unsigned resp2) {
-	buttons = (resp1 & 0x0F);								// _ _ _ _ C B A S
-	buttons |= ((resp2 & 0x09) << 4);						// > _ _ ^ C B A S
-	buttons |= ((resp2 & 0x02) << 6);						// > < _ ^ C B A S
-	buttons |= ((resp2 & 0x04) << 5);						// > < v ^ C B A S
+	spin_lock_irqsave(&lock, irqsave);
+	if (resp1 == 0x80 || resp2 == 0x80) {					// default case
+		buttons = 0xFF;
+	} else {
+		buttons = (resp1 & 0x0F);							// _ _ _ _ C B A S
+		buttons |= ((resp2 & 0x09) << 4);					// > _ _ ^ C B A S
+		buttons |= ((resp2 & 0x02) << 5);					// > < _ ^ C B A S
+		buttons |= ((resp2 & 0x04) << 3);					// > < v ^ C B A S
+	}
+	spin_unlock_irqrestore(&lock, irqsave);
+	if (resp1 != 0x80 || resp2 != 0x80) {
+		printk("Buttons: %x %x -> %x\n", resp1, resp2, buttons);
+	}
 }
 
 void tuxctl_handle_reset (struct tty_struct* tty) {
@@ -69,7 +80,6 @@ void tuxctl_handle_packet (struct tty_struct* tty, unsigned char* cmd)
     a = cmd[0]; /* Avoid printk() sign extending the 8-bit */
     b = cmd[1]; /* values when printing them. */
     c = cmd[2];
-	printk("Handle packet\n");
 	switch (a) {											// some kind of dispatcher
 	case MTCP_ACK:
 		tuxctl_handle_ack();
@@ -120,7 +130,6 @@ int tuxctl_ioctl_set_led (struct tty_struct* tty, unsigned long arg) {
 		if (arg & (0x01000000 << LED))						// if dp is on
 			cmd[LED + 2] |= 0x10;
 		LEDs[LED] = cmd[LED + 2];
-		printk("LED %d: %02X\n", LED, cmd[LED + 2]);
 	}
 	if (!acknowledged) return 0;							// ignore, instead of...
 	tuxctl_ldisc_put(tty, cmd, 6);							// returning -EINVAL, if...
@@ -136,7 +145,6 @@ int tuxctl_ioctl (struct tty_struct* tty, struct file* file,
 	case TUX_BUTTONS:
 		return tuxctl_ioctl_buttons((unsigned long*) arg);
 	case TUX_SET_LED:
-    	printk("Set LED to %X\n", arg);
 		return tuxctl_ioctl_set_led(tty, arg);
 	default:
 	    return -EINVAL;
