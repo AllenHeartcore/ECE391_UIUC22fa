@@ -354,6 +354,7 @@ main ()
 {
 	cmd_t last_cmd = CMD_NONE;
 	cmd_t cmd;
+	int i = 0;
 	time_t start_time;
 	static const char* const cmd_name[NUM_COMMANDS] = {
 		"none", "right", "left", "up", "down",
@@ -376,8 +377,27 @@ main ()
 		if (cmd == CMD_QUIT)
 			break;
 #else
+		// cmd = get_command_from_tux ();
+		// if (cmd_name[cmd][0] != 'n') printf("%s\n", cmd_name[cmd]);
+
+		// display_time_on_tux(114);
+		// sleep(1);
+		// display_time_on_tux(514);
+		// sleep(1);
+		// display_time_on_tux(1919);
+		// sleep(1);
+		// display_time_on_tux(810);
+		// sleep(1);
+		// display_time_on_tux(889);
+		// sleep(1);
+		// display_time_on_tux(464);
+		// sleep(1);
+
 		// display_time_on_tux ((clock () - start_time) / CLOCKS_PER_SEC);
-		cmd = get_command_from_tux ();
+		// ioctl(fd, TUX_SET_LED, 0x040F0000 | i++);
+		// sleep(.5);
+		display_time_on_tux(i++);
+		sleep(.5);
 #endif
 	}
 	shutdown_input ();

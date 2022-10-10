@@ -17,13 +17,15 @@
 | Tux | 3 mins | 90 mins | Receive no response packet | Add an infinite loop in the test |
 | Tux | 5 mins | 60 mins | Erroneous button mapping | `BIOC_EVENT` returns `80 80` when idle!<br>Map this case to `FF` by default |
 | Tux | 5 mins | 40 mins | Button status no available to user | Retain button status if `BIOC_EVENT`<br>sends `80 80` to avoid transient signals |
-| Tux | 3 mins | 20 mins | Clock advances per 3 seconds | |
+| Tux | 3 mins | ------ | Clock advances per 3 seconds | **UNRESOLVED** |
+| Tux | 10 mins | ------ | Buttons not in sync with ticks | **UNRESOLVED** |
+| Tux | 5 mins | ------ | SegFault when cannot go<br>a certain way in Tux | **UNRESOLVED** |
 | **CKPT 2-2** |
 | GCC | 2 mins | 50 mins | "Deref. ptr to incomplete type"<br>when quoting from `modex.c` | Define `fill_palette_optim` non-`static`ly,<br>`extern` it in `photo.h`, and call it in `photo.c` |
 | Array | 5 mins | 15 mins | Faulty `octree` index | Wrap an extra parenthesis around<br>`(pixel >> 11) & 0x1F` before `<< 1` |
 | Mem | 5 mins | 15 mins | Cannot access original image data<br>in the second go | Add an extra `img_raw` array for storage<br>since the file pointer cannot move backwards |
 | DType | 5 mins | 20 mins | An infinite loop when initializing<br>`covered` of size 387 * 290 = 112,230 | Change the iterator to type `uint32_t`<br>(`uint16_t` worked for 320 * 200. Tricky!) |
 | Mem | 2 mins | 10 mins | SegFault when processing more images<br>(`malloc` failed at later stages) | `free` the index recorders before returning<br>(DO NOT free non-`malloc`ed arrays!!!) |
-| DType | 20 mins | 60 mins | `covered` fails to mark lower half of image | Change `octree[i]->affiliates` to `uint32_t`<br>(OVERRIDEN by latter changes) |
+| DType | 20 mins | 60 mins | `covered` fails to mark<br>lower half of image | Change `octree[i]->affiliates` to `uint32_t`<br>(OVERRIDEN by latter changes) |
 | Array | 10 mins | 30 mins | Misplaced image parts and<br>(more) accidential SegFaults | Turned to a unified `affiliation` array<br>to prevent excessive memory usage |
 | Array | 5 mins | 20 mins | Noisy image & rare colors | Record the `node_id` in each node<br>so that it preserves after sorting |

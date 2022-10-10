@@ -169,13 +169,15 @@ static game_info_t game_info; /* game information */
  */
 
 static int32_t enter_room;				// (made global) player has changed room
-static int new_tick = 0;				// one tux cmd per tick
+static cmd_t tux_cmd;
+static int new_tick = 0, buttons_pressed = 0;	// one tux cmd per tick
 
 static pthread_t status_thread_id;
 static pthread_t tux_thread_id;
-static pthread_mutex_t cmd_lock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t msg_lock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t cmd_lock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t  msg_cv = PTHREAD_COND_INITIALIZER;
+static pthread_cond_t  cmd_cv = PTHREAD_COND_INITIALIZER;
 static char status_msg[STATUS_MSG_LEN + 1] = {'\0'};
 static char default_msg[STATUS_MSG_LEN + 1] = {'\0'};
 
@@ -326,7 +328,13 @@ game_loop ()
 	 * to be redrawn.
 	 */
 
+	tux_cmd = get_command_from_tux ();
+	if (tux_cmd == CMD_NONE) buttons_pressed = 0;			// sync
+	else buttons_pressed = 1;
+
 	pthread_mutex_lock(&cmd_lock);
+	if (buttons_pressed)
+		pthread_cond_signal (&cmd_cv);
 	cmd = get_command ();
 	switch (cmd) {
 		case CMD_UP:    move_photo_down ();  break;
@@ -721,13 +729,12 @@ status_thread (void* ignore)
 
 // @@ CHECKPOINT 2: Tux thread (body)
 static void* tux_thread (void* ignore) {
-	cmd_t cmd;
 	while (1) {
-		cmd = get_command_from_tux ();
 		if (new_tick) {
-			printf("Enter\n");
 			pthread_mutex_lock (&cmd_lock);
-			switch (cmd) {
+			// while (!buttons_pressed)
+			// 	pthread_cond_wait (&cmd_cv, &cmd_lock);
+			switch (tux_cmd) {
 				case CMD_UP:    move_photo_down ();  break;
 				case CMD_DOWN:  move_photo_up ();    break;
 				case CMD_LEFT:  move_photo_right (); break;
@@ -743,8 +750,8 @@ static void* tux_thread (void* ignore) {
 					break;
 				default: break;
 			}
-			pthread_mutex_unlock (&cmd_lock);
 			new_tick = 0;
+			pthread_mutex_unlock (&cmd_lock);
 		}
 	}
 	return NULL;
