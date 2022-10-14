@@ -95,6 +95,13 @@ void entry(unsigned long magic, unsigned long addr) {
 					(unsigned)mmap->length_low);
 	}
 
+	// Put segment addrs and sizes into GDT entries {
+	SET_LDT_PARAMS(gdt_ptr, &kcs, kcs_size);
+	SET_LDT_PARAMS(*(&gdt_ptr + 1), &kds, kds_size);
+	SET_LDT_PARAMS(*(&gdt_ptr + 2), &ucs, ucs_size);
+	SET_LDT_PARAMS(*(&gdt_ptr + 3), &uds, uds_size);
+	// Put segment addrs and sizes into GDT entries }
+
 	/* Construct an LDT entry in the GDT */
 	{
 		seg_desc_t the_ldt_desc;
