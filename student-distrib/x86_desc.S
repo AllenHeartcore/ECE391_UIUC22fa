@@ -6,8 +6,6 @@
 
 .text
 
-.globl kcs, kds, ucs, uds
-.globl kcs_size, kds_size, ucs_size, uds_size
 .globl ldt_size, tss_size
 .globl gdt_desc, ldt_desc, tss_desc
 .globl tss, tss_desc_ptr, ldt, ldt_desc_ptr
@@ -15,17 +13,6 @@
 .globl idt_desc_ptr, idt
 
 .align 4
-
-# Segment sizes {
-kcs_size:
-	.long kcs_bottom - kcs - 1
-kds_size:
-	.long kds_bottom - kds - 1
-ucs_size:
-	.long ucs_bottom - ucs - 1
-uds_size:
-	.long uds_bottom - uds - 1
-# Segment sizes }
 
 tss_size:
 	.long tss_bottom - tss - 1
@@ -102,45 +89,6 @@ ldt_desc_ptr:
 	.quad 0
 
 gdt_bottom:
-
-# Alloc space for segments {
-
-	.align 16
-kcs:
-	.rept 256
-	.long 0
-	.endr
-kcs_bottom:
-
-	.align 16
-kds:
-	.rept 256
-	.long 0
-	.endr
-kds_bottom:
-
-	.align 16
-ucs:
-	.rept 256
-	.long 0
-	.endr
-ucs_bottom:
-
-	.align 16
-uds:
-	.rept 256
-	.long 0
-	.endr
-uds_bottom:
-
-	.align 16
-ldt:
-	.rept 4
-	.quad 0
-	.endr
-ldt_bottom:
-
-# Alloc space for segments }
 
 .align 4
 	.word 0 # Padding

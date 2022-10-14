@@ -124,11 +124,6 @@ extern uint32_t tss_size;
 extern seg_desc_t tss_desc_ptr;
 extern tss_t tss;
 
-// Claim segment addrs and sizes {
-extern uint32_t kcs, kds, ucs, uds;
-extern uint32_t kcs_size, kds_size, ucs_size, uds_size;
-// Claim segment addrs and sizes }
-
 /* Sets runtime-settable parameters in the GDT entry for the LDT */
 #define SET_LDT_PARAMS(str, addr, lim)                          \
 do {                                                            \

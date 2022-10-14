@@ -95,13 +95,6 @@ void entry(unsigned long magic, unsigned long addr) {
 					(unsigned)mmap->length_low);
 	}
 
-	// Put segment addrs and sizes into GDT entries {
-	SET_LDT_PARAMS(gdt_ptr, &kcs, kcs_size);
-	SET_LDT_PARAMS(*(&gdt_ptr + 1), &kds, kds_size);
-	SET_LDT_PARAMS(*(&gdt_ptr + 2), &ucs, ucs_size);
-	SET_LDT_PARAMS(*(&gdt_ptr + 3), &uds, uds_size);
-	// Put segment addrs and sizes into GDT entries }
-
 	/* Construct an LDT entry in the GDT */
 	{
 		seg_desc_t the_ldt_desc;
@@ -142,6 +135,18 @@ void entry(unsigned long magic, unsigned long addr) {
 		tss.esp0 = 0x800000;
 		ltr(KERNEL_TSS);
 	}
+
+	// Populate IDT entries {
+	{
+		idt_desc_t div_error;
+		div_error.present = 1;
+		div_error.size = 1;
+		div_error.dpl = 0;
+		div_error.seg_selector = KERNEL_CS;
+		div_error.offset_31_16 = (unsigned int) div_error_handler >> 16;
+		div_error.offset_15_00 = (unsigned int) div_error_handler & 0xFFFF;
+	}
+	// Populate IDT entries }
 
 	/* Init the PIC */
 	i8259_init();
