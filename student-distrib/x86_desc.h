@@ -124,11 +124,6 @@ extern uint32_t tss_size;
 extern seg_desc_t tss_desc_ptr;
 extern tss_t tss;
 
-// Claim segment addrs and sizes {
-extern uint32_t kcs, kds, ucs, uds;
-extern uint32_t kcs_size, kds_size, ucs_size, uds_size;
-// Claim segment addrs and sizes }
-
 /* Sets runtime-settable parameters in the GDT entry for the LDT */
 #define SET_LDT_PARAMS(str, addr, lim)                          \
 do {                                                            \
@@ -173,10 +168,12 @@ extern idt_desc_t idt[NUM_VEC];
 extern x86_desc_t idt_desc_ptr;
 
 /* Sets runtime parameters for an IDT entry */
-#define SET_IDT_ENTRY(str, handler)                              \
+#define SET_IDT_ENTRY(str, handler, dpl)                         \
 do {                                                             \
 	str.offset_31_16 = ((uint32_t)(handler) & 0xFFFF0000) >> 16; \
 	str.offset_15_00 = ((uint32_t)(handler) & 0xFFFF);           \
+	str.seg_selector = dpl == 0 ? KERNEL_CS : USER_CS;           \
+	str.dpl = dpl;                                               \
 } while (0)
 
 /* Load task register.  This macro takes a 16-bit index into the GDT,
