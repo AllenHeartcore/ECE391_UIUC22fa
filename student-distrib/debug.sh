@@ -1,11 +1,11 @@
 #!/bin/bash
 
 if [ -d /mnt/tmpmp3 ]; then
-    rm -rf /mnt/tmpmp3
+	rm -rf /mnt/tmpmp3
 fi
 
 if [ -d /tmp/mp3 ]; then
-    rm -rf /tmp/mp3
+	rm -rf /tmp/mp3
 fi
 
 mkdir /mnt/tmpmp3
