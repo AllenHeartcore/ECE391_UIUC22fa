@@ -91,7 +91,7 @@ ldt:
 	.endr
 ldt_bottom:
 
-# @@ Alloc space for segments }
+# Alloc space for segments }
 
 .align 4
 	.word 0 # Padding
