@@ -15,7 +15,7 @@
 #define CAPS 0x0
 
 /* The table to translate scan code to ASCII code */
-char scan_code_table[SCAN_CODE_NUM]={
+char scan_code_table[SCAN_CODE_NUM][2]={
     '\0', '\0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', BACKSPACE, TAB,
 	'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', ENTER, LEFT_CONTROL, 'a', 's',
 	'd', 'f', 'g', 'h', 'j', 'k', 'l' , ';', '\'', '`', LEFT_SHIFT, '\\', 'z', 'x', 'c', 'v', 
