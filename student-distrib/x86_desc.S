@@ -28,8 +28,8 @@ ldt_desc:
 # GDT descriptor for loading {
 	.word 0
 gdt_desc:
-	.word gdt_bottom - gdt - 1
-	.long gdt
+	.word gdt_bottom - gdt - 1	# limit
+	.long gdt					# base
 # GDT descriptor for loading }
 
 	.align 4
@@ -90,6 +90,13 @@ ldt_desc_ptr:
 
 gdt_bottom:
 
+	.align 16
+ldt:
+	.rept 4
+	.quad 0
+	.endr
+ldt_bottom:
+
 .align 4
 	.word 0 # Padding
 idt_desc_ptr:
@@ -101,7 +108,7 @@ idt_desc_ptr:
 idt:
 _idt:
 	.rept NUM_VEC
-	.quad 0x00008E0000000000 # P = 0, D = 0
+	.quad 0
 	.endr
 
 idt_bottom:

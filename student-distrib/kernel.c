@@ -8,7 +8,7 @@
 #include "i8259.h"
 #include "debug.h"
 #include "tests.h"
-#include "interrupt.h"
+#include "idt.h"
 
 #define RUN_TESTS
 
@@ -137,40 +137,7 @@ void entry(unsigned long magic, unsigned long addr) {
 		ltr(KERNEL_TSS);
 	}
 
-	// Populate IDT {
-	SET_IDT_ENTRY(idt[0x00], exc_div0, 0);
-	SET_IDT_ENTRY(idt[0x01], exc_dbg, 0);
-	SET_IDT_ENTRY(idt[0x02], exc_nmi, 0);
-	SET_IDT_ENTRY(idt[0x03], exc_bp, 0);
-	SET_IDT_ENTRY(idt[0x04], exc_ovf, 0);
-	SET_IDT_ENTRY(idt[0x05], exc_bre, 0);
-	SET_IDT_ENTRY(idt[0x06], exc_ivo, 0);
-	SET_IDT_ENTRY(idt[0x07], exc_dna, 0);
-	SET_IDT_ENTRY(idt[0x08], exc_dbf, 0);
-	SET_IDT_ENTRY(idt[0x09], exc_cso, 0);
-	SET_IDT_ENTRY(idt[0x0A], exc_itss, 0);
-	SET_IDT_ENTRY(idt[0x0B], exc_snp, 0);
-	SET_IDT_ENTRY(idt[0x0C], exc_ssf, 0);
-	SET_IDT_ENTRY(idt[0x0D], exc_gpf, 0);
-	SET_IDT_ENTRY(idt[0x0E], exc_pf, 0);
-	SET_IDT_ENTRY(idt[0x0F], exc_r1, 0);
-	SET_IDT_ENTRY(idt[0x10], exc_fpe, 0);
-	SET_IDT_ENTRY(idt[0x11], exc_alc, 0);
-	SET_IDT_ENTRY(idt[0x12], exc_mac, 0);
-	SET_IDT_ENTRY(idt[0x13], exc_sfpe, 0);
-	SET_IDT_ENTRY(idt[0x14], exc_vte, 0);
-	SET_IDT_ENTRY(idt[0x15], exc_cpe, 0);
-	SET_IDT_ENTRY(idt[0x16], exc_r3, 0);
-	SET_IDT_ENTRY(idt[0x17], exc_r4, 0);
-	SET_IDT_ENTRY(idt[0x18], exc_r5, 0);
-	SET_IDT_ENTRY(idt[0x19], exc_r6, 0);
-	SET_IDT_ENTRY(idt[0x1A], exc_r7, 0);
-	SET_IDT_ENTRY(idt[0x1B], exc_r8, 0);
-	SET_IDT_ENTRY(idt[0x1C], exc_hie, 0);
-	SET_IDT_ENTRY(idt[0x1D], exc_vce, 0);
-	SET_IDT_ENTRY(idt[0x1E], exc_se, 0);
-	SET_IDT_ENTRY(idt[0x1F], exc_r9, 0);
-	// Populate IDT }
+	idt_init();
 
 	/* Init the PIC */
 	i8259_init();
