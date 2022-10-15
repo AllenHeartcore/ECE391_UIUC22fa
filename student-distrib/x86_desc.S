@@ -28,8 +28,8 @@ ldt_desc:
 # GDT descriptor for loading {
 	.word 0
 gdt_desc:
-	.word gdt_bottom - gdt - 1
-	.long gdt
+	.word gdt_bottom - gdt - 1	# limit
+	.long gdt					# base
 # GDT descriptor for loading }
 
 	.align 4
@@ -89,6 +89,13 @@ ldt_desc_ptr:
 	.quad 0
 
 gdt_bottom:
+
+	.align 16
+ldt:
+	.rept 4
+	.quad 0
+	.endr
+ldt_bottom:
 
 .align 4
 	.word 0 # Padding

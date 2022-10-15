@@ -8,6 +8,7 @@
 #include "i8259.h"
 #include "debug.h"
 #include "tests.h"
+#include "idt.h"
 
 #define RUN_TESTS
 
@@ -136,23 +137,18 @@ void entry(unsigned long magic, unsigned long addr) {
 		ltr(KERNEL_TSS);
 	}
 
-	// Populate IDT entries {
-	{
-		idt_desc_t div_error;
-		div_error.present = 1;
-		div_error.size = 1;
-		div_error.dpl = 0;
-		div_error.seg_selector = KERNEL_CS;
-		div_error.offset_31_16 = (unsigned int) div_error_handler >> 16;
-		div_error.offset_15_00 = (unsigned int) div_error_handler & 0xFFFF;
-	}
-	// Populate IDT entries }
+	// this include the "lidt"
+	idt_init();
 
 	/* Init the PIC */
 	i8259_init();
 
 	/* Initialize devices, memory, filesystem, enable device interrupts on the
 	 * PIC, any other initialization stuff... */
+
+	// init devices
+	key_init();
+	rtc_init();
 
 	/* Enable interrupts */
 	/* Do not enable the following until after you have set up your
