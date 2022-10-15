@@ -15,6 +15,7 @@ pg_tbl_t page_table __attribute__((aligned (4 * 1024)));
 
 void page_init(void) {
     int i;
+	uint32_t pd_pointer;
     // initialize all the entries in page directory table and page table
     for (i = 0; i < NUM_PG_DIR_ENTRY; i++){
         page_table[i].val = 0;
@@ -63,17 +64,11 @@ void page_init(void) {
     page_directory[0].global = 0;
     page_directory[0].avl = 0;
     // get the high 20 bits for page_directory
-    page_directory[0].addr = &page_table >> 12;
+	pd_pointer = (uint32_t) &page_table;
+    page_directory[0].addr = pd_pointer >> 12;
 
     __asm__ volatile(
-        // "movl   %1, %%cr3; \
-        //  orl    $0x80000001, %%cr0; \
-        //  orl    $0x8, %%cr4; \
-        //  andl   $FFFFFFEF %%cr4; \
-        //  movl   $1, %0\
-        // "
-        // change the value of cr0, cr3, cr4
-        " movl  %1, %%eax;\
+        " movl  %0, %%eax;\
           movl  %%eax, %%cr3;\
           movl  %%cr4, %%eax; \
           orl   $0x00000010, %%eax;\
@@ -84,6 +79,6 @@ void page_init(void) {
         "
         : /*no output*/
         : "r" (&page_directory)
-        : "%cr0", "%cr3", "%cr4", "%eax"
+        : "%eax"
     );
 }
