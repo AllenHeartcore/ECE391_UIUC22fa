@@ -53,6 +53,9 @@ typedef pg_dir_entr_t pg_dir_t[NUM_PG_DIR_ENTRY];
 /* Page table */
 typedef pg_tbl_entr_t pg_tbl_t[NUM_PG_TBL_ENTRY];
 
+extern pg_dir_t page_directory;
+extern pg_tbl_t page_table;
+
 /* Initialize paging */
 void page_init(void);
 
