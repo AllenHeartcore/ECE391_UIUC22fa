@@ -23,13 +23,12 @@
 #define MIN_RATE 3
 #define MAX_RATE 15
 #define MAX_FREQ 1024
-#define FREQ 1024
 
 
 /* Initialize RTC */
 void rtc_init(void);
 /* Set RTC frequency */
-void rtc_set_freq(uint32_t frequency);
+void rtc_set_freq(uint8_t );
 /* RTC handler */
 void rtc_handler(void);
 
