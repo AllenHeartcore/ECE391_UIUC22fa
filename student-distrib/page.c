@@ -23,49 +23,47 @@ void page_init(void) {
         page_directory[i].val = 0;
     }
 
-    // set up the entries in page table for video memory
-    for (i = 0; i < VIDEO_PAGE_NUM; i++){
-        page_table[i].present = 1;
-        page_table[i].rw = 1;
-        page_table[i].priviledge = 0;
-        page_table[i].pwt = 0;
-        page_table[i].pcd = 0;
-        page_table[i].accessed = 0;
-        page_table[i].dirty = 0;
-        page_table[i].pat = 0;
-        page_table[i].global = 0;
-        page_table[i].avl = 0;
-        // get the high 20 bits of mem
-        page_table[i].addr = (i * VIDEO_PAGE_SIZE + VIDEO) >> 12;
-    }
+    // set up the entry 0xB8 in page table for video memory
+	page_table[VIDEO >> 12].present = 1;
+	page_table[VIDEO >> 12].rw = 1;
+	page_table[VIDEO >> 12].priviledge = 0;
+	page_table[VIDEO >> 12].pwt = 0;
+	page_table[VIDEO >> 12].pcd = 0;
+	page_table[VIDEO >> 12].accessed = 0;
+	page_table[VIDEO >> 12].dirty = 0;
+	page_table[VIDEO >> 12].pat = 0;
+	page_table[VIDEO >> 12].global = 0;
+	page_table[VIDEO >> 12].avl = 0;
+	// get the high 20 bits of mem
+	page_table[VIDEO >> 12].addr = VIDEO >> 12;
 
     // set up the page directory entry for kernel
-    page_directory[0].present = 1;
-    page_directory[0].rw = 1;
-    page_directory[0].priviledge = 0;
-    page_directory[0].pwt = 0;
-    page_directory[0].pcd = 1;
-    page_directory[0].accessed = 0;
-    page_directory[0].dirty = 0;
-    page_directory[0].ps = 1;
-    page_directory[0].global = 1;
-    page_directory[0].avl = 0;
-    // right shift for 22 because low 22 bits are all 0
-    page_directory[0].addr = (KERNEL_ADDR >> 22) << 10;
-    
-    // set up the page directory entry for page table
     page_directory[1].present = 1;
     page_directory[1].rw = 1;
     page_directory[1].priviledge = 0;
-    page_directory[1].pwt = 1;
-    page_directory[1].pcd = 0;
+    page_directory[1].pwt = 0;
+    page_directory[1].pcd = 1;
     page_directory[1].accessed = 0;
     page_directory[1].dirty = 0;
-    page_directory[1].ps = 0;
-    page_directory[1].global = 0;
+    page_directory[1].ps = 1;
+    page_directory[1].global = 1;
     page_directory[1].avl = 0;
+    // right shift for 22 because low 22 bits are all 0
+    page_directory[1].addr = (KERNEL_ADDR >> 22) << 10;
+    
+    // set up the page directory entry for page table
+    page_directory[0].present = 1;
+    page_directory[0].rw = 1;
+    page_directory[0].priviledge = 0;
+    page_directory[0].pwt = 1;
+    page_directory[0].pcd = 0;
+    page_directory[0].accessed = 0;
+    page_directory[0].dirty = 0;
+    page_directory[0].ps = 0;
+    page_directory[0].global = 0;
+    page_directory[0].avl = 0;
     // get the high 20 bits for page_directory
-    page_directory[1].addr = &page_table >> 12;
+    page_directory[0].addr = &page_table >> 12;
 
     __asm__ volatile(
         // "movl   %1, %%cr3; \
@@ -87,5 +85,5 @@ void page_init(void) {
         : /*no output*/
         : "r" (&page_directory)
         : "%cr0", "%cr3", "%cr4", "%eax"
-    )
+    );
 }
