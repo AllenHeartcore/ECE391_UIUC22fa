@@ -3,6 +3,7 @@
 
 #include "keyboard.h"
 #include "lib.h"
+#include "i8259.h"
 
 /* Some special keys. We can modified ASCII later for ckpt2 or ckpt3 */
 #define BACKSPACE 0x0
@@ -14,18 +15,54 @@
 #define RIGHT_SHIFT 0x0
 #define CAPS 0x0
 
+/* Data port used by the PS/2 controller,
+ * out keyboard also use this port. */
+#define PS2_DATA_PORT 0x60
+
+/* Flags that indicate if a modifier key is pressed */
+uint8_t caps   = 0;
+uint8_t ctrll  = 0;
+uint8_t ctrlr  = 0;
+uint8_t shiftl = 0;
+uint8_t shiftr = 0;
+uint8_t altl   = 0;
+uint8_t altr   = 0;
+
 /* The table to translate scan code to ASCII code */
-char scan_code_table[SCAN_CODE_NUM][2]={
-    '\0', '\0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', BACKSPACE, TAB,
-	'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', ENTER, LEFT_CONTROL, 'a', 's',
-	'd', 'f', 'g', 'h', 'j', 'k', 'l' , ';', '\'', '`', LEFT_SHIFT, '\\', 'z', 'x', 'c', 'v', 
-	'b', 'n', 'm',',', '.', '/', RIGHT_SHIFT,'\0', LEFT_ALT, ' ', CAPS
+char scan_code_table[SCAN_CODE_NUM] = {
+	'\0', '\0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=',
+	BACKSPACE, TAB, 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p',
+	'[', ']', ENTER, LEFT_CONTROL,
+	'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l' ,
+	';', '\'', '`', LEFT_SHIFT, '\\',
+	'z', 'x', 'c', 'v', 'b', 'n', 'm',
+	',', '.', '/', RIGHT_SHIFT, '\0', LEFT_ALT, ' ', CAPS,
 };
+
 /* Initialize keyboard */
 void key_init(void) {
+	/* The keyboard is connected to IR1 on the PIC */
+	enable_irq(1);
 }
 
-/* Handler function for keyboard*/
+/* Handler function for keyboard */
 void key_handler(void) {
+	uint32_t scan_code;
+	uint8_t ascii;
+
+	/* Read from port to get the current scan code. */
+	scan_code = inb(PS2_DATA_PORT);
+	if (scan_code >= SCAN_CODE_NUM || scan_code < 0) {
+		return;
+	}
+	ascii = scan_code_table[scan_code];
+
+	/* Ignore special keys for now */
+	if (ascii == 0) {
+		return;
+	}
+
+	putc(ascii);
+	send_eoi(PS2_DATA_PORT);
 }
 
