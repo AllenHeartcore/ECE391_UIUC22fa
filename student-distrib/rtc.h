@@ -5,7 +5,7 @@
 #define _RTC_H
 
 #include "types.h"
-#include "i8259.h"
+
 
 /* Ports that RTC sits on */
 #define RTC_REG_PORT    0x70
@@ -26,10 +26,10 @@
 
 
 /* Initialize RTC */
-void rtc_init(void);
+extern void rtc_init(void);
 /* Set RTC frequency */
-void rtc_set_freq(uint8_t );
+extern void rtc_set_freq(uint8_t );
 /* RTC handler */
-void rtc_handler(void);
+extern void rtc_handler(void);
 
 #endif /* _I8259_H */

@@ -8,7 +8,10 @@
 #include "i8259.h"
 #include "debug.h"
 #include "tests.h"
+
 #include "idt.h"
+#include "keyboard.h"
+#include "rtc.h"
 
 #define RUN_TESTS
 
@@ -137,7 +140,6 @@ void entry(unsigned long magic, unsigned long addr) {
 		ltr(KERNEL_TSS);
 	}
 
-	// this include the "lidt"
 	idt_init();
 
 	/* Init the PIC */

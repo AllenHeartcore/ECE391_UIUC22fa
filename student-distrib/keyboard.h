@@ -5,7 +5,7 @@
 #define _KEYBOARD_H
 
 #include "types.h"
-#include "i8259.h"
+
 
 /* Ports that KEYBOARD sits on */
 #define KEY_DATA_PORT    0x60
@@ -21,8 +21,8 @@
 
 
 /* Initialize keyboard */
-void key_init(void);
+extern void key_init(void);
 /* keyboard handler */
-void key_handler(void);
+extern void key_handler(void);
 
 #endif /* _KEYBOARD_H */

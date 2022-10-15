@@ -3,7 +3,7 @@
 
 #include "rtc.h"
 #include "lib.h"
-
+#include "i8259.h"
 
 volatile uint32_t rtc_time_tic; // Time tic  Each time RTC interrupt happens, it increases 1.
 volatile uint32_t rtc_sec;  // How many seconds since the RTC has been initialized.

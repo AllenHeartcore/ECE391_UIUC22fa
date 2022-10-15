@@ -1,20 +1,20 @@
-#include "idt_lnk.h"
-#include "keyboard.h"
-#include "rtc.h"
+#define ASM
 
-.text
-
-.globl int_kbd_wrapper
-.globl int_rtc_wrapper
+.globl int_kbd_lnk
+.globl int_rtc_lnk
 
 int_kbd_lnk:
     pushal
+    pushfl
     call key_handler
+    popfl
     popal
     iret
 
 int_rtc_lnk:
     pushal
+    pushfl
     call rtc_handler
+    popfl
     popal
     iret
