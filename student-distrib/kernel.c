@@ -137,6 +137,7 @@ void entry(unsigned long magic, unsigned long addr) {
 		ltr(KERNEL_TSS);
 	}
 
+	// this include the "lidt"
 	idt_init();
 
 	/* Init the PIC */
@@ -144,6 +145,10 @@ void entry(unsigned long magic, unsigned long addr) {
 
 	/* Initialize devices, memory, filesystem, enable device interrupts on the
 	 * PIC, any other initialization stuff... */
+
+	// init devices
+	key_init();
+	rtc_init();
 
 	/* Enable interrupts */
 	/* Do not enable the following until after you have set up your

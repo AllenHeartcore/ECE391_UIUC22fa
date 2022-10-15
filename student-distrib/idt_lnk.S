@@ -1,6 +1,6 @@
 #include "idt_lnk.h"
-# #include "keyboard.h"
-# #include "rtc.h"
+#include "keyboard.h"
+#include "rtc.h"
 
 .text
 
@@ -9,12 +9,12 @@
 
 int_kbd_lnk:
     pushal
-    # call key_handler
+    call key_handler
     popal
     iret
 
 int_rtc_lnk:
     pushal
-    # call rtc_handler
+    call rtc_handler
     popal
     iret
