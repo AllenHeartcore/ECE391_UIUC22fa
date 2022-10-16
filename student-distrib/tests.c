@@ -55,6 +55,26 @@ int div0_test(){
 	return PASS;
 }
 
+int page_test() {
+	TEST_HEADER;
+	uint32_t* video_mem_start = (uint32_t*) 0xB8000;
+	uint32_t* video_mem_end   = video_mem_start + 0x1000;
+	uint32_t* kernel_start    = (uint32_t*) 0x400000;
+	uint32_t* kernel_end      = (uint32_t*) 0x800000;
+	uint32_t  foo;
+	uint32_t* addr;
+
+	for (addr = video_mem_start; addr < video_mem_end; addr++) {
+		foo = (*addr);
+	}
+
+	for (addr = kernel_start; addr < kernel_end; addr++) {
+		foo = (*addr);
+	}
+
+	return PASS;
+}
+
 /* Checkpoint 2 tests */
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
