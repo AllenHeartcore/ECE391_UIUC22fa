@@ -42,27 +42,30 @@ char scan_code_table[SCAN_CODE_NUM] = {
 /* Initialize keyboard */
 void key_init(void) {
 	/* The keyboard is connected to IR1 on the PIC */
-	enable_irq(1);
+	enable_irq(KEY_IRQ_NUM);
 }
 
 /* Handler function for keyboard */
 void key_handler(void) {
-	uint32_t scan_code;
+	uint8_t scan_code;
 	uint8_t ascii;
-
+	cli();
 	/* Read from port to get the current scan code. */
 	scan_code = inb(PS2_DATA_PORT);
 	if (scan_code >= SCAN_CODE_NUM || scan_code < 0) {
+		send_eoi(PS2_DATA_PORT);
 		return;
 	}
 	ascii = scan_code_table[scan_code];
 
 	/* Ignore special keys for now */
 	if (ascii == 0) {
+		send_eoi(PS2_DATA_PORT);
 		return;
 	}
 
 	putc(ascii);
 	send_eoi(PS2_DATA_PORT);
+	sti();
 }
 
