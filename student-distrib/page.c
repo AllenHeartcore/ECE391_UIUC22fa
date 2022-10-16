@@ -76,6 +76,9 @@ void page_init(void) {
 	pd_pointer = (uint32_t) &page_table;
     page_directory[0].addr = pd_pointer >> 12;
 
+    // set the highest bit of cr0 to be 1
+    // set the cr3 be the address of the page directory table
+    // set the fifth bit of cr4 to be 1
     __asm__ volatile(
         " movl  %0, %%eax;\
           movl  %%eax, %%cr3;\
