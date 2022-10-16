@@ -64,5 +64,5 @@ int div0_test(){
 /* Test suite entry point */
 void launch_tests(){
 	TEST_OUTPUT("idt_test", idt_test());
-	// TEST_OUTPUT("div0_test", div0_test());
+	TEST_OUTPUT("div0_test", div0_test());
 }

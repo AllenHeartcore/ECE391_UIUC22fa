@@ -60,7 +60,8 @@ void key_handler(void) {
 		return;
 	}
 
-	putc(ascii);
+	// putc(ascii);
+	printf("%c", ascii);
 	send_eoi(KEY_IRQ_NUM);
 	sti();
 }
