@@ -12,8 +12,8 @@ uint8_t slave_mask;  /* IRQs 8-15 */
 /* Initialize the 8259 PIC */
 void i8259_init(void) {
     /* Mask all the interrupts */
-    outb(0xFF,MASTER_8259_PORT);
-    outb(0xFF,SLAVE_8259_PORT);
+    outb(0xFF,MASTER_8259_PORT+1);
+    outb(0xFF,SLAVE_8259_PORT+1);
 
     /* Initialize Mastr PIC */
     outb(ICW1,MASTER_8259_PORT);
@@ -43,11 +43,11 @@ void enable_irq(uint32_t irq_num) {
     if(irq_num>7){
         /* The irq is on the slave PIC */
         slave_mask = slave_mask & ~(1<<(irq_num-8));
-        outb(slave_mask,SLAVE_8259_PORT);
+        outb(slave_mask,SLAVE_8259_PORT+1);
     }else{
         /* The irq is on the master PIC */
         master_mask = master_mask & ~(1<<irq_num);
-        outb(master_mask,MASTER_8259_PORT);
+        outb(master_mask,MASTER_8259_PORT+1);
     }
 }
 

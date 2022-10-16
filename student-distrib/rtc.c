@@ -20,7 +20,7 @@ void rtc_init(void) {
     rtc_set_freq(6);
     rtc_time_tic = 0;
     rtc_sec = 0;
-    freq = 32,768>>(6-1); // 2^15>>(rate-1)
+    freq = 32768>>(6-1); // 2^15>>(rate-1)
     enable_irq(RTC_IRQ_NUM);
     sti();
 }
