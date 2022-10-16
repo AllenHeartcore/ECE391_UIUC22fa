@@ -75,10 +75,10 @@ void send_eoi(uint32_t irq_num) {
         return;
     if(irq_num>=8){
         /* For slave PIC, both slave and master pic should receive EOI */
-        outb(EOI | (irq_num-8), SLAVE_8259_PORT+1); // Send to SLAVE PIC
-        outb(EOI | 2, MASTER_8259_PORT+1); // Send to MASTER PIC telling SLAVE PIC's hanlder has finished
+        outb(EOI | (irq_num-8), SLAVE_8259_PORT); // Send to SLAVE PIC
+        outb(EOI | 2, MASTER_8259_PORT); // Send to MASTER PIC telling SLAVE PIC's hanlder has finished
         return;
     }
     /* Send MASTER Pic */
-    outb(EOI | irq_num, MASTER_8259_PORT+1);
+    outb(EOI | irq_num, MASTER_8259_PORT);
 }

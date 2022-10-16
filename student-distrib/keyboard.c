@@ -15,10 +15,6 @@
 #define RIGHT_SHIFT 0x0
 #define CAPS 0x0
 
-/* Data port used by the PS/2 controller,
- * out keyboard also use this port. */
-#define PS2_DATA_PORT 0x60
-
 /* Flags that indicate if a modifier key is pressed */
 uint8_t caps   = 0;
 uint8_t ctrll  = 0;
@@ -51,21 +47,21 @@ void key_handler(void) {
 	uint8_t ascii;
 	cli();
 	/* Read from port to get the current scan code. */
-	scan_code = inb(PS2_DATA_PORT);
-	if (scan_code >= SCAN_CODE_NUM || scan_code < 0) {
-		send_eoi(PS2_DATA_PORT);
+	scan_code = inb(KEY_DATA_PORT);
+	if (scan_code >= SCAN_CODE_NUM) {
+		send_eoi(KEY_IRQ_NUM);
 		return;
 	}
 	ascii = scan_code_table[scan_code];
 
 	/* Ignore special keys for now */
 	if (ascii == 0) {
-		send_eoi(PS2_DATA_PORT);
+		send_eoi(KEY_IRQ_NUM);
 		return;
 	}
 
 	putc(ascii);
-	send_eoi(PS2_DATA_PORT);
+	send_eoi(KEY_IRQ_NUM);
 	sti();
 }
 

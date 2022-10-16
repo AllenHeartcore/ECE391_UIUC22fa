@@ -11,7 +11,6 @@ uint32_t freq;
 
 /* Initialize RTC */
 void rtc_init(void) {
-    cli();
     char prev;
     outb(REG_B,RTC_REG_PORT);
     prev = inb(RTC_DATA_PORT);  // Read current value from RegB
@@ -22,7 +21,6 @@ void rtc_init(void) {
     rtc_sec = 0;
     freq = 32768>>(6-1); // 2^15>>(rate-1)
     enable_irq(RTC_IRQ_NUM);
-    sti();
 }
 
 
@@ -53,11 +51,11 @@ void rtc_handler(void) {
         /* If one second has passed, reset timetic and plus one to sec */
         rtc_sec++;
         rtc_time_tic=0;
+        // printf("In RTC!!\n");
     }
     /* To make sure rtc can raise intterrupt later */
     outb(REG_C&0xF,RTC_REG_PORT);
     temp = inb(RTC_DATA_PORT);
-
     send_eoi(RTC_IRQ_NUM);
     sti();
 }

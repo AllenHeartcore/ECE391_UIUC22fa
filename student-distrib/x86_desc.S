@@ -26,6 +26,7 @@ ldt_desc:
 	.long ldt
 
 # GDT descriptor for loading {
+	.align 4
 	.word 0
 gdt_desc:
 	.word gdt_bottom - gdt - 1	# limit
