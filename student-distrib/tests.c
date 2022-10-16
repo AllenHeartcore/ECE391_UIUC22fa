@@ -57,12 +57,12 @@ int div0_test(){
 
 int page_test() {
 	TEST_HEADER;
-	uint32_t* video_mem_start = (uint32_t*) 0xB8000;
-	uint32_t* video_mem_end   = video_mem_start + 0x1000;
-	uint32_t* kernel_start    = (uint32_t*) 0x400000;
-	uint32_t* kernel_end      = (uint32_t*) 0x800000;
-	uint32_t  foo;
-	uint32_t* addr;
+	unsigned char* video_mem_start = (unsigned char*) 0xB8000;
+	unsigned char* video_mem_end   = video_mem_start + 0x1000;
+	unsigned char* kernel_start    = (unsigned char*) 0x400000;
+	unsigned char* kernel_end      = (unsigned char*) 0x800000;
+	unsigned char  foo;
+	unsigned char* addr;
 
 	for (addr = video_mem_start; addr < video_mem_end; addr++) {
 		foo = (*addr);
@@ -84,5 +84,6 @@ int page_test() {
 /* Test suite entry point */
 void launch_tests(){
 	TEST_OUTPUT("idt_test", idt_test());
+	TEST_OUTPUT("page_test", page_test());
 	TEST_OUTPUT("div0_test", div0_test());
 }
