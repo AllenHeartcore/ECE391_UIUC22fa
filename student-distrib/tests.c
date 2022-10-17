@@ -85,6 +85,47 @@ int page_test() {
 	return PASS;
 }
 
+/* Page test (dereference NULL)
+ * 
+ * Dereference NULL to check if page fault exception can be triggered
+ * return FAIL if successfully dereference NULL
+ * Inputs: None
+ * Outputs: PASS/FAIL
+ * Side Effects: None
+ * Coverage: Paging
+ * Files: page.c/h
+ */
+int page_test_deref_null() {
+	TEST_HEADER;
+
+	uint8_t foo;
+	uint8_t *null = NULL;
+
+	foo = *null;
+
+	return FAIL;
+}
+
+/* Page test (dereference address not exist)
+ * 
+ * Dereference an address that is not exist
+ * return FAIL if successfully dereference the not-exist address
+ * Inputs: None
+ * Outputs: PASS/FAIL
+ * Side Effects: None
+ * Coverage: Paging
+ * Files: page.c/h
+ */
+int page_test_deref_not_exist() {
+	TEST_HEADER;
+
+	uint8_t foo;
+	uint8_t *addr_not_exist = (uint8_t*)0x800001;
+	foo = *addr_not_exist;
+
+	return FAIL;
+}
+
 /* Checkpoint 2 tests */
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
