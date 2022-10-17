@@ -67,12 +67,6 @@ int div0_test(){
 	return FAIL;
 }
 
-int rtc_test() {
-	TEST_HEADER;
-	test_interrupts();
-	return PASS;
-}
-
 /* Page test
  * 
  * Dereference each address in video memory and kernel space,
@@ -154,7 +148,6 @@ int page_test_deref_not_exist() {
 void launch_tests(){
 	/* The machine will FREEZE after an exception */
 	TEST_OUTPUT("idt_test", idt_test());
-	TEST_OUTPUT("rtc_test", rtc_test());
 	TEST_OUTPUT("page_test", page_test());
 	TEST_OUTPUT("page_test_deref_null", page_test_deref_null());
 	TEST_OUTPUT("page_test_deref_not_exist", page_test_deref_not_exist());
