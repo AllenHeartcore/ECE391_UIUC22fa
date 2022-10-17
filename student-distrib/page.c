@@ -1,8 +1,9 @@
 #include "page.h"
 #include "lib.h"
-
+// begin at 4M
 #define KERNEL_ADDR (4*1024*1024)
 #define VIDEO_PAGE_SIZE (4*1024)
+// Start address is 0xB8000, end address is 0xC0000
 #define VIDEO_PAGE_NUM ((0xC0000 - 0xB8000) / VIDEO_PAGE_SIZE)
 // 1024 entries, 2 entries used
 // entry 0: 4m mapping, kernel
@@ -12,6 +13,13 @@ pg_dir_t page_directory __attribute__((aligned (4 * 1024)));
 pg_tbl_t page_table __attribute__((aligned (4 * 1024)));
 
 
+/*
+*   page_init
+*   initialize page directory table and page table, change some values in the registers
+*   input: None
+*   output: None
+*   side effect: Change the value in the cr0, cr3, cr4 
+*/
 
 void page_init(void) {
     int i;
@@ -25,6 +33,7 @@ void page_init(void) {
     }
 
     // set up the entry 0xB8 in page table for video memory
+    // all these number are referenced in intel version 3
 	page_table[VIDEO >> 12].present = 1;
 	page_table[VIDEO >> 12].rw = 1;
 	page_table[VIDEO >> 12].priviledge = 0;
@@ -67,6 +76,9 @@ void page_init(void) {
 	pd_pointer = (uint32_t) &page_table;
     page_directory[0].addr = pd_pointer >> 12;
 
+    // set the highest bit of cr0 to be 1
+    // set the cr3 be the address of the page directory table
+    // set the fifth bit of cr4 to be 1
     __asm__ volatile(
         " movl  %0, %%eax;\
           movl  %%eax, %%cr3;\
