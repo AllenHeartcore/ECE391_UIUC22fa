@@ -18,6 +18,7 @@ void exc_snp() { printf("EXCEPTION 0x0B: Segment not present\n"); while(1); }
 void exc_ssf() { printf("EXCEPTION 0x0C: Stack-segment fault\n"); while(1); }
 void exc_gpf() { printf("EXCEPTION 0x0D: General protection fault\n"); while(1); }
 void exc_pft() { printf("EXCEPTION 0x0E: Page fault\n"); while(1); }
+void exc_res() { printf("EXCEPTION 0x0F: Reserved\n"); while(1); }
 void exc_fpe() { printf("EXCEPTION 0x10: Floating-point error\n"); while(1); }
 void exc_alc() { printf("EXCEPTION 0x11: Alignment check\n"); while(1); }
 void exc_mac() { printf("EXCEPTION 0x12: Machine check\n"); while(1); }
@@ -44,6 +45,7 @@ void idt_init() {
     SET_IDT_ENTRY(idt[0x0C], exc_ssf, KERNEL_DPL, TYPE_TRAP);
     SET_IDT_ENTRY(idt[0x0D], exc_gpf, KERNEL_DPL, TYPE_TRAP);
     SET_IDT_ENTRY(idt[0x0E], exc_pft, KERNEL_DPL, TYPE_TRAP);
+    SET_IDT_ENTRY(idt[0x0F], exc_res, KERNEL_DPL, TYPE_TRAP);
     SET_IDT_ENTRY(idt[0x10], exc_fpe, KERNEL_DPL, TYPE_TRAP);
     SET_IDT_ENTRY(idt[0x11], exc_alc, KERNEL_DPL, TYPE_TRAP);
     SET_IDT_ENTRY(idt[0x12], exc_mac, KERNEL_DPL, TYPE_TRAP);
