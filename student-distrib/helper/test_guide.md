@@ -39,7 +39,8 @@
 | IDT | Handling exceptions | Run `div0_test`<br>***(This should come last)*** |
 | Keyboard | Interpreting scancodes in<br>the keyboard handler | Type & echo characters<br>on the screen |
 | RTC | Receiving an RTC interrupt | Uncomment `rtc.c:54` |
+| RTC | Reaches `test_interrupt`<br>on RTC interrupts | Check for `lib.c:471`<br>(char can be changed) |
 | Paging | Values contained in<br>paging structures | In QEMU, Ctrl+Alt+2<br>and type `info mem` |
-| Paging | Dereferencing address ranges | Run `page_test` |
-| Paging | Dereferencing NULL to<br>produce a page fault
+| Paging | Dereferencing address ranges | Run `page_test` and<br>`..._deref_not_exist` |
+| Paging | Dereferencing NULL to<br>produce a page fault | Run `..._deref_null` |
 | | Checking bad input<br>and return values | |
