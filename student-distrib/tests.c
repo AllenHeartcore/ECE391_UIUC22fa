@@ -45,6 +45,17 @@ int idt_test(){
 	return result;
 }
 
+/* Div 0 Test
+ * 
+ * Test if div 0 exception can be triggered
+ * should show exception message, return
+ * FAIL if divide 0 without exception.
+ * Inputs: None
+ * Outputs: FAIL
+ * Side Effects: None
+ * Coverage: Div 0 exception (IDT)
+ * Files: idt.c/h
+ */
 int div0_test(){
 	TEST_HEADER;
 
