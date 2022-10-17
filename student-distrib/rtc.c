@@ -9,7 +9,13 @@ volatile uint32_t rtc_time_tic; // Time tic  Each time RTC interrupt happens, it
 volatile uint32_t rtc_sec;  // How many seconds since the RTC has been initialized.
 uint32_t freq;
 
-/* Initialize RTC */
+/*
+*   rtc_init
+*   Initialize RTC
+*   input: int rate
+*   output: None
+*   side effect: The RTC device will be initialized and PIC's 8th irq will be enabled.
+*/
 void rtc_init(void) {
     char prev;
     outb(REG_B,RTC_REG_PORT);
@@ -19,14 +25,17 @@ void rtc_init(void) {
     rtc_set_freq(6);
     rtc_time_tic = 0;
     rtc_sec = 0;
-    freq = 32768>>(6-1); // 2^15>>(rate-1)
     enable_irq(RTC_IRQ_NUM);
 }
 
 
-/* Set RTC's frequency 
-*   frequency =  2^15>>(rate-1)
-*
+
+/*
+*   rtc_set_freq
+*   Set RTC's frequency  frequency =  2^15>>(rate-1)
+*   input: int rate
+*   output: None
+*   side effect: The RTC device's frequency will be changed. 
 */
 void rtc_set_freq(uint8_t rate){
     char prev;
@@ -40,9 +49,18 @@ void rtc_set_freq(uint8_t rate){
     
     /* Only change the bits related to rate in RegA(low 4 bits)*/
     outb((prev & 0xF0)|rate, RTC_DATA_PORT); 
+
+    /* Change the state variable freq */
+    freq = 32768>>(rate-1); // 2^15>>(rate-1)
 }
 
-/* Handler function for RTC */
+/*
+*   rtc_handler
+*   Handler function for RTC
+*   input: None
+*   output: None
+*   side effect: The state variable sec and tic will be changed.
+*/
 void rtc_handler(void) {
     cli();
     char temp;

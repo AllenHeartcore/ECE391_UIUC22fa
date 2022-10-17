@@ -35,13 +35,26 @@ char scan_code_table[SCAN_CODE_NUM] = {
 	',', '.', '/', RIGHT_SHIFT, '\0', LEFT_ALT, ' ', CAPS,
 };
 
-/* Initialize keyboard */
+/*
+*   key_init
+*   initialize the keyboard's irq on PIC
+*   input: None
+*   output: None
+*   side effect: PIC's 1st irq will be enabled. 
+*/
 void key_init(void) {
 	/* The keyboard is connected to IR1 on the PIC */
 	enable_irq(KEY_IRQ_NUM);
 }
 
-/* Handler function for keyboard */
+
+/*
+*   key_handler
+*   Handler function for keyboard:read what key was pressed on keyboard and print it on the screen
+*   input: None
+*   output: None
+*   side effect: a character may appear on screen
+*/
 void key_handler(void) {
 	uint8_t scan_code;
 	uint8_t ascii;
