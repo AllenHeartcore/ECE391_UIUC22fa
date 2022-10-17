@@ -9,7 +9,13 @@
 uint8_t master_mask; /* IRQs 0-7  */
 uint8_t slave_mask;  /* IRQs 8-15 */
 
-/* Initialize the 8259 PIC */
+/*
+*   i8259_init
+*   Initialize the 8259 PIC
+*   input: None
+*   output: None
+*   side effect: PICs will be set
+*/
 void i8259_init(void) {
     /* Mask all the interrupts */
     outb(0xFF,MASTER_8259_PORT+1);
@@ -34,7 +40,13 @@ void i8259_init(void) {
 
 }
 
-/* Enable (unmask) the specified IRQ */
+/*
+*   enable_irq
+*   Enable (unmask) the specified IRQ
+*   input: int irq_num -- indicating which irq will be unmasked
+*   output: None
+*   side effect: One irq on PIC will be unmask and can receive interrupt
+*/
 void enable_irq(uint32_t irq_num) {
     /* Sanity check, if irq_num>15, return */
     if(irq_num>15){
@@ -51,7 +63,13 @@ void enable_irq(uint32_t irq_num) {
     }
 }
 
-/* Disable (mask) the specified IRQ */
+/*
+*   disable_irq
+*   Disable (mask) the specified IRQ
+*   input: int irq_num -- indicating which irq will be masked
+*   output: None
+*   side effect: One irq on PIC will be mask and can not receive interrupt
+*/
 void disable_irq(uint32_t irq_num) {
     /* Sanity check, if irq_num>15, return */
     if(irq_num>15){
@@ -60,15 +78,21 @@ void disable_irq(uint32_t irq_num) {
     if(irq_num>7){
         /* The irq is on the slave PIC */
         slave_mask = slave_mask | (1<<(irq_num-8));
-        outb(slave_mask,SLAVE_8259_PORT);
+        outb(slave_mask,SLAVE_8259_PORT+1);
     }else{
         /* The irq is on the master PIC */
         master_mask = master_mask | (1<<irq_num);
-        outb(master_mask,MASTER_8259_PORT);
+        outb(master_mask,MASTER_8259_PORT+1);
     }
 }
 
-/* Send end-of-interrupt signal for the specified IRQ */
+/*
+*   send_eoi
+*   Send end-of-interrupt signal for the specified IRQ
+*   input: int irq_num -- indicating which irq handler has finished
+*   output: None
+*   side effect: The PIC will recive EOI and allow interrupt to happen again
+*/
 void send_eoi(uint32_t irq_num) {
     /* Sanity check */
     if (irq_num>15)
