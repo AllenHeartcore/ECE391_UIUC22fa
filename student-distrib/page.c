@@ -25,10 +25,10 @@ void page_init(void) {
     int i;
 	uint32_t pd_pointer;
     // initialize all the entries in page directory table and page table
-    for (i = 0; i < NUM_PG_DIR_ENTRY; i++){
+    for (i = 0; i < NUM_PG_TBL_ENTRY; i++){
         page_table[i].val = 0;
     }
-    for (i = 0; i < NUM_PG_TBL_ENTRY; i++){
+    for (i = 0; i < NUM_PG_DIR_ENTRY; i++){
         page_directory[i].val = 0;
     }
 

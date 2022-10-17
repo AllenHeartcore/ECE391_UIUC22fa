@@ -55,6 +55,16 @@ int div0_test(){
 	return PASS;
 }
 
+/* Page test
+ * 
+ * Dereference each address in video memory and kernel space,
+ * return PASS if successfully dereference all addresses
+ * Inputs: None
+ * Outputs: PASS/FAIL
+ * Side Effects: None
+ * Coverage: Paging
+ * Files: page.c/h
+ */
 int page_test() {
 	TEST_HEADER;
 	unsigned char* video_mem_start = (unsigned char*) 0xB8000;
