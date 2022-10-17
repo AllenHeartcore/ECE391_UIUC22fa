@@ -69,7 +69,6 @@ void rtc_handler(void) {
         /* If one second has passed, reset timetic and plus one to sec */
         rtc_sec++;
         rtc_time_tic=0;
-        // printf("In RTC!!\n");
     }
     /* To make sure rtc can raise intterrupt later */
     outb(REG_C&0xF,RTC_REG_PORT);
