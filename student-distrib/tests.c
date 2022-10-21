@@ -1,6 +1,7 @@
 #include "tests.h"
 #include "x86_desc.h"
 #include "lib.h"
+#include "rtc.h"
 
 #define PASS 1
 #define FAIL 0
@@ -139,6 +140,33 @@ int page_test_deref_not_exist() {
 }
 
 /* Checkpoint 2 tests */
+
+/* RTC Driver Test
+ *
+ * Changing through all possible RTC frequencies
+ * and print out a character for every interrupt
+ * Inputs: None
+ * Outputs: PASS/FAIL
+ * Side Effects: None
+ * Coverage: RTC driver
+ * Files: rtc.c/h
+ */
+int rtc_driver_test() {
+	TEST_HEADER;
+
+	int freq, rate, count;
+	for (freq = 2, rate = 0; freq <= 1024; freq <<= 1, rate++) {
+		rtc_write(0, &freq, 4);
+		for (count = 0; count < freq; count++) {
+			rtc_read(0, NULL, 0);
+			printf("%d", rate);
+		}
+		printf("\n");
+	}
+
+	return PASS;
+}
+
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
 /* Checkpoint 5 tests */
@@ -146,10 +174,14 @@ int page_test_deref_not_exist() {
 
 /* Test suite entry point */
 void launch_tests(){
+	/* Checkpoint 1 tests */
 	/* The machine will FREEZE after an exception */
-	TEST_OUTPUT("idt_test", idt_test());
-	TEST_OUTPUT("page_test", page_test());
-	TEST_OUTPUT("page_test_deref_null", page_test_deref_null());
-	TEST_OUTPUT("page_test_deref_not_exist", page_test_deref_not_exist());
-	TEST_OUTPUT("div0_test", div0_test());
+	// TEST_OUTPUT("idt_test", idt_test());
+	// TEST_OUTPUT("page_test", page_test());
+	// TEST_OUTPUT("page_test_deref_null", page_test_deref_null());
+	// TEST_OUTPUT("page_test_deref_not_exist", page_test_deref_not_exist());
+	// TEST_OUTPUT("div0_test", div0_test());
+
+	/* Checkpoint 2 tests */
+	TEST_OUTPUT("rtc_driver_test", rtc_driver_test());
 }

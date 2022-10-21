@@ -8,7 +8,7 @@
 
 volatile uint32_t rtc_time_tic; // (aka. "ms") Each time RTC interrupt happens, it increases 1.
 volatile uint32_t rtc_sec;      // (aka. "s") How many seconds since the RTC has been initialized.
-volatile bool rtc_int_occurred; // Flag to indicate if a **virtual** RTC interrupt has occurred.
+volatile uint32_t rtc_int_occurred; // Flag to indicate if a **virtual** RTC interrupt has occurred.
 uint32_t freq;                  // This is VIRTUALIZED (actual freq is always 1024 Hz)
 
 /*  More on virtual interrupts:
@@ -94,7 +94,6 @@ int rtc_read(int32_t fd, void* buf, int32_t nbytes) {
  *  side effect: The RTC's frequency will be set as requested (if it's a power of 2).
  */
 int rtc_write(int32_t fd, const void* buf, int32_t nbytes) {
-    char prev;
 	uint32_t freq_requested = *(uint32_t*) buf;
     /* Sanity check */
 	if (freq_requested <= 0 || freq_requested > ACTUAL_FREQ || \
@@ -115,8 +114,8 @@ void rtc_handler(void) {
     cli();
     char temp;
     rtc_time_tic++;
-    if (rtc_time_tic % ACTUAL_FREQ) rtc_sec++;	// one second has passed
-	if (rtc_time_tic % (ACTUAL_FREQ / freq))
+    if (rtc_time_tic % ACTUAL_FREQ == 0) rtc_sec++;	// one second has passed
+	if (rtc_time_tic % (ACTUAL_FREQ / freq) == 0)
 		rtc_int_occurred = 1;	// delayed virtual interrupt
     /* To make sure rtc can raise intterrupt later */
     outb(REG_C&0xF,RTC_REG_PORT);

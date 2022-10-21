@@ -20,14 +20,17 @@
 #define REG_C 0x8C
 
 /* About frequency */
-#define ACTUAL_RATE 10
+#define ACTUAL_RATE 6
 #define ACTUAL_FREQ 1024
 
 
 /* Initialize RTC */
 extern void rtc_init(void);
-/* Set RTC frequency */
-extern void rtc_set_freq(uint8_t );
+/* RTC driver */
+extern int rtc_open(const uint8_t* filename);
+extern int rtc_close(int32_t fd);
+extern int rtc_read(int32_t fd, void* buf, int32_t nbytes);
+extern int rtc_write(int32_t fd, const void* buf, int32_t nbytes);
 /* RTC handler */
 extern void rtc_handler(void);
 
