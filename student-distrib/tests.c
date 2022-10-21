@@ -1,6 +1,7 @@
 #include "tests.h"
 #include "x86_desc.h"
 #include "lib.h"
+#include "filesys.h"
 
 #define PASS 1
 #define FAIL 0
@@ -139,6 +140,59 @@ int page_test_deref_not_exist() {
 }
 
 /* Checkpoint 2 tests */
+
+
+
+/* Read by name test
+ * 
+ * Asserts that we can read dentry by name
+ * Inputs: None
+ * Outputs: PASS/FAIL
+ * Side Effects: None
+ * Coverage: Load IDT, IDT definition
+ * Files: x86_desc.h/S
+ */
+int read_file_name_test() {
+	TEST_HEADER;
+	dentry_t test;
+	uint8_t filename[FILE_NAME_MAX] = "frame0.txt";
+	read_dentry_by_name(filename,&test);
+	printf("The file's name is %s!\n",test.filename);
+
+	if(strncmp((int8_t*)test.filename,(int8_t*)filename,FILE_NAME_MAX)!=0)
+		return FAIL;
+	return PASS;
+}
+
+
+/* Read by name test
+ * 
+ * Asserts that we can read data from data block
+ * Inputs: None
+ * Outputs: PASS/FAIL
+ * Side Effects: None
+ * Coverage: Load IDT, IDT definition
+ * Files: x86_desc.h/S
+ */
+int read_data_test() {
+	TEST_HEADER;
+	dentry_t test;
+	char* buff;
+	uint8_t filename[FILE_NAME_MAX] = "frame0.txt";
+	read_dentry_by_name(filename,&test);
+	
+	read_data(test.inode_num,0,(uint8_t*)buff,4096);
+
+	printf(buff);
+	return PASS;
+}
+
+
+
+
+
+
+
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
 /* Checkpoint 5 tests */
@@ -147,9 +201,11 @@ int page_test_deref_not_exist() {
 /* Test suite entry point */
 void launch_tests(){
 	/* The machine will FREEZE after an exception */
-	TEST_OUTPUT("idt_test", idt_test());
-	TEST_OUTPUT("page_test", page_test());
-	TEST_OUTPUT("page_test_deref_null", page_test_deref_null());
-	TEST_OUTPUT("page_test_deref_not_exist", page_test_deref_not_exist());
-	TEST_OUTPUT("div0_test", div0_test());
+	// TEST_OUTPUT("idt_test", idt_test());
+	// TEST_OUTPUT("page_test", page_test());
+	// TEST_OUTPUT("page_test_deref_null", page_test_deref_null());
+	// TEST_OUTPUT("page_test_deref_not_exist", page_test_deref_not_exist());
+	// TEST_OUTPUT("div0_test", div0_test());
+	// TEST_OUTPUT("read_file_name_test", read_file_name_test());
+	TEST_OUTPUT("read_data_test", read_data_test());
 }

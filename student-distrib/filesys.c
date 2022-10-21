@@ -48,7 +48,7 @@ int32_t read_dentry_by_index (uint8_t index, dentry_t* dentry){
     dentry->inode_num = dentry_ptr->inode_num;
     /* copy file name
     *  Here, we must use strncpy because file name can have no \0 */
-    strncpy(dentry->filename, dentry_ptr->filename, FILE_NAME_MAX);
+    strncpy((int8_t*)dentry->filename, (int8_t*)dentry_ptr->filename, FILE_NAME_MAX);
     return 0;
 }
 
@@ -64,8 +64,8 @@ int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry){
     uint8_t i;
     dentry_t* current_dentry;
     for(i=0; i<boot_block->dir_num; i++){
-        *current_dentry = dentries[i];
-        if(strncmp(fname, current_dentry->filename, FILE_NAME_MAX)==0){
+        current_dentry = &(dentries[i]);
+        if(strncmp((int8_t*)fname, (int8_t*)current_dentry->filename, FILE_NAME_MAX)==0){
             /* The file name is the same, use read_index to assign value */
             read_dentry_by_index(i, dentry);
             return 0;
@@ -105,7 +105,12 @@ int32_t read_data(uint32_t inode_index, uint32_t offset, uint8_t* buf, uint32_t 
         return 0;
     if(length == 0)
         return 0;
-    *inode = inodes[inode_index];
+    if (length>(inodes[inode_index].len - offset))
+    {
+        length = inodes[inode_index].len - offset;
+    }
+    
+    inode = &(inodes[inode_index]);
     bytes_copied = 0;
 
     /* Calculate how many data blocks are used and start/end positions */
@@ -116,7 +121,7 @@ int32_t read_data(uint32_t inode_index, uint32_t offset, uint8_t* buf, uint32_t 
 
     for(i=start_block_index; i<=end_block_index; i++){
         cur_datablock_index = (inodes[inode_index].data_block)[i];
-        *cur_datablock = data_blocks[cur_datablock_index];
+        cur_datablock = &(data_blocks[cur_datablock_index]);
         /* Copy the start data block */
         if(i == start_block_index){
             if(start_block_index==end_block_index){
