@@ -19,7 +19,7 @@
 
 /* Data Structures for file system */
 
-typedef struct __attribute__((packed)) dentry_t {
+typedef struct  dentry_t { //__attribute__((packed))
     uint8_t   filename[FILE_NAME_MAX];
     uint32_t filetype;
     uint32_t inode_num;
@@ -27,7 +27,7 @@ typedef struct __attribute__((packed)) dentry_t {
     uint32_t reserved[6];  
 }   dentry_t;
 
-typedef struct __attribute__((packed)) boot_block_t {
+typedef struct  boot_block_t {
     uint32_t dir_num;
     uint32_t inode_num;
     uint32_t data_blocks_num;
@@ -36,13 +36,13 @@ typedef struct __attribute__((packed)) boot_block_t {
     dentry_t dentries[BOOT_BLOCK_MAX_INDEX];
 }   boot_block_t;
 
-typedef struct __attribute__((packed)) inode_t {
+typedef struct  inode_t {
     uint32_t len;
     /* There are 1023 data_block indices in total */
     uint32_t data_block[(BLOCK_SIZE-4)/4];
 }   inode_t;
 
-typedef struct __attribute__((packed)) datablock_t {
+typedef struct  datablock_t {
     uint8_t data[BLOCK_SIZE];
 }   data_block_t;
 
@@ -63,7 +63,7 @@ int32_t read_data(uint32_t inode_index, uint32_t offset, uint8_t* buf, uint32_t 
 
 
 
-void file_system_init();
+void file_system_init(uint32_t file_add);
 
 
 int32_t file_open(const uint8_t* fname);
