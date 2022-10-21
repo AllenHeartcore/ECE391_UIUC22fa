@@ -20,9 +20,8 @@
 #define REG_C 0x8C
 
 /* About frequency */
-#define MIN_RATE 3
-#define MAX_RATE 15
-#define MAX_FREQ 1024
+#define ACTUAL_RATE 10
+#define ACTUAL_FREQ 1024
 
 
 /* Initialize RTC */
