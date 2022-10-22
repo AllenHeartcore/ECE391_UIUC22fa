@@ -3,6 +3,9 @@
 
 #include "lib.h"
 
+#define CURSOR_ENABLE 1
+#define CURSOR_ASCII  '_'
+
 static int screen_x;
 static int screen_y;
 static char* video_mem = (char *)VIDEO;
@@ -18,6 +21,18 @@ void get_cursor(uint8_t* x, uint8_t* y) {
 	}
 	*x = screen_x;
 	*y = screen_y;
+}
+
+/* void cursor_redraw(void);
+ * Inputs: uint8_t c -- character to draw
+ * Return Value: none
+ * Function: Redraw cursor
+ */
+void cursor_redraw(uint8_t c) {
+#if (CURSOR_ENABLE == 1)
+	*(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = c;
+	*(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
+#endif
 }
 
 /* void clear(void);
@@ -88,8 +103,10 @@ void handle_backspace() {
  * Function: Handles newline events
  */
 void handle_newline() {
+	cursor_redraw(' ');
 	screen_x = 0;
 	screen_y++;
+	cursor_redraw(CURSOR_ASCII);
 	if (screen_y >= NUM_ROWS) {
 		scroll();
 	}
@@ -254,6 +271,8 @@ void putc(uint8_t c) {
 		*(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
 		screen_x++;
 	}
+
+	cursor_redraw(CURSOR_ASCII);
 }
 
 /* int8_t* itoa(uint32_t value, int8_t* buf, int32_t radix);

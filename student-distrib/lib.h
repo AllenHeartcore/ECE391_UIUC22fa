@@ -12,6 +12,7 @@
 #define ATTRIB      0x7
 
 void get_cursor(uint8_t* x, uint8_t* y);
+void cursor_redraw(uint8_t c);
 int32_t printf(int8_t *format, ...);
 void putc(uint8_t c);
 int32_t puts(int8_t *s);
