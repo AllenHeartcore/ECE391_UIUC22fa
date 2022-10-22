@@ -138,12 +138,13 @@ int32_t terminal_close(int32_t fd) {
 void terminal_scroll() {
 	int i;
 	for (i = 1; i < NUM_ROWS; i++) {
-		memcpy((uint8_t*)(VIDEO + (i - 1) * NUM_COLS),
-			   (uint8_t*)(VIDEO + i * NUM_COLS),
-			   NUM_COLS);
+		/* Each character occupies 2 bytes */
+		memcpy((uint8_t*)(VIDEO + (i - 1) * NUM_COLS * 2),
+			   (uint8_t*)(VIDEO + i * NUM_COLS * 2),
+			   NUM_COLS * 2);
 	}
 	/* Clear the last line */
-	memset((uint8_t*)(VIDEO + (NUM_ROWS - 1) * NUM_COLS), 0, NUM_COLS);
+	memset((uint8_t*)(VIDEO + (NUM_ROWS - 1) * NUM_COLS * 2), 0, NUM_COLS * 2);
 }
 
 /* terminal_clear
