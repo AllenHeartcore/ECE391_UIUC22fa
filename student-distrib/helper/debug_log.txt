@@ -40,3 +40,11 @@ BUG Log for mp3 ---- ZinixOS Group
     Reason: Each character is 2 bytes, so we need to shift by 80*2 = 160 bytes.
     Solution: Shift 80*2 = 160 bytes instead of 80 bytes for one line
     in the scrolling loop in function terminal_scroll.
+
+2. 22/10/2022
+    Description: terminal_clear does not clear the whole screen
+    screen.
+    Reason: Each character is 2 bytes, so the size of the video memory
+    is NUM_ROWS * NUM_COLS * 2 bytes.
+    Solution: Fix the formula for calculating the size of the video
+    memory in function terminal_clear.

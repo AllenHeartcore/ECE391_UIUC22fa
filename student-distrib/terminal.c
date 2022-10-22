@@ -155,7 +155,7 @@ void terminal_scroll() {
  *  SIDE EFFECT: Clear the screen
  */
 void terminal_clear() {
-	memset((uint8_t*)(VIDEO), 0, NUM_COLS * NUM_ROWS);
+	memset((uint8_t*)(VIDEO), 0, NUM_COLS * NUM_ROWS * 2);
 	term.cursor_x = term.cursor_y = 0;
 	set_cursor(0, 0);
 }
