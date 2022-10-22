@@ -86,15 +86,16 @@ void scroll(void) {
  * Function: Handles backspace key press
  */
 void handle_backspace() {
-	*(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = ' ';
 	if (screen_x == 0 && screen_y == 0) {
 		return;
 	}
+	cursor_redraw(' ');
 	screen_x--;
 	if (screen_x < 0) {
 		screen_y--;
 		screen_x = NUM_COLS - 1;
 	}
+	*(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = ' ';
 }
 
 /* handle_newline

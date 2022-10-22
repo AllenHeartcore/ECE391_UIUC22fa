@@ -143,8 +143,10 @@ void key_handler(void) {
 					}
 				}
 			} else if (ascii != '\0') {
-				putc(ascii);								/* Leave \b and \t to putc */
-				term->kbd_buf[term->kbd_buf_count++] = ascii;
+				if (term->kbd_buf_count < KBD_BUF_SIZE - 1) {
+					putc(ascii);								/* Leave \b and \t to putc */
+					term->kbd_buf[term->kbd_buf_count++] = ascii;
+				}
 			}
 	}
 
