@@ -153,7 +153,7 @@ int page_test_deref_not_exist() {
 int read_file_name_test() {
 	TEST_HEADER;
 	dentry_t test;
-	uint8_t filename[200] = "asfvasdashdvjbahjdbhajbhjmbahjbjhBWEFBJsdvjSBNJBGVJBASLDVJ";
+	uint8_t filename[200] = "frame0.txt";
 	// uint8_t* filename = NULL;
 	clear();
 	printf("READ FILE TEST");
@@ -208,6 +208,7 @@ int read_directory_test(){
 	TEST_HEADER;
 	int i;
 	char buf[4096];
+	buf[32] = '\0';
 	// 63 is the max directory number in filesystem
 	clear();
 	printf("files in the directory");
@@ -236,7 +237,7 @@ void launch_tests(){
 	// TEST_OUTPUT("page_test_deref_null", page_test_deref_null());
 	// TEST_OUTPUT("page_test_deref_not_exist", page_test_deref_not_exist());
 	// TEST_OUTPUT("div0_test", div0_test());
-	// TEST_OUTPUT("read_file_name_test", read_file_name_test());
+	TEST_OUTPUT("read_file_name_test", read_file_name_test());
 	// TEST_OUTPUT("read_data_test", read_data_test());
-	TEST_OUTPUT("read_directory", read_directory_test());
+	// TEST_OUTPUT("read_directory", read_directory_test());
 }
