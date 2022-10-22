@@ -15,7 +15,7 @@
 #include "rtc.h"
 #include "filesys.h"
 
-#define RUN_TESTS
+#define RUN_TESTS 1
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
