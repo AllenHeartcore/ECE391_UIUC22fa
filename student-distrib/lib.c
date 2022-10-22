@@ -45,7 +45,7 @@ void clear(void) {
  */
 void scroll(void) {
 	int32_t i;
-	for (i = 1; i < NUM_ROWS; i++) {
+	for (i = 0; i < NUM_ROWS - 1; i++) {
 		memcpy((uint8_t *)(video_mem + (i * NUM_COLS * 2)),
 			   (uint8_t *)(video_mem + ((i + 1) * NUM_COLS * 2)),
 			   NUM_COLS * 2);
