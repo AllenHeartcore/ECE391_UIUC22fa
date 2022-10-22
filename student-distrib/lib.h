@@ -11,6 +11,10 @@
 #define NUM_ROWS    25
 #define ATTRIB      0x7
 
+void enable_cursor(uint8_t cursor_start, uint8_t cursor_end);
+void disable_cursor();
+void update_cursor(int x, int y);
+void get_cursor(uint8_t* x, uint8_t* y);
 int32_t printf(int8_t *format, ...);
 void putc(uint8_t c);
 int32_t puts(int8_t *s);
@@ -18,6 +22,9 @@ int8_t *itoa(uint32_t value, int8_t* buf, int32_t radix);
 int8_t *strrev(int8_t* s);
 uint32_t strlen(const int8_t* s);
 void clear(void);
+void scroll(void);
+void handle_newline(void);
+void handle_backspace(void);
 
 void* memset(void* s, int32_t c, uint32_t n);
 void* memset_word(void* s, int32_t c, uint32_t n);

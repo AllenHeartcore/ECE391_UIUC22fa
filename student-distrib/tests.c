@@ -2,6 +2,7 @@
 #include "x86_desc.h"
 #include "lib.h"
 #include "rtc.h"
+#include "terminal.h"
 
 #define PASS 1
 #define FAIL 0
@@ -167,6 +168,57 @@ int rtc_driver_test() {
 	return PASS;
 }
 
+/* Terminal Keyboard Test (Echo)
+ * 
+ * Try to repeatedly read from and write to terminal
+ * Inputs: None
+ * Outputs: PASS/FAIL
+ * Side Effects: None
+ * Coverage: Terminal, Keyboard
+ * Files: terminal.c/h, keyboard.c/h
+ */
+int terminal_kbd_test_echo() {
+	TEST_HEADER;
+
+	uint8_t buf[128];
+	while (1) {
+		terminal_read(0, buf, 128);
+		terminal_write(0, buf, 128);
+	}
+
+	return PASS;
+}
+
+/* Terminal Keyboard Test (Newline)
+ * 
+ * Check if the terminal automatically wraps to the next line
+ * Inputs: None
+ * Outputs: PASS/FAIL
+ * Side Effects: None
+ * Coverage: Terminal, Keyboard
+ * Files: terminal.c/h, keyboard.c/h
+ */
+int terminal_kbd_test_newline() {
+	TEST_HEADER;
+
+	uint8_t buffer[100] = {
+		'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
+		'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
+		'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
+		'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
+		'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
+		'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
+		'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
+		'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
+		'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
+		'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
+	};
+	terminal_init();
+	terminal_write(0, buffer, 100);
+
+	return PASS;
+}
+
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
 /* Checkpoint 5 tests */
@@ -184,4 +236,6 @@ void launch_tests(){
 
 	/* Checkpoint 2 tests */
 	TEST_OUTPUT("rtc_driver_test", rtc_driver_test());
+	TEST_OUTPUT("terminal_kbd_test_echo", terminal_kbd_test_echo());
+	// TEST_OUTPUT("terminal_kbd_test_newline", terminal_kbd_test_newline());
 }

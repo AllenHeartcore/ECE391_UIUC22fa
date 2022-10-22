@@ -32,3 +32,24 @@ BUG Log for mp3 ---- ZinixOS Group
     Reason: Our test code was wrong. We dereferenced the ptr out or range of our page.
     Solution: Modiy for loop and pointer type in test code.
     Take Time: 10min
+
+----------- check point 1 -----------
+1. 22/10/2022
+    Description: Scrolling shifts characters right by half of the size of the
+    screen.
+    Reason: Each character is 2 bytes, so we need to shift by 80*2 = 160 bytes.
+    Solution: Shift 80*2 = 160 bytes instead of 80 bytes for one line
+    in the scrolling loop in function terminal_scroll.
+
+2. 22/10/2022
+    Description: terminal_clear does not clear the whole screen
+    screen.
+    Reason: Each character is 2 bytes, so the size of the video memory
+    is NUM_ROWS * NUM_COLS * 2 bytes.
+    Solution: Fix the formula for calculating the size of the video
+    memory in function terminal_clear.
+
+3. 22/10/2022
+    Description: <CR> does not bring the cursor the next line.
+	Reason: We does not pass '\n' to function putc.
+	Solution: Pass '\n' to function putc.

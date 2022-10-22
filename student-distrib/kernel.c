@@ -13,6 +13,7 @@
 #include "idt.h"
 #include "keyboard.h"
 #include "rtc.h"
+#include "terminal.h"
 
 #define RUN_TESTS
 
@@ -151,6 +152,7 @@ void entry(unsigned long magic, unsigned long addr) {
 
 	/* Initialize devices, memory, filesystem, enable device interrupts on the
 	 * PIC, any other initialization stuff... */
+	terminal_init();
 	key_init();
 	rtc_init();
 
