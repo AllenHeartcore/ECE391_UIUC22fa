@@ -80,8 +80,8 @@ int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes) {
 
 	if (NULL == buf || nbytes <= 0) { return 0; }
 
-	/* Write to the screen */
-	for (i = 0; i < nbytes; i++) {
+	/* Write to the screen; stop at NUL */
+	for (i = 0; i < nbytes && ((char*)buf)[i] != '\0'; i++) {
 		putc(((char*)buf)[i]);
 	}
 

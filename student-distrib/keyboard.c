@@ -131,6 +131,7 @@ void key_handler(void) {
 				break;
 			} else if (ascii == '\n' && term != NULL) {
 				putc('\n');
+				term->kbd_buf[term->kbd_buf_count++] = '\n';
 				term->readkey = 1;							/* Set the "endline" flag */
 			} else if (ascii == '\b') {
 				if (term->kbd_buf_count > 0) {
