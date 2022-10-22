@@ -133,8 +133,10 @@ void key_handler(void) {
 				putc('\n');
 				term->readkey = 1;							/* Set the "endline" flag */
 			} else if (ascii == '\b') {
-				putc(ascii);								/* Backspace */
-				term->kbd_buf[--term->kbd_buf_count] = '\0';
+				if (term->kbd_buf_count > 0) {
+					putc(ascii);								/* Backspace */
+					term->kbd_buf[--term->kbd_buf_count] = '\0';
+				}
 			} else if (ascii == '\t') {
 				for (i = 0; i < 4; i++) {
 					if (term->kbd_buf_count < KBD_BUF_SIZE - 1) {
