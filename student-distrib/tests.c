@@ -179,11 +179,10 @@ int read_data_test() {
 	// TEST_HEADER;
 	dentry_t test;
 	char buff[40000] = {'\0'};
-	uint8_t filename[FILE_NAME_MAX] = "fish";
+	uint8_t filename[FILE_NAME_MAX] = "shell";
 	int i;
 	int32_t bytes_read;
 	read_dentry_by_name(filename,&test);
-	
 	bytes_read = read_data(test.inode_num,0,(uint8_t*)buff,100000);
 	clear();
 	printf(buff);
@@ -305,10 +304,10 @@ void launch_tests(){
 	// TEST_OUTPUT("page_test_deref_not_exist", page_test_deref_not_exist());
 	// TEST_OUTPUT("div0_test", div0_test());
 	// TEST_OUTPUT("read_file_name_test", read_file_name_test());
-	// TEST_OUTPUT("read_data_test", read_data_test());
+	TEST_OUTPUT("read_data_test", read_data_test());
 	// TEST_OUTPUT("read_directory", read_directory_test());
 	// TEST_OUTPUT("file_open_test", open_file_test());
-	TEST_OUTPUT("file_close_test", close_file_test());
+	// TEST_OUTPUT("file_close_test", close_file_test());
 	// TEST_OUTPUT("file_read_test", read_file_test());
 	// TEST_OUTPUT("file_write_test", write_file_test());
 }
