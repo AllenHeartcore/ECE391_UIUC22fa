@@ -17,10 +17,9 @@ terminal_t term;
 int32_t terminal_init() {
 	term.readkey = 0;
 	term.kbd_buf_count = 0;
-	/* Clear the screen and set the cursor at
-	 * the top left corner on the screen */
+	get_cursor(&term.cursor_x, &term.cursor_y);
 	enable_cursor(0, 14);					/* Set cursor shape */
-	update_cursor(0, 0);					/* Set cursor position */
+	update_cursor(term.cursor_x, term.cursor_y);	/* Set cursor position */
 	return 0;
 }
 
