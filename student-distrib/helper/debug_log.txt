@@ -48,3 +48,8 @@ BUG Log for mp3 ---- ZinixOS Group
     is NUM_ROWS * NUM_COLS * 2 bytes.
     Solution: Fix the formula for calculating the size of the video
     memory in function terminal_clear.
+
+3. 22/10/2022
+    Description: <CR> does not bring the cursor the next line.
+	Reason: We does not pass '\n' to function putc.
+	Solution: Pass '\n' to function putc.

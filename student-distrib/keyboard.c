@@ -130,6 +130,7 @@ void key_handler(void) {
 				terminal_clear();							/* Ctrl + L cleans the screen */
 				break;
 			} else if (ascii == '\n' && term != NULL) {
+				putc('\n');
 				term->readkey = 1;							/* Set the "endline" flag */
 			} else if (ascii == '\b') {
 				putc(ascii);								/* Backspace */
