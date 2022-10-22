@@ -116,3 +116,4 @@ source/
 .vscode/
 Makefile.dep
 bootimg
+*.img
