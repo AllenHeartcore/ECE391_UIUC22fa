@@ -13,6 +13,9 @@ static char* video_mem = (char *)VIDEO;
  * Return Value: none
  * Function: Get cursor from external coords */
 void get_cursor(uint8_t* x, uint8_t* y) {
+	if (x == NULL || y == NULL) {
+		return;
+	}
 	*x = screen_x;
 	*y = screen_y;
 }
