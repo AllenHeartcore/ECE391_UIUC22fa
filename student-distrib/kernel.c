@@ -13,9 +13,10 @@
 #include "idt.h"
 #include "keyboard.h"
 #include "rtc.h"
+#include "filesys.h"
 #include "terminal.h"
 
-#define RUN_TESTS
+#define RUN_TESTS 1
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
@@ -26,6 +27,7 @@
 void entry(unsigned long magic, unsigned long addr) {
 
 	multiboot_info_t *mbi;
+	uint32_t file_add;
 
 	/* Clear the screen. */
 	clear();
@@ -66,6 +68,7 @@ void entry(unsigned long magic, unsigned long addr) {
 				printf("0x%x ", *((char*)(mod->mod_start+i)));
 			}
 			printf("\n");
+			file_add = mod->mod_start;  // Get the file img's address
 			mod_count++;
 			mod++;
 		}
@@ -142,6 +145,7 @@ void entry(unsigned long magic, unsigned long addr) {
 		ltr(KERNEL_TSS);
 	}
 
+	file_system_init(file_add);
 	idt_init();
 
 	/* Init the PIC */

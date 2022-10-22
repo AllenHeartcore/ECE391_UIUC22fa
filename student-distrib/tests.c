@@ -3,6 +3,7 @@
 #include "lib.h"
 #include "rtc.h"
 #include "terminal.h"
+#include "filesys.h"
 
 #define PASS 1
 #define FAIL 0
@@ -142,6 +143,143 @@ int page_test_deref_not_exist() {
 
 /* Checkpoint 2 tests */
 
+
+
+/* Read by name test
+ * 
+ * Asserts that we can read dentry by name
+ * Inputs: None
+ * Outputs: PASS/FAIL
+ * Side Effects: None
+ */
+int read_file_name_test() {
+	TEST_HEADER;
+	dentry_t test;
+	uint8_t filename[200] = "frame0.txt";
+	// uint8_t* filename = NULL;
+	printf("READ FILE TEST");
+	printf(" \n");
+	if (read_dentry_by_name(filename,&test) == -1)
+		return FAIL;
+	printf("The file's name is %s!\n",test.filename);
+
+	if(strncmp((int8_t*)test.filename,(int8_t*)filename,FILE_NAME_MAX)!=0)
+		return FAIL;
+	return PASS;
+}
+
+/* Access data by name test
+ * 
+ * Asserts that we can read data from data block
+ * Inputs: None
+ * Outputs: PASS/FAIL
+ * Side Effects: None
+ */
+int read_data_test() {
+	// TEST_HEADER;
+	dentry_t test;
+	char buff[40000] = {'\0'};
+	uint8_t filename[FILE_NAME_MAX] = "ls";
+	int i;
+	int32_t bytes_read;
+	read_dentry_by_name(filename,&test);
+	bytes_read = read_data(test.inode_num,0,(uint8_t*)buff,100000);
+	for(i=0; i <bytes_read; i++)
+		putc(buff[i]);
+	return PASS;
+}
+
+
+
+/* Read directory test
+ * 
+ * Asserts that we can read directory
+ * Inputs: None
+ * Outputs: PASS/FAIL
+ * Side Effects: None
+ * Coverage: Read directory
+ */
+int read_directory_test(){
+	TEST_HEADER;
+	int i;
+	uint8_t buf[4096];
+	buf[32] = '\0';
+	// 63 is the max directory number in filesystem
+	for (i = 0; i < 63; i++){
+		if (read_directory(buf, i) == -1)
+			break;
+		printf((int8_t*)buf);
+		printf("\n");
+	}
+	return PASS;
+}
+
+/*
+* File Open test
+* Asserts we can open the file
+* Inputs: None
+* Outputs: PASS/FAIL
+* Side Effects: None
+* Coverage: Open the file
+*/
+int open_file_test(){
+	TEST_HEADER;
+	uint8_t filename[100] = "frame0.txt";
+	if (fopen(filename) == -1)
+		return FAIL;
+	return PASS;
+}
+
+/*
+* File Close test
+* Asserts we can close the file
+* Inputs: None
+* Outputs: PASS/FAIL
+* Side Effects: None
+* Coverage: Close the file
+*/
+int close_file_test(){
+	TEST_HEADER;
+	int fd = 0;
+	if (fclose(fd) == 0)
+		return PASS;
+	return FAIL;
+}
+
+/*
+* File Write test
+* Asserts we can write the file
+* Inputs: None
+* Outputs: PASS/FAIL
+* Side Effects: None
+* Coverage: Write the file
+*/
+int write_file_test(){
+	TEST_HEADER;
+	if (fwrite(0, NULL, 0) == 0)
+		return PASS;
+	return FAIL;
+}
+
+/*
+* File Read test
+* Asserts we can read the file
+* Inputs: None
+* Outputs: PASS/FAIL
+* Side Effects: None
+* Coverage: Read the file
+*/
+
+int read_file_test(){
+	TEST_HEADER;
+	if (fread(0, NULL, 0) == 0)
+		return PASS;
+	return FAIL;
+}
+
+
+
+
 /* RTC Driver Test
  *
  * Changing through all possible RTC frequencies
@@ -228,14 +366,29 @@ int terminal_kbd_test_newline() {
 void launch_tests(){
 	/* Checkpoint 1 tests */
 	/* The machine will FREEZE after an exception */
-	// TEST_OUTPUT("idt_test", idt_test());
-	// TEST_OUTPUT("page_test", page_test());
-	// TEST_OUTPUT("page_test_deref_null", page_test_deref_null());
-	// TEST_OUTPUT("page_test_deref_not_exist", page_test_deref_not_exist());
-	// TEST_OUTPUT("div0_test", div0_test());
+	// // TEST_OUTPUT("idt_test", idt_test());
+	// // TEST_OUTPUT("page_test", page_test());
+	// // TEST_OUTPUT("page_test_deref_null", page_test_deref_null());
+	// // TEST_OUTPUT("page_test_deref_not_exist", page_test_deref_not_exist());
+	// // TEST_OUTPUT("div0_test", div0_test());
 
 	/* Checkpoint 2 tests */
+	TEST_OUTPUT("open_file_test", open_file_test());
+	rtc_read(0, NULL, 0);
+	TEST_OUTPUT("close_file_test", close_file_test());
+	rtc_read(0, NULL, 0);
+	TEST_OUTPUT("read_file_test", read_file_test());
+	rtc_read(0, NULL, 0);
+	TEST_OUTPUT("write_file_test", write_file_test());
+	rtc_read(0, NULL, 0);
+	TEST_OUTPUT("read_file_name_test", read_file_name_test());
+	rtc_read(0, NULL, 0);
+	TEST_OUTPUT("read_data_test", read_data_test());
+	rtc_read(0, NULL, 0);
+	TEST_OUTPUT("read_directory", read_directory_test());
+	rtc_read(0, NULL, 0);
 	TEST_OUTPUT("rtc_driver_test", rtc_driver_test());
+	rtc_read(0, NULL, 0);
 	TEST_OUTPUT("terminal_kbd_test_echo", terminal_kbd_test_echo());
 	// TEST_OUTPUT("terminal_kbd_test_newline", terminal_kbd_test_newline());
 }
