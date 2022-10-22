@@ -222,6 +222,73 @@ int read_directory_test(){
 	return PASS;
 }
 
+/*
+* File Open test
+* Asserts we can open the file
+* Inputs: None
+* Outputs: PASS/FAIL
+* Side Effects: None
+* Coverage: Open the file
+*/
+int open_file_test(){
+	TEST_HEADER;
+	char filename[100] = "frame0.txt";
+	clear();
+	if (fopen(filename) == -1)
+		return FAIL;
+	return PASS;
+}
+
+/*
+* File Close test
+* Asserts we can close the file
+* Inputs: None
+* Outputs: PASS/FAIL
+* Side Effects: None
+* Coverage: Close the file
+*/
+int close_file_test(){
+	TEST_HEADER;
+	int fd = 0;
+	clear();
+	if (fclose(fd) == 0)
+		return PASS;
+	return FAIL;
+}
+
+/*
+* File Write test
+* Asserts we can write the file
+* Inputs: None
+* Outputs: PASS/FAIL
+* Side Effects: None
+* Coverage: Write the file
+*/
+int write_file_test(){
+	TEST_HEADER;
+	clear();
+	if (fwrite(0, NULL, 0) == 0)
+		return PASS;
+	return FAIL;
+}
+
+/*
+* File Read test
+* Asserts we can read the file
+* Inputs: None
+* Outputs: PASS/FAIL
+* Side Effects: None
+* Coverage: Read the file
+*/
+
+int read_file_test(){
+	TEST_HEADER;
+	clear();
+	if (fread(0, NULL, 0) == 0)
+		return PASS;
+	return FAIL;
+}
+
 
 
 /* Checkpoint 3 tests */
@@ -237,7 +304,11 @@ void launch_tests(){
 	// TEST_OUTPUT("page_test_deref_null", page_test_deref_null());
 	// TEST_OUTPUT("page_test_deref_not_exist", page_test_deref_not_exist());
 	// TEST_OUTPUT("div0_test", div0_test());
-	TEST_OUTPUT("read_file_name_test", read_file_name_test());
+	// TEST_OUTPUT("read_file_name_test", read_file_name_test());
 	// TEST_OUTPUT("read_data_test", read_data_test());
 	// TEST_OUTPUT("read_directory", read_directory_test());
+	// TEST_OUTPUT("file_open_test", open_file_test());
+	TEST_OUTPUT("file_close_test", close_file_test());
+	// TEST_OUTPUT("file_read_test", read_file_test());
+	// TEST_OUTPUT("file_write_test", write_file_test());
 }

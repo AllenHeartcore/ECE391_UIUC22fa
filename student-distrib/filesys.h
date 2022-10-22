@@ -66,14 +66,14 @@ int32_t read_data(uint32_t inode_index, uint32_t offset, uint8_t* buf, uint32_t 
 void file_system_init(uint32_t file_add);
 
 
-int32_t file_open(const uint8_t* fname);
+int32_t fopen(const uint8_t* fname);
 
-int32_t file_close(int32_t fd);
+int32_t fclose(int32_t fd);
 
 /* function we care */
-int32_t file_read(int32_t fd, void* buf, int32_t nbytes);
+int32_t fread(int32_t fd, void* buf, int32_t nbytes);
 
-int32_t file_write(int32_t fd, const void* buf, int32_t nbytes);
+int32_t fwrite(int32_t fd, const void* buf, int32_t nbytes);
 
 int32_t dir_open(const uint8_t* fname);
 

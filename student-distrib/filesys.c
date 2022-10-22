@@ -166,13 +166,69 @@ int32_t read_data(uint32_t inode_index, uint32_t offset, uint8_t* buf, uint32_t 
  * Outputs: 0, always successful
  * Side Effects: None
  * Coverage: Load all the filename in the directory
- * Files: x86_desc.h/S
  */
 int32_t read_directory(uint8_t* buf, int index){
     dentry_t dentry;                // initialize the dentry
+    // get the certain dentry
     dentry = dentries[index];
     if (index >= boot_block->dir_num)
         return -1;
+    // copy the filename into buffer
     memcpy(buf, &dentry.filename, FILE_NAME_MAX);
+    return 0;
+}
+
+
+/*
+ * fopen
+ * check whether we can open the file with filename
+ * Inputs: fname
+ * Output: 0 if success -1 if fail
+ * Side Effect: None
+ * Coverage: Check whether we can open the file
+ */
+int32_t fopen(const uint8_t* filename){
+    dentry_t dentry;
+    // call the function read_dentry_by_name
+    if (read_dentry_by_name(filename, &dentry))
+        return -1;
+    else
+        return 0;
+}
+
+
+/*
+ * fopen
+ * check whether we can close the file with filename
+ * Inputs: fd (file descriptor)
+ * Output: 0 if success -1 if fail
+ * Side Effect: None
+ * Coverage: Check whether we can close the file
+ */
+int32_t fclose(int32_t fd){
+    return 0;
+}
+
+/*
+ * fwrite
+ * write into file
+ * Input: fd: file descriptor, buffer: written data , n_bytes: how many bytes written
+ * Output: 0 if success -1 if failure
+ * Side Effect: File maybe changed
+ * Coverage: Write into files
+ */
+int32_t fwrite(int32_t fd, const void* buf, int32_t n_bytes){
+    return 0;
+}
+
+/*
+ * fread
+ * read file
+ * Input: fd: file descriptor, buffer: written data , n_bytes: how many bytes written
+ * Output: 0 if success -1 if failure
+ * Side Effect: None
+ * Coverage: Read the files
+ */
+int32_t fread(int32_t fd, void* buf, int32_t n_bytes){
     return 0;
 }
