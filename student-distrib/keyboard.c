@@ -91,7 +91,7 @@ void key_init(void) {
 */
 void key_handler(void) {
 	uint8_t scan_code;
-	uint8_t ascii;
+	uint8_t ascii, i;
 	terminal_t* term = get_current_terminal();
 	cli();
 
@@ -135,6 +135,13 @@ void key_handler(void) {
 			} else if (ascii == '\b') {
 				putc(ascii);								/* Backspace */
 				term->kbd_buf[--term->kbd_buf_count] = '\0';
+			} else if (ascii == '\t') {
+				for (i = 0; i < 4; i++) {
+					if (term->kbd_buf_count < KBD_BUF_SIZE - 1) {
+						putc(' ');
+						term->kbd_buf[term->kbd_buf_count++] = ' ';
+					}
+				}
 			} else if (ascii != '\0') {
 				putc(ascii);								/* Leave \b and \t to putc */
 				term->kbd_buf[term->kbd_buf_count++] = ascii;

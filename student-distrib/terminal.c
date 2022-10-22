@@ -37,7 +37,9 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes) {
 
 	if (NULL == buf || nbytes <= 0) { return 0; }
 
-	term.readkey = 0;
+	memset(term.kbd_buf, 0, KBD_BUF_SIZE);	/* Clear the buffer */
+	term.kbd_buf_count = 0;					/* Reset the buffer count */
+	term.readkey = 0;						/* Reset the "endline" flag */
 	while (1) {
 		if (term.readkey != 0) {
 			term.readkey = 0;

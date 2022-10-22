@@ -141,7 +141,37 @@ int page_test_deref_not_exist() {
 
 /* Checkpoint 2 tests */
 
-int terminal_kbd_test() {
+/* Terminal Keyboard Test (Echo)
+ * 
+ * Try to repeatedly read from and write to terminal
+ * Inputs: None
+ * Outputs: PASS/FAIL
+ * Side Effects: None
+ * Coverage: Terminal, Keyboard
+ * Files: terminal.c/h, keyboard.c/h
+ */
+int terminal_kbd_test_echo() {
+	TEST_HEADER;
+
+	uint8_t buf[128];
+	while (1) {
+		terminal_read(0, buf, 128);
+		terminal_write(0, buf, 128);
+	}
+
+	return PASS;
+}
+
+/* Terminal Keyboard Test (Newline)
+ * 
+ * Check if the terminal automatically wraps to the next line
+ * Inputs: None
+ * Outputs: PASS/FAIL
+ * Side Effects: None
+ * Coverage: Terminal, Keyboard
+ * Files: terminal.c/h, keyboard.c/h
+ */
+int terminal_kbd_test_newline() {
 	TEST_HEADER;
 
 	uint8_t buffer[100] = {
@@ -175,5 +205,6 @@ void launch_tests(){
 	// TEST_OUTPUT("page_test_deref_null", page_test_deref_null());
 	// TEST_OUTPUT("page_test_deref_not_exist", page_test_deref_not_exist());
 	// TEST_OUTPUT("div0_test", div0_test());
-	TEST_OUTPUT("keyboard_test", terminal_kbd_test());
+	// TEST_OUTPUT("terminal_kbd_test_newline", terminal_kbd_test_newline());
+	TEST_OUTPUT("terminal_kbd_test_echo", terminal_kbd_test_echo());
 }
