@@ -123,6 +123,7 @@ int32_t terminal_open(const uint8_t* filename) {
  *  SIDE EFFECT: close the terminal
  */
 int32_t terminal_close(int32_t fd) {
+	memset(term.kbd_buf, 0, KBD_BUF_SIZE);
 	return 0;
 }
 
