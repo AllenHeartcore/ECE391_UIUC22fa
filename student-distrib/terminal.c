@@ -3,6 +3,7 @@
  */
 #include "terminal.h"
 #include "lib.h"
+#include "keyboard.h"
 
 terminal_t term;
 
@@ -15,7 +16,7 @@ terminal_t term;
  */
 int32_t terminal_init() {
 	term.readkey = 0;
-	memset(&(term.kbd_buf), 0, KBD_BUF_SIZE);
+	term.kbd_buf_count = 0;
 	/* Clear the screen and set the cursor at
 	 * the top left corner on the screen */
 	terminal_clear();
@@ -123,7 +124,7 @@ int32_t terminal_open(const uint8_t* filename) {
  *  SIDE EFFECT: close the terminal
  */
 int32_t terminal_close(int32_t fd) {
-	memset(term.kbd_buf, 0, KBD_BUF_SIZE);
+	term.kbd_buf_count = 0;
 	return 0;
 }
 
@@ -155,6 +156,7 @@ void terminal_scroll() {
 void terminal_clear() {
 	memset((uint8_t*)(VIDEO), 0, NUM_COLS * NUM_ROWS);
 	term.cursor_x = term.cursor_y = 0;
+	set_cursor(0, 0);
 }
 
 /* get_current_terminal

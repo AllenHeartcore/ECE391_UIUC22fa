@@ -11,6 +11,7 @@ typedef struct terminal_t {
 	uint8_t  cursor_x;          /* column number of current cursor position */
 	uint8_t  cursor_y;          /* row number of current cursor position    */
 	uint8_t  kbd_buf[KBD_BUF_SIZE];     /* keyboard buffer                  */
+	uint8_t  kbd_buf_count;     /* number of characters in keyboard buffer  */
 } terminal_t;
 
 /* Initialize the terminal */

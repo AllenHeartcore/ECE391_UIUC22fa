@@ -4,6 +4,7 @@
 #include "keyboard.h"
 #include "lib.h"
 #include "i8259.h"
+#include "terminal.h"
 
 /* Modifier keys */
 #define LEFT_CTRL_PRESSED    0x1D
@@ -91,6 +92,7 @@ void key_init(void) {
 void key_handler(void) {
 	uint8_t scan_code;
 	uint8_t ascii;
+	terminal_t* term = get_current_terminal();
 	cli();
 
 	/* Read from port to get the current scan code. */
@@ -123,7 +125,19 @@ void key_handler(void) {
 			} else {
 				ascii = scan_code_table[scan_code];
 			}
-			if (ascii != '\0') putc(ascii);
+
+			if (ctrl && (ascii == 'l' || ascii == 'L')) {
+				terminal_clear();							/* Ctrl + L cleans the screen */
+				break;
+			} else if (ascii == '\n' && term != NULL) {
+				term->readkey = 1;							/* Set the "endline" flag */
+			} else if (ascii == '\b') {
+				putc(ascii);								/* Backspace */
+				term->kbd_buf[--term->kbd_buf_count] = '\0';
+			} else if (ascii != '\0') {
+				putc(ascii);								/* Leave \b and \t to putc */
+				term->kbd_buf[term->kbd_buf_count++] = ascii;
+			}
 	}
 
 	send_eoi(KEY_IRQ_NUM);

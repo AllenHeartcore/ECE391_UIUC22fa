@@ -139,6 +139,19 @@ int page_test_deref_not_exist() {
 }
 
 /* Checkpoint 2 tests */
+
+int keyboard_test() {
+	TEST_HEADER;
+
+	uint8_t user_buffer[128];
+	while (1) {
+		terminal_read(0, user_buffer, 128);
+		terminal_write(0, user_buffer, 128);
+	}
+
+	return PASS;
+}
+
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
 /* Checkpoint 5 tests */
@@ -147,9 +160,10 @@ int page_test_deref_not_exist() {
 /* Test suite entry point */
 void launch_tests(){
 	/* The machine will FREEZE after an exception */
-	TEST_OUTPUT("idt_test", idt_test());
-	TEST_OUTPUT("page_test", page_test());
-	TEST_OUTPUT("page_test_deref_null", page_test_deref_null());
-	TEST_OUTPUT("page_test_deref_not_exist", page_test_deref_not_exist());
-	TEST_OUTPUT("div0_test", div0_test());
+	// TEST_OUTPUT("idt_test", idt_test());
+	// TEST_OUTPUT("page_test", page_test());
+	// TEST_OUTPUT("page_test_deref_null", page_test_deref_null());
+	// TEST_OUTPUT("page_test_deref_not_exist", page_test_deref_not_exist());
+	// TEST_OUTPUT("div0_test", div0_test());
+	TEST_OUTPUT("keyboard_test", keyboard_test());
 }

@@ -9,6 +9,16 @@ static int screen_x;
 static int screen_y;
 static char* video_mem = (char *)VIDEO;
 
+/* void set_cursor(void);
+ * Inputs: x -- x coordinate of cursor
+ *         y -- y coordinate of cursor
+ * Return Value: none
+ * Function: Set cursor from external coords */
+void set_cursor(uint8_t x, uint8_t y) {
+	screen_x = x;
+	screen_y = y;
+}
+
 /* void clear(void);
  * Inputs: void
  * Return Value: none
@@ -168,6 +178,16 @@ void putc(uint8_t c) {
 	if(c == '\n' || c == '\r') {
 		screen_y++;
 		screen_x = 0;
+	} else if (c == '\b') {				/* Handle backspace */
+		*(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = ' ';
+		if (screen_x == 0 && screen_y == 0) {
+			return;
+		}
+		screen_x--;
+		if (screen_x < 0) {
+			screen_y--;
+			screen_x = NUM_COLS - 1;
+		}
 	} else {
 		*(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = c;
 		*(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
