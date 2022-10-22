@@ -155,8 +155,13 @@ int page_test_deref_not_exist() {
 int read_file_name_test() {
 	TEST_HEADER;
 	dentry_t test;
-	uint8_t filename[FILE_NAME_MAX] = "frame0.txt";
-	read_dentry_by_name(filename,&test);
+	uint8_t filename[200] = "asfvasdashdvjbahjdbhajbhjmbahjbjhBWEFBJsdvjSBNJBGVJBASLDVJ";
+	// uint8_t* filename = NULL;
+	clear();
+	printf("READ FILE TEST");
+	printf(" \n");
+	if (read_dentry_by_name(filename,&test) == -1)
+		return FAIL;
 	printf("The file's name is %s!\n",test.filename);
 
 	if(strncmp((int8_t*)test.filename,(int8_t*)filename,FILE_NAME_MAX)!=0)
@@ -203,6 +208,7 @@ int read_directory_test(){
 	char buf[4096];
 	// 63 is the max directory number in filesystem
 	clear();
+	printf("files in the directory");
 	printf(" \n");
 	for (i = 0; i < 63; i++){
 		if (read_directory(buf, i) == -1)
