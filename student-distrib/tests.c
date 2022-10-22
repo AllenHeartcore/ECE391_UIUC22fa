@@ -195,7 +195,29 @@ int read_data_test() {
 
 
 
-
+/* Read by name test
+ * 
+ * Asserts that we can read directory
+ * Inputs: None
+ * Outputs: PASS/FAIL
+ * Side Effects: None
+ * Coverage: Read directory
+ */
+int read_directory_test(){
+	TEST_HEADER;
+	int i;
+	char buf[4096];
+	// 63 is the max directory number in filesystem
+	clear();
+	printf(" \n");
+	for (i = 0; i < 63; i++){
+		if (read_directory(buf, i) == -1)
+			break;
+		printf(buf);
+		printf("\n");
+	}
+	return PASS;
+}
 
 
 
@@ -213,5 +235,6 @@ void launch_tests(){
 	// TEST_OUTPUT("page_test_deref_not_exist", page_test_deref_not_exist());
 	// TEST_OUTPUT("div0_test", div0_test());
 	// TEST_OUTPUT("read_file_name_test", read_file_name_test());
-	TEST_OUTPUT("read_data_test", read_data_test());
+	// TEST_OUTPUT("read_data_test", read_data_test());
+	TEST_OUTPUT("read_directory", read_directory_test());
 }

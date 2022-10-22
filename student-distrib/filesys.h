@@ -81,6 +81,7 @@ int32_t dir_close(int32_t fd);
 
 int32_t dir_write(int32_t fd, const void* buf, int32_t nbytes);
 
+int32_t read_directory(uint8_t* buf, int index);
 /* function we care */
 int32_t dir_read();
 

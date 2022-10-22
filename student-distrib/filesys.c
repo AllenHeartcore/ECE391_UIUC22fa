@@ -63,6 +63,10 @@ int32_t read_dentry_by_index (uint8_t index, dentry_t* dentry){
 int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry){
     uint8_t i;
     dentry_t* current_dentry;
+    if (fname == NULL)  
+        return -1;
+    if (strlen((int8_t*)fname) > 32)
+        return -1;
     for(i=0; i<boot_block->dir_num; i++){
         current_dentry = &(dentries[i]);
         if(strncmp((int8_t*)fname, (int8_t*)current_dentry->filename, FILE_NAME_MAX)==0){
@@ -153,4 +157,22 @@ int32_t read_data(uint32_t inode_index, uint32_t offset, uint8_t* buf, uint32_t 
     }
 
     return bytes_copied;
+}
+
+/* Read all the descriptions of the files
+ * 
+ * Asserts that we can read data from data block
+ * Inputs: buffer to store the file description data
+ * Outputs: 0, always successful
+ * Side Effects: None
+ * Coverage: Load all the filename in the directory
+ * Files: x86_desc.h/S
+ */
+int32_t read_directory(uint8_t* buf, int index){
+    dentry_t dentry;                // initialize the dentry
+    dentry = dentries[index];
+    if (index >= boot_block->dir_num)
+        return -1;
+    memcpy(buf, &dentry.filename, FILE_NAME_MAX);
+    return 0;
 }
