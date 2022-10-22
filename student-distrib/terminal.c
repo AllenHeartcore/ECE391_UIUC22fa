@@ -73,35 +73,16 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes) {
  */
 int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes) {
 	int32_t i = 0;
-	uint8_t c = '\0';
 
 	if (NULL == buf || nbytes <= 0) { return 0; }
 
+	/* Write to the screen */
 	for (i = 0; i < nbytes; i++) {
-		/* Cursor at the end of current line */
-		if (term.cursor_x >= NUM_COLS) {
-			term.cursor_y++;
-			term.cursor_x = 0;
-			putc('\n');
-			/* Cursor at the end of the screen */
-			if (term.cursor_y >= NUM_ROWS) {
-				term.cursor_y = NUM_ROWS - 1;
-				terminal_scroll();
-			}
-		}
-
-		/* Put the character on the screen */
-		c = ((char*)buf)[i];
-		putc(c);
-
-		/* Update cursor position */
-		if (c == '\n' || c == '\r') {
-			term.cursor_x = 0;
-			term.cursor_y++;
-		} else {
-			term.cursor_x++;
-		}
+		putc(((char*)buf)[i]);
 	}
+
+	/* Update cursor position */
+	get_cursor(&term.cursor_x, &term.cursor_y);
 
 	return i + 1;
 }
@@ -136,15 +117,8 @@ int32_t terminal_close(int32_t fd) {
  *  SIDE EFFECT: change the contents on the screen
  */
 void terminal_scroll() {
-	int i;
-	for (i = 1; i < NUM_ROWS; i++) {
-		/* Each character occupies 2 bytes */
-		memcpy((uint8_t*)(VIDEO + (i - 1) * NUM_COLS * 2),
-			   (uint8_t*)(VIDEO + i * NUM_COLS * 2),
-			   NUM_COLS * 2);
-	}
-	/* Clear the last line */
-	memset((uint8_t*)(VIDEO + (NUM_ROWS - 1) * NUM_COLS * 2), 0, NUM_COLS * 2);
+	scroll();
+	get_cursor(&term.cursor_x, &term.cursor_y);
 }
 
 /* terminal_clear
@@ -155,9 +129,8 @@ void terminal_scroll() {
  *  SIDE EFFECT: Clear the screen
  */
 void terminal_clear() {
-	memset((uint8_t*)(VIDEO), 0, NUM_COLS * NUM_ROWS * 2);
-	term.cursor_x = term.cursor_y = 0;
-	set_cursor(0, 0);
+	clear();
+	get_cursor(&term.cursor_x, &term.cursor_y);
 }
 
 /* get_current_terminal

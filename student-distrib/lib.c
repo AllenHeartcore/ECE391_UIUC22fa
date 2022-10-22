@@ -3,33 +3,95 @@
 
 #include "lib.h"
 
-
-
 static int screen_x;
 static int screen_y;
 static char* video_mem = (char *)VIDEO;
 
-/* void set_cursor(void);
- * Inputs: x -- x coordinate of cursor
- *         y -- y coordinate of cursor
+/* void get_cursor(void);
+ * Inputs: x -- pointer to x coordinate of cursor
+ *         y -- pointer to y coordinate of cursor
  * Return Value: none
- * Function: Set cursor from external coords */
-void set_cursor(uint8_t x, uint8_t y) {
-	screen_x = x;
-	screen_y = y;
+ * Function: Get cursor from external coords */
+void get_cursor(uint8_t* x, uint8_t* y) {
+	*x = screen_x;
+	*y = screen_y;
 }
 
 /* void clear(void);
  * Inputs: void
  * Return Value: none
- * Function: Clears video memory */
+ * Function: Clears video memory;
+ *           Set the cursor to the
+ *           left top corner of the screen.
+ */
 void clear(void) {
 	int32_t i;
+	screen_x = screen_y = 0;
 	for (i = 0; i < NUM_ROWS * NUM_COLS; i++) {
 		*(uint8_t *)(video_mem + (i << 1)) = ' ';
 		*(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
 	}
 }
+
+/* void scroll(void)
+ * Inputs: void
+ * Return Value: none
+ * Function: Scrolls the screen up one line;
+ *           Moves the cursor up one line.
+ *           (if the cursor is not on the top line)
+ */
+void scroll(void) {
+	int32_t i;
+	for (i = 1; i < NUM_ROWS; i++) {
+		memcpy((uint8_t *)(video_mem + (i * NUM_COLS * 2)),
+			   (uint8_t *)(video_mem + ((i + 1) * NUM_COLS * 2)),
+			   NUM_COLS * 2);
+	}
+
+	/* Clear the last line */
+	for (i = 0; i < NUM_COLS; i++) {
+		*(uint8_t *)(video_mem + ((NUM_ROWS - 1) * NUM_COLS * 2) + (i << 1)) = ' ';
+		*(uint8_t *)(video_mem + ((NUM_ROWS - 1) * NUM_COLS * 2) + (i << 1) + 1)
+			= ATTRIB;
+	}
+
+	/* Move the cursor up one line,
+	 * but don't move it off the screen */
+	if (--screen_y < 0) {
+		++screen_y;
+	}
+}
+
+/* handle_backspace
+ * Inputs: void
+ * Return Value: none
+ * Function: Handles backspace key press
+ */
+void handle_backspace() {
+	*(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = ' ';
+	if (screen_x == 0 && screen_y == 0) {
+		return;
+	}
+	screen_x--;
+	if (screen_x < 0) {
+		screen_y--;
+		screen_x = NUM_COLS - 1;
+	}
+}
+
+/* handle_newline
+ * Inputs: void
+ * Return Value: none
+ * Function: Handles newline events
+ */
+void handle_newline() {
+	screen_x = 0;
+	screen_y++;
+	if (screen_y >= NUM_ROWS) {
+		scroll();
+	}
+}
+
 
 /* Standard printf().
  * Only supports the following format strings:
@@ -175,25 +237,19 @@ int32_t puts(int8_t* s) {
  * Return Value: void
  *  Function: Output a character to the console */
 void putc(uint8_t c) {
+	/* Go to a new line if get line break or if the
+	 * cursor is already at the end of the current line */
 	if(c == '\n' || c == '\r') {
-		screen_y++;
-		screen_x = 0;
+		handle_newline();
 	} else if (c == '\b') {				/* Handle backspace */
-		*(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = ' ';
-		if (screen_x == 0 && screen_y == 0) {
-			return;
+		handle_backspace();
+	} else {                            /* Handle regular characters */
+		if (screen_x >= NUM_COLS) {
+			handle_newline();
 		}
-		screen_x--;
-		if (screen_x < 0) {
-			screen_y--;
-			screen_x = NUM_COLS - 1;
-		}
-	} else {
 		*(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = c;
 		*(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
 		screen_x++;
-		screen_x %= NUM_COLS;
-		screen_y = (screen_y + (screen_x / NUM_COLS)) % NUM_ROWS;
 	}
 }
 

@@ -1,6 +1,7 @@
 #include "tests.h"
 #include "x86_desc.h"
 #include "lib.h"
+#include "terminal.h"
 
 #define PASS 1
 #define FAIL 0
@@ -140,14 +141,23 @@ int page_test_deref_not_exist() {
 
 /* Checkpoint 2 tests */
 
-int keyboard_test() {
+int terminal_kbd_test() {
 	TEST_HEADER;
 
-	uint8_t user_buffer[128];
-	while (1) {
-		terminal_read(0, user_buffer, 128);
-		terminal_write(0, user_buffer, 128);
-	}
+	uint8_t buffer[100] = {
+		'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
+		'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
+		'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
+		'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
+		'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
+		'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
+		'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
+		'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
+		'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
+		'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
+	};
+	terminal_init();
+	terminal_write(0, buffer, 100);
 
 	return PASS;
 }
@@ -165,5 +175,5 @@ void launch_tests(){
 	// TEST_OUTPUT("page_test_deref_null", page_test_deref_null());
 	// TEST_OUTPUT("page_test_deref_not_exist", page_test_deref_not_exist());
 	// TEST_OUTPUT("div0_test", div0_test());
-	TEST_OUTPUT("keyboard_test", keyboard_test());
+	TEST_OUTPUT("keyboard_test", terminal_kbd_test());
 }
