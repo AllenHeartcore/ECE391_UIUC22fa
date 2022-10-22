@@ -149,8 +149,6 @@ int page_test_deref_not_exist() {
  * Inputs: None
  * Outputs: PASS/FAIL
  * Side Effects: None
- * Coverage: Load IDT, IDT definition
- * Files: x86_desc.h/S
  */
 int read_file_name_test() {
 	TEST_HEADER;
@@ -176,8 +174,6 @@ int read_file_name_test() {
  * Inputs: None
  * Outputs: PASS/FAIL
  * Side Effects: None
- * Coverage: Load IDT, IDT definition
- * Files: x86_desc.h/S
  */
 int read_data_test() {
 	// TEST_HEADER;
@@ -200,7 +196,7 @@ int read_data_test() {
 
 
 
-/* Read by name test
+/* Read directory test
  * 
  * Asserts that we can read directory
  * Inputs: None
