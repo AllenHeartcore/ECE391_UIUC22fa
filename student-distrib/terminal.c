@@ -18,8 +18,8 @@ int32_t terminal_init() {
 	term.readkey = 0;
 	term.kbd_buf_count = 0;
 	get_cursor(&term.cursor_x, &term.cursor_y);
-	enable_cursor(0, 14);					/* Set cursor shape */
-	update_cursor(term.cursor_x, term.cursor_y);	/* Set cursor position */
+	vga_enable_cursor(0, 14);							/* Set cursor shape */
+	vga_redraw_cursor(term.cursor_x, term.cursor_y);	/* Set cursor position */
 	return 0;
 }
 

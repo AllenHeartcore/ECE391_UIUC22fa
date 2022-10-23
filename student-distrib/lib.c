@@ -10,33 +10,33 @@ static char* video_mem = (char *)VIDEO;
 /* (The following 3 text mode cursor functions)
  * Reference: https://wiki.osdev.org/Text_Mode_Cursor */
 
-/* void enable_cursor(uint8_t cursor_start, uint8_t cursor_end)
+/* void vga_enable_cursor(uint8_t cursor_start, uint8_t cursor_end)
  *   Inputs: cursor_start - the scanline to start the cursor at
  *           cursor_end - the scanline to end the cursor at
  *   Return Value: none
  *   Function: Enables the text-mode cursor */
-void enable_cursor(uint8_t cursor_start, uint8_t cursor_end) {
+void vga_enable_cursor(uint8_t cursor_start, uint8_t cursor_end) {
 	outb(0x0A, 0x3D4);						/* Select 0x0A (Cursor Start Register) in 0x3D4 (cmd port) */
 	outb((inb(0x3D5) & 0xC0) | cursor_start, 0x3D5);	/* Clear CursorStartReg:5 to enable cursor */
 	outb(0x0B, 0x3D4);						/* Select 0x0B (Cursor End Register) in 0x3D4 (cmd port) */
 	outb((inb(0x3D5) & 0xE0) | cursor_end, 0x3D5);		/* Cursor Skew = -1 */
 }
 
-/* void disable_cursor()
+/* void vga_disable_cursor()
  *   Inputs: none
  *   Return Value: none
  *   Function: Disables the text-mode cursor */
-void disable_cursor() {
+void vga_disable_cursor() {
 	outb(0x0A, 0x3D4);						/* Select 0x0A (Cursor Start Register) */
 	outb(0x20, 0x3D5);						/* Set CursorStartReg:5 to disable cursor */
 }
 
-/* void update_cursor(int x, int y)
+/* void vga_redraw_cursor(int x, int y)
  *   Inputs: x - the x position of the cursor
  *           y - the y position of the cursor
  *   Return Value: none
  *   Function: Updates the text-mode cursor */
-void update_cursor(int x, int y) {
+void vga_redraw_cursor(int x, int y) {
 	uint16_t pos = y * NUM_COLS + x;		/* Calculate position */
 	outb(0x0F, 0x3D4);						/* Lower byte -> 0x0F (Cursor Location Low Register) */
 	outb((uint8_t) (pos & 0xFF), 0x3D5);
@@ -71,7 +71,7 @@ void clear(void) {
 		*(uint8_t *)(video_mem + (i << 1)) = ' ';
 		*(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
 	}
-	update_cursor(screen_x, screen_y);
+	vga_redraw_cursor(screen_x, screen_y);
 }
 
 /* void scroll(void)
@@ -101,7 +101,7 @@ void scroll(void) {
 	if (--screen_y < 0) {
 		++screen_y;
 	}
-	update_cursor(screen_x, screen_y);
+	vga_redraw_cursor(screen_x, screen_y);
 }
 
 /* handle_backspace
@@ -132,7 +132,7 @@ void handle_newline() {
 	if (screen_y >= NUM_ROWS) {
 		scroll();
 	}
-	update_cursor(screen_x, screen_y);
+	vga_redraw_cursor(screen_x, screen_y);
 }
 
 
@@ -295,7 +295,7 @@ void putc(uint8_t c) {
 		screen_x++;
 	}
 
-	update_cursor(screen_x, screen_y);
+	vga_redraw_cursor(screen_x, screen_y);
 }
 
 /* int8_t* itoa(uint32_t value, int8_t* buf, int32_t radix);
