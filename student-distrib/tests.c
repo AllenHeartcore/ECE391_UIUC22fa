@@ -152,11 +152,9 @@ int page_test_deref_not_exist() {
  * Outputs: PASS/FAIL
  * Side Effects: None
  */
-int read_file_name_test() {
+int read_file_name_test(uint8_t* filename) {
 	TEST_HEADER;
 	dentry_t test;
-	uint8_t filename[200] = "frame0.txt";
-	// uint8_t* filename = NULL;
 	printf("READ FILE TEST");
 	printf(" \n");
 	if (read_dentry_by_name(filename,&test) == -1)
@@ -175,11 +173,10 @@ int read_file_name_test() {
  * Outputs: PASS/FAIL
  * Side Effects: None
  */
-int read_data_test() {
+int read_data_test(uint8_t* filename) {
 	// TEST_HEADER;
 	dentry_t test;
 	char buff[40000] = {'\0'};
-	uint8_t filename[FILE_NAME_MAX] = "ls";
 	int i;
 	int32_t bytes_read;
 	read_dentry_by_name(filename,&test);
@@ -222,9 +219,8 @@ int read_directory_test(){
 * Side Effects: None
 * Coverage: Open the file
 */
-int open_file_test(){
+int open_file_test(uint8_t* filename){
 	TEST_HEADER;
-	uint8_t filename[100] = "frame0.txt";
 	if (fopen(filename) == -1)
 		return FAIL;
 	return PASS;
@@ -373,7 +369,7 @@ void launch_tests(){
 	// // TEST_OUTPUT("div0_test", div0_test());
 
 	/* Checkpoint 2 tests */
-	TEST_OUTPUT("open_file_test", open_file_test());
+	TEST_OUTPUT("open_file_test", open_file_test((uint8_t*)"nonexistant_filename"));
 	sleep(1);
 	TEST_OUTPUT("close_file_test", close_file_test());
 	sleep(1);
@@ -381,9 +377,9 @@ void launch_tests(){
 	sleep(1);
 	TEST_OUTPUT("write_file_test", write_file_test());
 	sleep(1);
-	TEST_OUTPUT("read_file_name_test", read_file_name_test());
+	TEST_OUTPUT("read_file_name_test", read_file_name_test((uint8_t*)"frame0.txt"));
 	sleep(4);
-	TEST_OUTPUT("read_data_test", read_data_test());
+	TEST_OUTPUT("read_data_test", read_data_test((uint8_t*)"pingpong"));
 	sleep(4);
 	TEST_OUTPUT("read_directory", read_directory_test());
 	sleep(4);
