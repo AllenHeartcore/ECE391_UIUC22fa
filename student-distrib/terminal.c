@@ -49,19 +49,13 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes) {
 
 	/* Read from the keyboard buffer */
 	/* User can only type up to 127 (KBD_BUF_SIZE - 1) characters */
-	for (i = 0; i < nbytes && i < KBD_BUF_SIZE - 1; i++) {
-		if (term.kbd_buf[i] == '\n') {
-			break;
-		}
+	for (i = 0; i < nbytes && i < KBD_BUF_SIZE; i++) {
 		((char*)buf)[i] = term.kbd_buf[i];
 	}
-	/* Append '\n' at the end of the buffer */
-	((char*)buf)[i] = '\n';
-	/* Fill the rest of the buffer with 0
-	 * if encounter line break */
-	memset(&(((char*)buf)[i + 1]), 0, KBD_BUF_SIZE - i - 1);
+	/* Fill the rest of the buffer with 0 */
+	memset(&(((char*)buf)[i]), 0, KBD_BUF_SIZE - i);
 
-	return i + 1;
+	return i;
 }
 
 /* terminal_write
@@ -78,15 +72,15 @@ int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes) {
 
 	if (NULL == buf || nbytes <= 0) { return 0; }
 
-	/* Write to the screen; stop at NUL */
-	for (i = 0; i < nbytes && ((char*)buf)[i] != '\0'; i++) {
+	/* Write to the screen */
+	for (i = 0; i < nbytes; i++) {
 		putc(((char*)buf)[i]);
 	}
 
 	/* Update cursor position */
 	get_cursor(&term.cursor_x, &term.cursor_y);
 
-	return i + 1;
+	return i;
 }
 
 /* terminal_open

@@ -90,10 +90,15 @@ void key_init(void) {
 *   side effect: a character may appear on screen
 */
 void key_handler(void) {
+	cli();
 	uint8_t scan_code;
 	uint8_t ascii, i;
 	terminal_t* term = get_current_terminal();
-	cli();
+	if (term == NULL) {
+		send_eoi(KEY_IRQ_NUM);
+		sti();
+		return;
+	}
 
 	/* Read from port to get the current scan code. */
 	scan_code = inb(KEY_DATA_PORT);
@@ -129,8 +134,8 @@ void key_handler(void) {
 			if (ctrl && (ascii == 'l' || ascii == 'L')) {
 				terminal_clear();							/* Ctrl + L cleans the screen */
 				break;
-			} else if (ascii == '\n' && term != NULL) {
-				putc('\n');
+			} else if (ascii == '\n') {
+				putc(ascii);
 				term->kbd_buf[term->kbd_buf_count++] = '\n';
 				term->readkey = 1;							/* Set the "endline" flag */
 			} else if (ascii == '\b') {
