@@ -19,13 +19,11 @@ BUG Log for mp3 ---- ZinixOS Group
     Solution:  Change 0xA1,0x21 to 0xA0,0x20.
     Take Time:  1h
 
-
 4. 15/10/2022
     Description: Invalid Opcode exception
     Reason: This is actually the same reason above. send_eoi problem.
     Solution: Change 0xA1,0x21 to 0xA0,0x20.
     Take Time: 1h
-
 
 5. 15/10/2022
     Description: When we test paging, the page fualt appeared
@@ -33,7 +31,7 @@ BUG Log for mp3 ---- ZinixOS Group
     Solution: Modiy for loop and pointer type in test code.
     Take Time: 10min
 
------------ check point 1 -----------
+----------- check point 2 -----------
 1. 22/10/2022
     Description: Scrolling shifts characters right by half of the size of the
     screen.
@@ -53,3 +51,8 @@ BUG Log for mp3 ---- ZinixOS Group
     Description: <CR> does not bring the cursor the next line.
 	Reason: We does not pass '\n' to function putc.
 	Solution: Pass '\n' to function putc.
+
+4. 22/10/2022
+    Description: RTC driver fails to catch virtual ("mod 0") interrupts.
+    Reason: We check for non-zero "mod" results
+    Solution: Check for zero "mod" results (happens every "freq" times).

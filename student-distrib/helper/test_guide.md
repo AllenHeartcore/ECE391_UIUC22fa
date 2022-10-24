@@ -18,6 +18,12 @@
 | `rtc.c` | RTC initialization |
 | `page.c` | Paging initialization |
 
+### Checkpoint 2
+| File | Content |
+| - | - |
+| `terminal.c` | Terminal driver |
+| `filesys.c` | Read-only file system |
+
 ### Helpers
 | File | Content |
 | - | - |
@@ -29,7 +35,7 @@
 ## Testing Guidelines
 
 ### **IMPORTANT NOTES**
-- ***Backup** `mp3.img` in a safe place and **restore** it each time the OS crashes.<br>Also, keep an eye on the git change log to identify if the image has been corrupted.*
+- ***Backup** `mp3.img` in a safe place and **restore** it each time the OS crashes.*
 - *An exception immediately freezes the system and should appear as the **last** testpoint.*
 
 ### Checkpoint 1
@@ -42,4 +48,14 @@
 | Paging | Values contained in<br>paging structures | In QEMU, Ctrl+Alt+2<br>and type `info mem` |
 | Paging | Dereferencing address ranges | Run `page_test` and<br>`..._deref_not_exist` |
 | Paging | Dereferencing NULL to<br>produce a page fault | Run `..._deref_null` |
-| | Checking bad input<br>and return values | |
+
+### Checkpoint 2
+| Type | Tested Functionality | Testing Method |
+| - | - | - |
+| RTC | Change all possible frequencies<br>and receive interrupts | Run `rtc_driver_test` |
+| Terminal | Read user input from keyboard | Run `terminal_kbd_test_echo`,<br>type characters, press Enter,<br>and examine the echoed string |
+| Terminal | Write different sized strings<br>to the terminal | Run `terminal_kbd_test_newline`<br>and examine the echoed string<br>(Also change `nbytes` in argument) |
+| Filesys | Check whether a file exists | Run `read_file_name_test` |
+| Filesys | Print out the contents of<br>different sized files | Run `read_data_test`<br>and examine the echoed string |
+| Filesys | Print out a list of all files<br>in the file system | Run `read_directory_test` |
+| Filesys | Filesys driver functions | Run `*_file_test` (For now,<br>they should all PASS except for<br>nonexistant filenames in `read`) |
