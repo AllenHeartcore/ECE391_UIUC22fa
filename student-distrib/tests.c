@@ -374,21 +374,21 @@ void launch_tests(){
 
 	/* Checkpoint 2 tests */
 	TEST_OUTPUT("open_file_test", open_file_test());
-	rtc_read(0, NULL, 0);
+	sleep(1);
 	TEST_OUTPUT("close_file_test", close_file_test());
-	rtc_read(0, NULL, 0);
+	sleep(1);
 	TEST_OUTPUT("read_file_test", read_file_test());
-	rtc_read(0, NULL, 0);
+	sleep(1);
 	TEST_OUTPUT("write_file_test", write_file_test());
-	rtc_read(0, NULL, 0);
+	sleep(1);
 	TEST_OUTPUT("read_file_name_test", read_file_name_test());
-	rtc_read(0, NULL, 0);
+	sleep(4);
 	TEST_OUTPUT("read_data_test", read_data_test());
-	rtc_read(0, NULL, 0);
+	sleep(4);
 	TEST_OUTPUT("read_directory", read_directory_test());
-	rtc_read(0, NULL, 0);
+	sleep(4);
 	TEST_OUTPUT("rtc_driver_test", rtc_driver_test());
-	rtc_read(0, NULL, 0);
+	sleep(4);
 	TEST_OUTPUT("terminal_kbd_test_echo", terminal_kbd_test_echo());
 	// TEST_OUTPUT("terminal_kbd_test_newline", terminal_kbd_test_newline());
 }

@@ -2,6 +2,7 @@
  * vim:ts=4 noexpandtab */
 
 #include "lib.h"
+#include "rtc.h"
 
 static int screen_x;
 static int screen_y;
@@ -582,6 +583,22 @@ int8_t* strncpy(int8_t* dest, const int8_t* src, uint32_t n) {
 		i++;
 	}
 	return dest;
+}
+
+/* void sleep(uint32_t ticks)
+ * NOTE: ticks = seconds * freq
+ *       Since the virtualized "freq" in RTC is not
+ *       a global variable, we cannot pass in the 
+ *       number of seconds as argument and thus
+ *       turn to the number of ticks.
+ * Inputs: uint32_t ticks = number of ticks to sleep
+ * Return Value: none
+ * Function: sleep for a given number of ticks */
+void sleep(uint32_t ticks) {
+	int32_t i;
+	for (i = 0; i < ticks; i++) {
+		rtc_read(0, NULL, 0);
+	}
 }
 
 /* void test_interrupts(void)
