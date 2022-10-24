@@ -73,7 +73,7 @@ int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes) {
 	if (NULL == buf || nbytes <= 0) { return 0; }
 
 	/* Write to the screen */
-	for (i = 0; i < nbytes; i++) {
+	for (i = 0; i < nbytes && i < KBD_BUF_SIZE; i++) {
 		putc(((char*)buf)[i]);
 	}
 
