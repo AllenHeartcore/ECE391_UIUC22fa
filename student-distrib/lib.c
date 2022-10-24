@@ -282,7 +282,9 @@ int32_t puts(int8_t* s) {
 void putc(uint8_t c) {
 	/* Go to a new line if get line break or if the
 	 * cursor is already at the end of the current line */
-	if(c == '\n' || c == '\r') {
+	if (c == '\0') {
+		return;
+	} else if (c == '\n' || c == '\r') {
 		handle_newline();
 	} else if (c == '\b') {				/* Handle backspace */
 		handle_backspace();
