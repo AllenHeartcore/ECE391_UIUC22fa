@@ -311,13 +311,13 @@ int rtc_driver_test() {
  * Coverage: Terminal, Keyboard
  * Files: terminal.c/h, keyboard.c/h
  */
-int terminal_kbd_test_echo() {
+int terminal_kbd_test_echo(int32_t read_nbytes, int32_t write_nbytes) {
 	TEST_HEADER;
 
 	uint8_t buf[128];
 	while (1) {
-		terminal_read(0, buf, 128);
-		terminal_write(0, buf, 128);
+		terminal_read(0, buf, read_nbytes);
+		terminal_write(0, buf, write_nbytes);
 	}
 
 	return PASS;
@@ -332,7 +332,7 @@ int terminal_kbd_test_echo() {
  * Coverage: Terminal, Keyboard
  * Files: terminal.c/h, keyboard.c/h
  */
-int terminal_kbd_test_newline() {
+int terminal_kbd_test_newline(int32_t write_nbytes) {
 	TEST_HEADER;
 
 	uint8_t buffer[100] = {
@@ -348,7 +348,7 @@ int terminal_kbd_test_newline() {
 		'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
 	};
 	terminal_init();
-	terminal_write(0, buffer, 100);
+	terminal_write(0, buffer, write_nbytes);
 
 	return PASS;
 }
@@ -385,6 +385,6 @@ void launch_tests(){
 	sleep(4);
 	TEST_OUTPUT("rtc_driver_test", rtc_driver_test());
 	sleep(4);
-	TEST_OUTPUT("terminal_kbd_test_echo", terminal_kbd_test_echo());
-	// TEST_OUTPUT("terminal_kbd_test_newline", terminal_kbd_test_newline());
+	TEST_OUTPUT("terminal_kbd_test_echo", terminal_kbd_test_echo(128, 128));
+	TEST_OUTPUT("terminal_kbd_test_newline", terminal_kbd_test_newline(100));
 }
