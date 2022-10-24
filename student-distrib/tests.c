@@ -314,10 +314,12 @@ int rtc_driver_test() {
 int terminal_kbd_test_echo(int32_t read_nbytes, int32_t write_nbytes) {
 	TEST_HEADER;
 
+	int32_t retr, retw;
 	uint8_t buf[128];
 	while (1) {
-		terminal_read(0, buf, read_nbytes);
-		terminal_write(0, buf, write_nbytes);
+		retr = terminal_read(0, buf, read_nbytes);
+		retw = terminal_write(0, buf, write_nbytes);
+		printf("Read %d bytes, wrote %d bytes\n", retr, retw);
 	}
 
 	return PASS;
