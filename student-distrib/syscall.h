@@ -4,6 +4,8 @@
 #include "types.h"
 #include "filesys.h"
 
+#define MAX_OPENED_FILES 8
+
 extern int32_t halt (uint8_t status);
 extern int32_t execute (const uint8_t* command);
 extern int32_t read (int32_t fd, void* buf, int32_t nbytes);
