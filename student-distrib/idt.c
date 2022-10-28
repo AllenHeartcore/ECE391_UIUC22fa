@@ -3,26 +3,31 @@
 #include "idt.h"
 #include "idt_lnk.h"
 
-void exc_dv0() { printf("EXCEPTION 0x00: Divide by zero\n"); while(1); }
-void exc_dbg() { printf("EXCEPTION 0x01: Debug\n"); while(1); }
-void exc_nmi() { printf("EXCEPTION 0x02: Non-maskable interrupt\n"); while(1); }
-void exc_bpt() { printf("EXCEPTION 0x03: Breakpoint\n"); while(1); }
-void exc_ovf() { printf("EXCEPTION 0x04: Overflow\n"); while(1); }
-void exc_bre() { printf("EXCEPTION 0x05: Bound range exceeded\n"); while(1); }
-void exc_ivo() { printf("EXCEPTION 0x06: Invalid opcode\n"); while(1); }
-void exc_dna() { printf("EXCEPTION 0x07: Device not available\n"); while(1); }
-void exc_dbf() { printf("EXCEPTION 0x08: Double fault\n"); while(1); }
-void exc_cso() { printf("EXCEPTION 0x09: Coprocessor segment overrun\n"); while(1); }
-void exc_its() { printf("EXCEPTION 0x0A: Invalid TSS\n"); while(1); }
-void exc_snp() { printf("EXCEPTION 0x0B: Segment not present\n"); while(1); }
-void exc_ssf() { printf("EXCEPTION 0x0C: Stack-segment fault\n"); while(1); }
-void exc_gpf() { printf("EXCEPTION 0x0D: General protection fault\n"); while(1); }
-void exc_pft() { printf("EXCEPTION 0x0E: Page fault\n"); while(1); }
-void exc_res() { printf("EXCEPTION 0x0F: Reserved\n"); while(1); }
-void exc_fpe() { printf("EXCEPTION 0x10: Floating-point error\n"); while(1); }
-void exc_alc() { printf("EXCEPTION 0x11: Alignment check\n"); while(1); }
-void exc_mac() { printf("EXCEPTION 0x12: Machine check\n"); while(1); }
-void exc_sfe() { printf("EXCEPTION 0x13: SIMD floating-point exception\n"); while(1); }
+/*  Since we are in the kernel level and idt[0x80] has USER_DPL,
+ *  we cannot use the "movl $0, %eax; int $0x80" instruction.
+ *  Instead, we call the unified "halt" syscall with a status
+ *  code "1" to indicate an exception (contrary to a normal "0"). */
+
+void exc_dv0() { printf("EXCEPTION 0x00: Divide by zero\n");                halt(1); }
+void exc_dbg() { printf("EXCEPTION 0x01: Debug\n");                         halt(1); }
+void exc_nmi() { printf("EXCEPTION 0x02: Non-maskable interrupt\n");        halt(1); }
+void exc_bpt() { printf("EXCEPTION 0x03: Breakpoint\n");                    halt(1); }
+void exc_ovf() { printf("EXCEPTION 0x04: Overflow\n");                      halt(1); }
+void exc_bre() { printf("EXCEPTION 0x05: Bound range exceeded\n");          halt(1); }
+void exc_ivo() { printf("EXCEPTION 0x06: Invalid opcode\n");                halt(1); }
+void exc_dna() { printf("EXCEPTION 0x07: Device not available\n");          halt(1); }
+void exc_dbf() { printf("EXCEPTION 0x08: Double fault\n");                  halt(1); }
+void exc_cso() { printf("EXCEPTION 0x09: Coprocessor segment overrun\n");   halt(1); }
+void exc_its() { printf("EXCEPTION 0x0A: Invalid TSS\n");                   halt(1); }
+void exc_snp() { printf("EXCEPTION 0x0B: Segment not present\n");           halt(1); }
+void exc_ssf() { printf("EXCEPTION 0x0C: Stack-segment fault\n");           halt(1); }
+void exc_gpf() { printf("EXCEPTION 0x0D: General protection fault\n");      halt(1); }
+void exc_pft() { printf("EXCEPTION 0x0E: Page fault\n");                    halt(1); }
+void exc_res() { printf("EXCEPTION 0x0F: Reserved\n");                      halt(1); }
+void exc_fpe() { printf("EXCEPTION 0x10: Floating-point error\n");          halt(1); }
+void exc_alc() { printf("EXCEPTION 0x11: Alignment check\n");               halt(1); }
+void exc_mac() { printf("EXCEPTION 0x12: Machine check\n");                 halt(1); }
+void exc_sfe() { printf("EXCEPTION 0x13: SIMD floating-point exception\n"); halt(1); }
 
 void idt_init() {
     int i;
