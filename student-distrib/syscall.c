@@ -1,6 +1,7 @@
 #include "syscall.h"
 #include "lib.h"
 #include "types.h"
+#include "rtc.h"
 
 int32_t halt(uint8_t status) {
     return 0;
@@ -47,7 +48,7 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes) {
 		fd >= MAX_OPENED_FILES ||
 		buf == NULL ||
 		nbytes <= 0 ||
-		!(current_pcb->file_descs[fd].flags.valid_desc)) {
+		!(current_pcb->file_descs[fd].flags)) {
 		return 0;
 	}
 
@@ -70,7 +71,7 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes) {
 		fd >= MAX_OPENED_FILES ||
 		buf == NULL ||
 		nbytes <= 0 ||
-		!current_pcb->file_descs[fd].flags.valid_desc) {
+		!current_pcb->file_descs[fd].flags) {
 		return 0;
 	}
 
@@ -78,10 +79,44 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes) {
 }
 
 int32_t open(const uint8_t* filename) {
-    if (fopen(filename) == 0)
-        return 0; 
-    
-    return -1;
+    int i;
+    int fd;
+    dentry_t dentry;
+    if (fopen(filename) == -1)
+        return -1; 
+    pcb_t* cur_pcb = get_cur_pcb();
+    for (i = 0; i < MAX_OPENED_FILES; i++){
+        if (cur_pcb->file_descs[i].flags == 1)
+            continue;
+        else
+            break;
+    }
+    if (i == MAX_OPENED_FILES)
+        return -1;
+    fd = i;
+    read_dentry_by_name(filename, &dentry);
+    cur_pcb->file_descs[fd].flags = 1;
+    cur_pcb->file_descs[fd].inode = dentry.inode_num;
+    cur_pcb->file_descs[fd].file_position = 0;
+    // 1 and 2is the filetype of d
+    if (dentry.filetype == 1 || dentry.filetype == 2){
+        cur_pcb->file_descs[fd].file_operation->open_file = fopen;
+        cur_pcb->file_descs[fd].file_operation->close_file = fclose;
+        cur_pcb->file_descs[fd].file_operation->read_file = fread;
+        cur_pcb->file_descs[fd].file_operation->write_file = fwrite;
+    }
+    // 0 is the filetype of rtc
+    else if (dentry.filetype == 0){
+        cur_pcb->file_descs[fd].file_operation->open_file = rtc_open;
+        cur_pcb->file_descs[fd].file_operation->close_file = rtc_close;
+        cur_pcb->file_descs[fd].file_operation->read_file = rtc_read;
+        cur_pcb->file_descs[fd].file_operation->write_file = rtc_write;
+    }
+    else{
+        cur_pcb->file_descs[fd].flags = 0;
+        return -1;
+    }
+    return fd;
 }
 
 int32_t close(int32_t fd) {
