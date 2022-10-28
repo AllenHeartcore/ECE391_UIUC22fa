@@ -17,6 +17,17 @@ extern int32_t sigreturn (void);
 
 /* PCB */
 
+typedef struct file_desc_t 
+{
+
+} file_desc_t;
+
+
+typedef struct file_op
+{
+    
+} file_op;
+
 typedef struct pcb
 {
     file_desc_t file_descs[8];

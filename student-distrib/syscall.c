@@ -9,12 +9,11 @@ int32_t halt(uint8_t status) {
 
 int32_t execute(const uint8_t* command) {
     int32_t i;
-    uint8_t program_name[];
+    uint8_t program_name[FILE_NAME_MAX];
     /* Parse command */
     for(i<0;i++;i<len(command)){
         if(command[i]==' ')
             break;
-        program_name
     }
     /* Check file validity */
 
@@ -62,3 +61,4 @@ int32_t set_handler(int32_t signum, void* handler_address) {
 int32_t sigreturn(void) {
     return 0;
 }
+
