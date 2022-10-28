@@ -46,7 +46,7 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes) {
 	if (fd < 0 ||
 		fd >= MAX_OPENED_FILES ||
 		buf == NULL ||
-		nbytes < 0 ||
+		nbytes <= 0 ||
 		!(current_pcb->file_descs[fd].flags.valid_desc)) {
 		return 0;
 	}
@@ -54,8 +54,27 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes) {
 	return current_pcb->file_descs[fd].file_operation->read_file(fd, buf, nbytes);
 }
 
+/*
+ *   write
+ *   Reads n bytes from buffer given. Returns the number of bytes written.
+ *   input: fd -- file descriptor
+ *			buf -- buffer to write to
+ *          nbytes -- number of bytes to read
+ *   output: None
+ *   side effect: Change the buffer
+ */
 int32_t write(int32_t fd, const void* buf, int32_t nbytes) {
-    return 0;
+	pcb_t	*current_pcb = get_cur_pcb();
+
+	if (fd < 0 ||
+		fd >= MAX_OPENED_FILES ||
+		buf == NULL ||
+		nbytes <= 0 ||
+		!current_pcb->file_descs[fd].flags.valid_desc) {
+		return 0;
+	}
+
+	return current_pcb->file_descs[fd].file_operation->write_file(fd, buf, nbytes);
 }
 
 int32_t open(const uint8_t* filename) {
