@@ -1,15 +1,21 @@
 #include "syscall.h"
 #include "lib.h"
 #include "types.h"
+#include "filesys.h"
 
 int32_t halt(uint8_t status) {
     return 0;
 }
 
 int32_t execute(const uint8_t* command) {
-
+    int32_t i;
+    uint8_t program_name[];
     /* Parse command */
-
+    for(i<0;i++;i<len(command)){
+        if(command[i]==' ')
+            break;
+        program_name
+    }
     /* Check file validity */
 
     /* Create PCB */
