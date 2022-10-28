@@ -1,7 +1,6 @@
 #include "syscall.h"
 #include "lib.h"
 #include "types.h"
-#include "filesys.h"
 
 int32_t halt(uint8_t status) {
     return 0;
