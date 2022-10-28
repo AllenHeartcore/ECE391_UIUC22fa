@@ -30,13 +30,14 @@ int32_t execute(const uint8_t* command) {
 }
 
 /*
- *   read
- *   Reads a function to the buffer given. Returns the number of bytes read.
- *   input: fd -- file descriptor
+ *   int32_t read(int32_t fd, void* buf, int32_t nbytes)
+ *
+ *   Reads n bytes to the buffer given. Returns the number of bytes read.
+ *   INPUT: fd -- file descriptor
  *			buf -- buffer to read to
  *          nbytes -- number of bytes to read
- *   output: None
- *   side effect: Change the buffer
+ *   OUTPUT: None
+ *   SIDE EFFECT: Change the buffer
  */
 int32_t read(int32_t fd, void* buf, int32_t nbytes) {
 	pcb_t	*current_pcb = get_cur_pcb();
