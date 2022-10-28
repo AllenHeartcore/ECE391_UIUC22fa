@@ -38,7 +38,10 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes) {
 }
 
 int32_t open(const uint8_t* filename) {
-    return 0;
+    if (fopen(filename) == 0)
+        return 0; 
+    
+    return -1;
 }
 
 int32_t close(int32_t fd) {

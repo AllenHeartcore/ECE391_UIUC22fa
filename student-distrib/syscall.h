@@ -17,15 +17,73 @@ extern int32_t sigreturn (void);
 
 
 
-/* file operations */
+/* type specific file operations */
+typedef int32_t(*read_ptr)(const uint8_t*);
+typedef int32_t(*write_ptr)(int32_t fd, const void* buf, int32_t nbyte);
+typedef int32_t(*open_ptr)(const uint8_t*);
+typedef int32_t(*close_ptr)(int32_t);
 
-typedef struct file_op
+
+
+// typedef struct reg_file_op
+// {
+//     int32_t (*open_file)(const uint8_t* filename);
+//     int32_t (*close_file)(int32_t fd);
+//     int32_t (*read_file)(int32_t fd, void* buf, int32_t nbytes);
+//     int32_t (*write_file)(int32_t fd, void* buf, int32_t nbytes);
+// } reg_file_op_t;
+
+// typedef struct rtc_op
+// {
+//     int32_t (*open_rtc)(const uint8_t* filename);
+//     int32_t (*close_rtc)(int32_t fd);
+//     int32_t (*read_rtc)(int32_t fd, void* buf, int32_t nbytes);
+//     int32_t (*write_rtc)(int32_t fd, void* buf, int32_t nbytes);
+// } rtc_op_t;
+
+// typedef struct dir_op
+// {
+//     int32_t (*open_directory)(const uint8_t* filename);
+//     int32_t (*close_directory)(int32_t fd);
+//     int32_t (*read_directory)(int32_t fd, void* buf, int32_t nbytes);
+//     int32_t (*write_directory)(int32_t fd, void* buf, int32_t nbytes);
+// } dir_op_t;
+
+// typedef struct stdin_op
+// {
+//     int32_t (*open_terminal)(const uint8_t* filename);
+//     int32_t (*close_terminal)(int32_t fd);
+//     int32_t (*read_terminal)(int32_t fd, void* buf, int32_t nbytes);
+//     int32_t (*write_stdout)(int32_t fd, void* buf, int32_t nbytes);
+// } stdin_op_t;
+
+// typedef struct stdout_op
+// {
+//     int32_t (*open_terminal)(const uint8_t* filename);
+//     int32_t (*close_terminal)(int32_t fd);
+//     int32_t (*read_stdout)(int32_t fd, void* buf, int32_t nbytes);
+//     int32_t (*write_terminal)(int32_t fd, void* buf, int32_t nbytes);
+// } stdout_op_t;
+
+
+typedef struct file_operation
 {
-    int32_t (*open)(const uint8_t* filename);
-    int32_t (*close)(int32_t fd);
-    int32_t (*read)(int32_t fd, void* buf, int32_t nbytes);
-    int32_t (*write)(int32_t fd, void* buf, int32_t nbytes);
-} file_op;
+    open_ptr open_file;
+    close_ptr close_file;
+    read_ptr read_file;
+    write_ptr write_file; 
+}file_op;
+
+
+
+
+/* flag structure */
+// 0 for rtc, 1 for directory, 2 fir regular file, 3 for standard in, 4 for standard out.
+typedef struct flag
+{
+    int16_t filetype;
+    int16_t valid_desc;
+} flag_t;
 
 /* file_descriptor entry */
 
@@ -34,7 +92,7 @@ typedef struct file_desc_t
     file_op* file_operation;
     inode_t* inode;
     int32_t file_position;
-    int32_t flags;
+    flag_t flags;
 } file_desc_t;
 
 
