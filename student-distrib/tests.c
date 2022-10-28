@@ -371,22 +371,24 @@ void launch_tests(){
 	// // TEST_OUTPUT("div0_test", div0_test());
 
 	/* Checkpoint 2 tests */
-	TEST_OUTPUT("open_file_test", open_file_test((uint8_t*)"nonexistant_filename"));
-	sleep(1);
-	TEST_OUTPUT("close_file_test", close_file_test());
-	sleep(1);
-	TEST_OUTPUT("read_file_test", read_file_test());
-	sleep(1);
-	TEST_OUTPUT("write_file_test", write_file_test());
-	sleep(1);
-	TEST_OUTPUT("read_file_name_test", read_file_name_test((uint8_t*)"frame0.txt"));
-	sleep(4);
-	TEST_OUTPUT("read_data_test", read_data_test((uint8_t*)"pingpong"));
-	sleep(4);
-	TEST_OUTPUT("read_directory", read_directory_test());
-	sleep(4);
-	TEST_OUTPUT("rtc_driver_test", rtc_driver_test());
-	sleep(4);
-	TEST_OUTPUT("terminal_kbd_test_echo", terminal_kbd_test_echo(128, 128));
-	TEST_OUTPUT("terminal_kbd_test_newline", terminal_kbd_test_newline(100));
+	// TEST_OUTPUT("open_file_test", open_file_test((uint8_t*)"nonexistant_filename"));
+	// sleep(1);
+	// TEST_OUTPUT("close_file_test", close_file_test());
+	// sleep(1);
+	// TEST_OUTPUT("read_file_test", read_file_test());
+	// sleep(1);
+	// TEST_OUTPUT("write_file_test", write_file_test());
+	// sleep(1);
+	// TEST_OUTPUT("read_file_name_test", read_file_name_test((uint8_t*)"frame0.txt"));
+	// sleep(4);
+	// TEST_OUTPUT("read_data_test", read_data_test((uint8_t*)"pingpong"));
+	// sleep(4);
+	// TEST_OUTPUT("read_directory", read_directory_test());
+	// sleep(4);
+	// TEST_OUTPUT("rtc_driver_test", rtc_driver_test());
+	// sleep(4);
+	// TEST_OUTPUT("terminal_kbd_test_echo", terminal_kbd_test_echo(128, 128));
+	// TEST_OUTPUT("terminal_kbd_test_newline", terminal_kbd_test_newline(100));
+
+	/* Checkpoint 3 tests */
 }

@@ -52,6 +52,6 @@ void idt_init() {
     SET_IDT_ENTRY(idt[0x13], exc_sfe, KERNEL_DPL, TYPE_TRAP);
     SET_IDT_ENTRY(idt[0x21], int_kbd_lnk, KERNEL_DPL, TYPE_INTR);
     SET_IDT_ENTRY(idt[0x28], int_rtc_lnk, KERNEL_DPL, TYPE_INTR);
-    // SET_IDT_ENTRY(idt[0x80], syscall_lnk, USER_DPL,   TYPE_INTR);
+    SET_IDT_ENTRY(idt[0x80], syscall_lnk, USER_DPL,   TYPE_INTR);
     lidt(idt_desc_ptr);
 }
