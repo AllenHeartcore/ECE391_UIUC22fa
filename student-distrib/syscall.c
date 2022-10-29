@@ -6,11 +6,10 @@
 #include "rtc.h"
 #include "idt_lnk.h"
 #include "page.h"
+#include "terminal.h"
 
 /* Process id array */
 uint32_t pid_array[MAX_PROCESS] = {0};
-
-
 
 int32_t halt(uint8_t status) {
     uint32_t ret_val;
@@ -42,6 +41,7 @@ int32_t halt(uint8_t status) {
     pcb_t* parent_pcb = get_pcb(cur_pcb->parent_pid);
 
     /* Set paging for parent process */
+	set_user_prog_page(parent_pcb->parent_pid);
 
     /* Prepare for the context switch */
     tss.ss0 = KERNEL_DS;
@@ -128,6 +128,7 @@ int32_t execute(const uint8_t* command) {
     pcb->file_descs[1].file_operation->write_file = terminal_write;
 
     /* Set up paging */
+	set_user_prog_page(target_pid);
 
     /* Load program */
 
@@ -293,5 +294,3 @@ pcb_t* get_cur_pcb(){
     cur_pid = get_cur_pid();
     return get_pcb(cur_pid);
 }
-
-

@@ -58,5 +58,7 @@ extern pg_tbl_t page_table;
 
 /* Initialize paging */
 void page_init(void);
+/* Set paging for user program */
+void set_user_prog_page(uint32_t pid);
 
 #endif

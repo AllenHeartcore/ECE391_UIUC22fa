@@ -1,5 +1,6 @@
 #include "page.h"
 #include "lib.h"
+#include "syscall.h"	/* MAX_PROCESS, etc */
 // begin at 4M
 #define KERNEL_ADDR (4*1024*1024)
 #define VIDEO_PAGE_SIZE (4*1024)
@@ -93,4 +94,40 @@ void page_init(void) {
         : "r" (&page_directory)
         : "%eax"
     );
+}
+
+
+/*
+ *   set_user_prog_page
+ *   Set page for a user program
+ *   input: pid -- the pid of the user program
+ *   output: None
+ *   side effect: Change the paging directory; Change CR3; flush TLB
+ */
+void set_user_prog_page(uint32_t pid) {
+	/* Set the the PDE at USER_SPACE >> 22 because
+	 * the least 22 bits are all zeros */
+    page_directory[USER_SPACE >> 22].present = 1;
+    page_directory[USER_SPACE >> 22].rw = 1;
+    page_directory[USER_SPACE >> 22].priviledge = 1;
+    page_directory[USER_SPACE >> 22].pwt = 0;
+    page_directory[USER_SPACE >> 22].pcd = 1;
+    page_directory[USER_SPACE >> 22].accessed = 0;
+    page_directory[USER_SPACE >> 22].dirty = 0;
+    page_directory[USER_SPACE >> 22].ps = 1;
+    page_directory[USER_SPACE >> 22].global = 1;
+    page_directory[USER_SPACE >> 22].avl = 0;
+    // right shift for 22 because low 22 bits are all 0
+	/* the physical starting address of the process is the physical starting address of the
+	 * user space + (number of process - 1) * 4MB (each process uses 4MB) */
+    page_directory[USER_SPACE >> 22].addr = ((EIGHT_MB + (pid - 1)*FOUR_MB) >> 22) << 10;
+
+	/* Update CR3 and flush TLB */
+	asm volatile(
+		"movl %0, %%eax \n\t"
+		"movl %%eax, %%cr3 \n\t"
+		: /* no output */
+		: "r" (&page_directory)
+		: "%eax"
+	);
 }
