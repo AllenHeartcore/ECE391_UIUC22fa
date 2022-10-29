@@ -6,14 +6,6 @@
 #include "rtc.h"
 #include "idt_lnk.h"
 #include "page.h"
-#include "terminal.h"
-
-#define MAX_PROCESS 6          // At most 6 processes and...
-#define MAX_OPENED_FILES 8     // 8 files can be concurrently opened
-#define EIGHT_MB    0x800000   // 8 MB
-#define EIGHT_KB    0x2000     // 8 KB
-#define USER_SPACE  0x8000000  // 128 MB
-#define USER_STACK  0x8400000  // 132 MB
 
 /* Process id array */
 uint32_t pid_array[MAX_PROCESS] = {0};
