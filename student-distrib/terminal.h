@@ -31,6 +31,6 @@ extern void terminal_clear();
 /* Get current terminal */
 extern terminal_t* get_current_terminal();
 /* stdin_read fault wrapper */
-int32_t stdin_read(int32_t fd, const void* buf, int32_t nbyte);
+int32_t illegal_read(int32_t fd, void* buf, int32_t nbyte);
 /* stdout_write fault wrapper */
-int32_t stdout_write(int32_t fd, const void* buf, int32_t nbyte);
+int32_t illegal_write(int32_t fd, const void* buf, int32_t nbyte);

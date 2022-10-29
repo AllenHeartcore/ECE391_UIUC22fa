@@ -144,12 +144,12 @@ terminal_t* get_current_terminal() {
 	return &term;
 }
 
-int32_t stdin_read(int32_t fd, const void* buf, int32_t nbyte){
-    printf("You cannot read in std in.");
+int32_t illegal_read(int32_t fd, void* buf, int32_t nbyte){
+    printf("You cannot read in stdout.");
     return -1;
 }
 
-int32_t stdout_write(int32_t fd, const void* buf, int32_t nbyte){
-    printf("You cannot read in std in.");
+int32_t illegal_write(int32_t fd, const void* buf, int32_t nbyte){
+    printf("You cannot write in stdin.");
     return -1;
 }

@@ -40,7 +40,7 @@ int32_t halt(uint8_t status) {
     for (int i = 0; i < MAX_OPENED_FILES; i++)
     {
         /* TODO: Set all descriptors to 0 */
-        cur_pcb->file_descs;
+        cur_pcb->file_descs[i].flags = 0;
     }
 
     /* Deactivate current process */
@@ -126,14 +126,14 @@ int32_t execute(const uint8_t* command) {
     pcb->file_descs[0].flags = 1;
     pcb->file_descs[0].file_operation->open_file = terminal_open;
     pcb->file_descs[0].file_operation->close_file = terminal_close;
-    pcb->file_descs[0].file_operation->read_file = stdin_read;
-    pcb->file_descs[0].file_operation->write_file = terminal_write;
+    pcb->file_descs[0].file_operation->read_file = terminal_read;
+    pcb->file_descs[0].file_operation->write_file = illegal_write;
 
     pcb->file_descs[1].flags = 1;
     pcb->file_descs[1].file_operation->open_file = terminal_open;
     pcb->file_descs[1].file_operation->close_file = terminal_close;
-    pcb->file_descs[1].file_operation->read_file = terminal_read;
-    pcb->file_descs[1].file_operation->write_file = stdout_write;
+    pcb->file_descs[1].file_operation->read_file = illegal_read;
+    pcb->file_descs[1].file_operation->write_file = terminal_write;
 
     /* Set up paging */
 

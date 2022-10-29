@@ -7,7 +7,7 @@
 #define MAX_OPENED_FILES 8
 
 /* type specific file operations */
-typedef int32_t(*read_ptr)(int32_t fd, const void* buf, int32_t nbyte);
+typedef int32_t(*read_ptr)(int32_t fd, void* buf, int32_t nbyte);
 typedef int32_t(*write_ptr)(int32_t fd, const void* buf, int32_t nbyte);
 typedef int32_t(*open_ptr)(const uint8_t*);
 typedef int32_t(*close_ptr)(int32_t);
