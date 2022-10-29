@@ -143,3 +143,13 @@ void terminal_clear() {
 terminal_t* get_current_terminal() {
 	return &term;
 }
+
+int32_t stdin_read(int32_t fd, const void* buf, int32_t nbyte){
+    printf("You cannot read in std in.");
+    return -1;
+}
+
+int32_t stdout_write(int32_t fd, const void* buf, int32_t nbyte){
+    printf("You cannot read in std in.");
+    return -1;
+}
