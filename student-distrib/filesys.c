@@ -1,7 +1,7 @@
 #include "lib.h"
 #include "x86_desc.h"
 #include "filesys.h"
-
+#include "syscall.h"
 
 
 boot_block_t* boot_block; // Pointer to the boot block
@@ -230,5 +230,9 @@ int32_t fwrite(int32_t fd, const void* buf, int32_t n_bytes){
  * Coverage: Read the files
  */
 int32_t fread(int32_t fd, void* buf, int32_t n_bytes){
-    return 0;
+    pcb_t* cur_pcb = get_cur_pcb();
+    file_desc_t* file_desc = cur_pcb->file_descs;
+    uint32_t inode = file_desc[fd].inode;
+    uint32_t offset = file_desc[fd].file_position;
+    return read_data(inode, offset, buf, n_bytes);
 }

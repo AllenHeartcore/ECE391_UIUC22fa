@@ -42,7 +42,7 @@ int32_t execute(const uint8_t* command) {
  */
 int32_t read(int32_t fd, void* buf, int32_t nbytes) {
 	pcb_t	*current_pcb = get_cur_pcb();
-
+    int32_t bytes_read;
 	/* Read 0 byte if args are invalid */
 	if (fd < 0 ||
 		fd >= MAX_OPENED_FILES ||
@@ -52,7 +52,9 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes) {
 		return 0;
 	}
 
-	return current_pcb->file_descs[fd].file_operation->read_file(fd, buf, nbytes);
+	bytes_read = current_pcb->file_descs[fd].file_operation->read_file(fd, buf, nbytes);
+    current_pcb->file_descs[fd].file_position += bytes_read;
+    return bytes_read;
 }
 
 /*
@@ -65,7 +67,7 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes) {
  *   side effect: Change the buffer
  */
 int32_t write(int32_t fd, const void* buf, int32_t nbytes) {
-	pcb_t	*current_pcb = get_cur_pcb();
+	pcb_t* current_pcb = get_cur_pcb();
 
 	if (fd < 0 ||
 		fd >= MAX_OPENED_FILES ||
@@ -120,6 +122,11 @@ int32_t open(const uint8_t* filename) {
 }
 
 int32_t close(int32_t fd) {
+    // cannot delete file whose fd is 0 or 1 because they are stdin and stdout
+    if (fd <= 1 || fd >= MAX_OPENED_FILES)
+        return -1;
+    pcb_t* pcb = get_cur_pcb();
+    pcb->file_descs[fd].flags = 0;
     return 0;
 }
 
