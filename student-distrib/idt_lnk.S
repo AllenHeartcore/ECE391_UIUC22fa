@@ -38,19 +38,24 @@ syscall_lnk:
     pushl %ebp
     pushl %edi
     pushl %esi
-    pushl %edx
+    pushl %edx      # callee-save (not args)
     pushl %ecx
     pushl %ebx
-    pushl %eax
-    cmpl $0, %eax
+
+    cmpl $0, %eax   # sanity check
     jl invalid_callnum
     cmpl $9, %eax
     jg invalid_callnum
-    jmp *syscall_jmptbl(, %eax, 4)
+
+    pushl %edx      # push arguments
+    pushl %ecx
+    pushl %ebx
+    call *syscall_jmptbl(, %eax, 4)
+    addl $12, %esp
+
 invalid_callnum:    # maybe we should raise an exception
-    popl %eax
-    popl %ebx
-    popl %ecx
+    popl %ebx       # We don't save and restore eax, ...
+    popl %ecx       # because it holds the return value
     popl %edx
     popl %esi
     popl %edi

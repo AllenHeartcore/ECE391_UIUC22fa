@@ -28,7 +28,4 @@ typedef struct pcb
 } pcb_t;
 
 
-/* Process id array */
-uint32_t pid_array[6];
-
 #endif
