@@ -5,6 +5,7 @@
 #include "filesys.h"
 #include "idt_lnk.h"
 #include "page.h"
+#include "terminal.h"
 
 #define MAX_PROCESS 6          // At most 6 processes and...
 #define MAX_OPENED_FILES 8     // 8 files can be concurrently opened
@@ -15,6 +16,8 @@
 
 /* Process id array */
 uint32_t pid_array[MAX_PROCESS] = {0};
+
+
 
 int32_t halt(uint8_t status) {
     uint32_t ret_val;
@@ -119,6 +122,17 @@ int32_t execute(const uint8_t* command) {
     }
 
     /* Open stdin stdout */
+    pcb->file_descs[0].flags = 1;
+    pcb->file_descs[0].file_operation->open_file = terminal_open;
+    pcb->file_descs[0].file_operation->close_file = terminal_close;
+    pcb->file_descs[0].file_operation->read_file = stdin_read;
+    pcb->file_descs[0].file_operation->write_file = terminal_write;
+
+    pcb->file_descs[1].flags = 1;
+    pcb->file_descs[1].file_operation->open_file = terminal_open;
+    pcb->file_descs[1].file_operation->close_file = terminal_close;
+    pcb->file_descs[1].file_operation->read_file = terminal_read;
+    pcb->file_descs[1].file_operation->write_file = stdout_write;
 
     /* Set up paging */
 
@@ -202,3 +216,5 @@ pcb_t* get_cur_pcb(){
     cur_pid = get_cur_pid();
     return get_pcb(cur_pid);
 }
+
+
