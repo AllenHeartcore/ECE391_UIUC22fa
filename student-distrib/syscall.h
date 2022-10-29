@@ -2,7 +2,34 @@
 #define SYSCALL_H
 
 #include "types.h"
+#include "filesys.h"
 
+#define MAX_OPENED_FILES 8
+
+/* type specific file operations */
+typedef int32_t(*read_ptr)(int32_t fd, const void* buf, int32_t nbyte);
+typedef int32_t(*write_ptr)(int32_t fd, const void* buf, int32_t nbyte);
+typedef int32_t(*open_ptr)(const uint8_t*);
+typedef int32_t(*close_ptr)(int32_t);
+
+typedef struct file_operation
+{
+    open_ptr open_file;
+    close_ptr close_file;
+    read_ptr read_file;
+    write_ptr write_file; 
+} file_op;
+
+/* file_descriptor entry */
+typedef struct file_desc_t 
+{
+    file_op* file_operation;
+    uint32_t inode;
+    int32_t file_position;
+    int32_t flags;   // valid_desc: 0 invalid, 1 valid
+} file_desc_t;
+
+/* PCB */
 typedef struct pcb
 {
     file_desc_t file_descs[8];
