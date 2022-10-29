@@ -391,4 +391,12 @@ void launch_tests(){
 	// TEST_OUTPUT("terminal_kbd_test_newline", terminal_kbd_test_newline(100));
 
 	/* Checkpoint 3 tests */
+	uint8_t cmd[128] = "ls";
+	asm volatile("movl %0, %%ebx; \n\
+				  movl $1, %%eax; \n\
+				  int $0x80;"
+				 :
+				 : "r" (cmd)
+				 : "eax", "ebx"
+				 );
 }

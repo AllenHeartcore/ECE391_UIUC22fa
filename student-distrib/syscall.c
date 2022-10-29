@@ -75,7 +75,7 @@ int32_t execute(const uint8_t* command) {
         return -1;
 
     /* Parse command */
-    for (i < 0; i < len(command); i++){
+    for (i = 0; i < strlen((int8_t*)command); i++) {
         if(command[i] == ' ')
             break;
         program_name[i] = command[i];
@@ -111,11 +111,11 @@ int32_t execute(const uint8_t* command) {
     pcb->cur_pid = target_pid;
 
     if(target_pid == 0){
-        /* If current pid = 0, which means it is shell, the parent is 0 itself. */
+        /* If target pid = 0, which means it is shell, the parent is 0 itself. */
         pcb->parent_pid = 0;
     }else{
-        /* If current pid is not 0, assign parent pid as current pid. */
-        pcb->parent_pid = get_pid_with_esp();
+        /* If target pid is not 0, assign parent pid as current pid. */
+        pcb->parent_pid = get_cur_pid();
     }
 
     /* Open stdin stdout */
