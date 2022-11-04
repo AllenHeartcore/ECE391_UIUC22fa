@@ -119,8 +119,8 @@ void set_user_prog_page(uint32_t pid) {
     page_directory[USER_SPACE >> 22].avl = 0;
     // right shift for 22 because low 22 bits are all 0
 	/* the physical starting address of the process is the physical starting address of the
-	 * user space + (number of process - 1) * 4MB (each process uses 4MB) */
-    page_directory[USER_SPACE >> 22].addr = ((EIGHT_MB + (pid - 1)*FOUR_MB) >> 22) << 10;
+	 * user space + number of process * 4MB (each process uses 4MB) */
+    page_directory[USER_SPACE >> 22].addr = ((EIGHT_MB + pid*FOUR_MB) >> 22) << 10;
 
 	/* Update CR3 and flush TLB */
 	asm volatile(
