@@ -115,7 +115,7 @@ void set_user_prog_page(uint32_t pid) {
     page_directory[USER_SPACE >> 22].accessed = 0;
     page_directory[USER_SPACE >> 22].dirty = 0;
     page_directory[USER_SPACE >> 22].ps = 1;
-    page_directory[USER_SPACE >> 22].global = 1;
+    page_directory[USER_SPACE >> 22].global = 0;
     page_directory[USER_SPACE >> 22].avl = 0;
     // right shift for 22 because low 22 bits are all 0
 	/* the physical starting address of the process is the physical starting address of the
