@@ -4,7 +4,13 @@
 #include "types.h"
 #include "filesys.h"
 
-#define MAX_OPENED_FILES 8
+#define MAX_PROCESS 6          // At most 6 processes and...
+#define MAX_OPENED_FILES 8     // 8 files can be concurrently opened
+#define EIGHT_MB    0x800000   // 8 MB
+#define FOUR_MB     0x400000   // 4 MB
+#define EIGHT_KB    0x2000     // 8 KB
+#define USER_SPACE  0x8000000  // 128 MB
+#define USER_STACK  0x8400000  // 132 MB
 
 /* type specific file operations */
 typedef int32_t(*read_ptr)(int32_t fd, void* buf, int32_t nbyte);
@@ -39,14 +45,6 @@ typedef struct pcb
     int32_t ex_esp; /* ESP for the process context when execute */
     int32_t ex_ebp; /* EBP for the process context when execute */
 } pcb_t;
-
-#define MAX_PROCESS 6          // At most 6 processes and...
-#define MAX_OPENED_FILES 8     // 8 files can be concurrently opened
-#define EIGHT_MB    0x800000   // 8 MB
-#define FOUR_MB     0x400000   // 4 MB
-#define EIGHT_KB    0x2000     // 8 KB
-#define USER_SPACE  0x8000000  // 128 MB
-#define USER_STACK  0x8400000  // 132 MB
 
 extern int32_t halt (uint8_t status);
 extern int32_t execute (const uint8_t* command);

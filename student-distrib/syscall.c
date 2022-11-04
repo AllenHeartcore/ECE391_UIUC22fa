@@ -11,8 +11,14 @@
 /* Process id array */
 uint32_t pid_array[MAX_PROCESS] = {0};
 
+/* int32_t halt(uint8_t status)
+ * Inputs: status - the status to return to the parent process
+ * Outputs: none
+ * Side Effects: none
+ * Function: Halt the current process and return to the parent process
+ */
 int32_t halt(uint8_t status) {
-    uint32_t ret_val;
+    uint32_t ret_val, i;
     ret_val = 0;
 
     /* status = 0 means normal halt, status = 1 means exception */
@@ -28,7 +34,7 @@ int32_t halt(uint8_t status) {
     }
 
     /* Close all file descriptors */
-    for (int i = 0; i < MAX_OPENED_FILES; i++)
+    for (i = 0; i < MAX_OPENED_FILES; i++)
     {
         /* TODO: Set all descriptors to 0 */
         cur_pcb->file_descs[i].flags = 0;
@@ -60,11 +66,19 @@ int32_t halt(uint8_t status) {
     return 0;
 }
 
+/* int32_t execute(const uint8_t* command)
+ *
+ * Inputs: command - the command to be executed
+ * Outputs: -1 if fail, 0 if success
+ * Side Effects: change `pid_array`
+ * Function: Execute the issued command
+ */
 int32_t execute(const uint8_t* command) {
     int32_t i, program_start_addr, target_pid;
     uint8_t program_name[FILE_NAME_MAX] = {'\0'};
     dentry_t temp_dentry;
     pcb_t* pcb;
+    file_op file_op_init[MAX_OPENED_FILES];
     uint8_t elf_buff[4]; /* Testing ELF needs 4 bytes */
 
     if (command == NULL)
@@ -112,6 +126,12 @@ int32_t execute(const uint8_t* command) {
     }else{
         /* If target pid is not 0, assign parent pid as current pid. */
         pcb->parent_pid = get_cur_pid();
+    }
+
+    /* Without an explicit declaration,
+     * all "file_operation" pointers will be NULL */
+    for (i = 0; i < MAX_OPENED_FILES; i++) {
+        pcb->file_descs[i].file_operation = &file_op_init[i];
     }
 
     /* Open stdin stdout */

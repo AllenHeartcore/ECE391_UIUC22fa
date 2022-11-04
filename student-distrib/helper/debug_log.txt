@@ -56,3 +56,10 @@ BUG Log for mp3 ---- ZinixOS Group
     Description: RTC driver fails to catch virtual ("mod 0") interrupts.
     Reason: We check for non-zero "mod" results
     Solution: Check for zero "mod" results (happens every "freq" times).
+
+----------- check point 3 -----------
+1. 4/11/2022
+    Description: Page Fault when dereferencing `file_operation`
+    Reason: These pointers will be defaulted to 0x0, or NULL address
+    Solution: Let the 8 pointers point into a "file_op_init" array
+    Take Time: 20min
