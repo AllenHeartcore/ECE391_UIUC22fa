@@ -63,3 +63,23 @@ BUG Log for mp3 ---- ZinixOS Group
     Reason: These pointers will be defaulted to 0x0, or NULL address
     Solution: Let the 8 pointers point into a "file_op_init" array
     Take Time: 20min
+
+2. 4/11/2022
+    Description: Page Fault at `iret` (in `execute`)
+    Reason: The executable image is not copied to user page
+    Solution: Add a `read_data` function to copy nearly 4MB data
+              into address 0x08048000
+    Take Time: 1.5h
+
+3. 4/11/2022
+    Description: `shell` passes 1 in the `filename` argument in `open`
+    Reason: The correct syscall should be `write`
+    Solution: Pad a zero in syscall jumptable to make `halt`
+              the 1st syscall, etc.
+    Take Time: 1h
+
+4. 4/11/2022
+    Description: Page Fault at `halt`
+    Reason: A typo causes us to pass -1 into get_pcb
+    Solution: Change `parent_pcb->cur_pid` to `cur_pcb->cur_pid`
+    Take Time: 30min

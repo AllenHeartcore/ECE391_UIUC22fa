@@ -51,7 +51,7 @@ int32_t halt(uint8_t status) {
 
     /* Prepare for the context switch */
     tss.ss0 = KERNEL_DS;
-    tss.esp0 = (uint32_t)get_pcb(parent_pcb->cur_pid - 1) - 4; /* Get the bottom of current process memory */
+    tss.esp0 = (uint32_t)get_pcb(cur_pcb->cur_pid - 1) - 4; /* Get the bottom of current process memory */
 
     asm volatile("movl %0, %%eax \n\
                   movl %1, %%ebp \n\
