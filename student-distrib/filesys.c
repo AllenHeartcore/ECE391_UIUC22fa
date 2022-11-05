@@ -107,13 +107,12 @@ int32_t read_data(uint32_t inode_index, uint32_t offset, uint8_t* buf, uint32_t 
     /* If offset is already bigger than the file's total length, we can not read any bytes */
     if(inodes[inode_index].len < offset)
         return 0;
+
+    length = (length + offset > inodes[inode_index].len) ?
+                inodes[inode_index].len - offset : length;
     if(length == 0)
         return 0;
-    if (length>(inodes[inode_index].len - offset))
-    {
-        length = inodes[inode_index].len - offset;
-    }
-    
+
     inode = &(inodes[inode_index]);
     bytes_copied = 0;
 
