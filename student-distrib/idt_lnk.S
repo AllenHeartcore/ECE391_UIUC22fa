@@ -21,6 +21,7 @@ int_rtc_lnk:
     iret
 
 syscall_jmptbl:
+    .long 0         # Syscall number 0 is reserved
     .long halt
     .long execute
     .long read
