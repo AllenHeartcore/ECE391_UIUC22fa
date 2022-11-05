@@ -47,11 +47,11 @@ int32_t halt(uint8_t status) {
     pcb_t* parent_pcb = get_pcb(cur_pcb->parent_pid);
 
     /* Set paging for parent process */
-	set_user_prog_page(parent_pcb->parent_pid);
+	set_user_prog_page(cur_pcb->parent_pid);
 
     /* Prepare for the context switch */
     tss.ss0 = KERNEL_DS;
-    tss.esp0 = (uint32_t)get_pcb(cur_pcb->cur_pid - 1) - 4; /* Get the bottom of current process memory */
+    tss.esp0 = EIGHT_MB - parent_pcb->cur_pid * EIGHT_KB - 4; /* Get the bottom of current process memory */
 
     asm volatile("movl %0, %%eax \n\
                   movl %1, %%ebp \n\
@@ -152,7 +152,6 @@ int32_t execute(const uint8_t* command) {
 
     /* Load program */
     read_data(temp_dentry.inode_num, 0, (uint8_t*)USER_CODE, 0x3B8000);
-
     /* Save old stack */
     register uint32_t saved_ebp asm("ebp");
     register uint32_t saved_esp asm("esp");
