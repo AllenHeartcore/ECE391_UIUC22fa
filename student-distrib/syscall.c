@@ -30,13 +30,20 @@ int32_t halt(uint8_t status) {
     pcb_t* cur_pcb = get_cur_pcb();
     uint32_t cur_pid = cur_pcb->cur_pid;
     if (cur_pcb->cur_pid == 0){
-        /* TODO: Restart shell */
+        printf("Shell is not allowed to halt");
+        ret_val = -1;
+        asm volatile("movl %0, %%eax \n\
+                      leave          \n\
+                      ret            \n"
+                      : /* no output */
+                      : "r" (ret_val)
+                      : "eax");
     }
 
     /* Close all file descriptors */
     for (i = 0; i < MAX_OPENED_FILES; i++)
     {
-        /* TODO: Set all descriptors to 0 */
+        /* TODO: Close all opened files */
         cur_pcb->file_descs[i].flags = 0;
     }
 
@@ -151,7 +158,8 @@ int32_t execute(const uint8_t* command) {
 	set_user_prog_page(target_pid);
 
     /* Load program */
-    read_data(temp_dentry.inode_num, 0, (uint8_t*)USER_CODE, 0x3B8000);
+    read_data(temp_dentry.inode_num, 0, (uint8_t*)USER_CODE, USER_STACK - USER_CODE);
+
     /* Save old stack */
     register uint32_t saved_ebp asm("ebp");
     register uint32_t saved_esp asm("esp");
