@@ -45,14 +45,10 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes) {
 	/* Read from the keyboard buffer */
 	/* User can only type up to 127 (KBD_BUF_SIZE - 1) characters */
 
-	/* In 3 conditions will the read loop stop:
-	 *     1. If more than 'nbytes' is read, 
-	 *     2. if more than 128 bytes is read, or
-	 *     3. if a NUL is encountered.
-	 * The same also applies for the write loop. */
-
-	for (i = 0; i < nbytes && i < KBD_BUF_SIZE; i++) {
-		if (term.kbd_buf[i] == '\0') break;
+	/* In 2 conditions will the read/write loop be broken:
+	 *     1. If more than 'nbytes' are read/written, or
+	 *     2. if a NUL is encountered. */
+	for (i = 0; i < nbytes && term.kbd_buf[i] != '\0'; i++) {
 		((char*)buf)[i] = term.kbd_buf[i];
 	}
 	/* Fill the rest of the buffer with 0 */
@@ -76,8 +72,8 @@ int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes) {
 	if (NULL == buf || nbytes <= 0) { return 0; }
 
 	/* Write to the screen */
-	for (i = 0; i < nbytes && i < KBD_BUF_SIZE; i++) {
-		if (((char*)buf)[i] == '\0') break;
+	/* See above for loop-breaking conditions */
+	for (i = 0; i < nbytes && ((char*)buf)[i] != '\0'; i++) {
 		putc(((char*)buf)[i]);
 	}
 

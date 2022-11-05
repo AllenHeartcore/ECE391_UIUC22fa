@@ -54,7 +54,7 @@ int32_t halt(uint8_t status) {
     pcb_t* parent_pcb = get_pcb(cur_pcb->parent_pid);
 
     /* Set paging for parent process */
-	set_user_prog_page(parent_pcb->parent_pid);
+	set_user_prog_page(cur_pcb->parent_pid);
 
     /* Prepare for the context switch */
     tss.ss0 = KERNEL_DS;
@@ -63,7 +63,6 @@ int32_t halt(uint8_t status) {
     asm volatile("movl %0, %%eax \n\
                   movl %1, %%ebp \n\
                   movl %2, %%esp \n\
-                  leave          \n\
                   ret            \n"
                 : /* no output */
                 : "r" (ret_val), \
