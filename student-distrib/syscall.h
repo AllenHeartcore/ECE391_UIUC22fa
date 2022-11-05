@@ -10,6 +10,7 @@
 #define FOUR_MB     0x400000   // 4 MB
 #define EIGHT_KB    0x2000     // 8 KB
 #define USER_SPACE  0x8000000  // 128 MB
+#define USER_CODE   0x8048000  // starting point of user code
 #define USER_STACK  0x8400000  // 132 MB
 
 /* type specific file operations */

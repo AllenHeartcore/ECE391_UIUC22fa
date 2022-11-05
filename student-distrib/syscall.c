@@ -151,6 +151,7 @@ int32_t execute(const uint8_t* command) {
 	set_user_prog_page(target_pid);
 
     /* Load program */
+    read_data(temp_dentry.inode_num, 0, (uint8_t*)USER_CODE, 0x3B8000);
 
     /* Save old stack */
     register uint32_t saved_ebp asm("ebp");
