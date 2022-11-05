@@ -35,8 +35,6 @@ syscall_jmptbl:
 
 syscall_lnk:
     pushfl
-    pushl %esp      # the order matters
-    pushl %ebp
     pushl %edi
     pushl %esi
     pushl %edx      # callee-save (not args)
@@ -60,7 +58,5 @@ invalid_callnum:    # maybe we should raise an exception
     popl %edx
     popl %esi
     popl %edi
-    popl %ebp
-    popl %esp
     popfl
     iret
