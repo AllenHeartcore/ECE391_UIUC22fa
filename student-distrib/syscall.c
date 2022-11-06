@@ -202,6 +202,7 @@ int32_t execute(const uint8_t* command) {
  *   SIDE EFFECT: Change the buffer
  */
 int32_t read(int32_t fd, void* buf, int32_t nbytes) {
+    int i;
 	pcb_t	*current_pcb = get_cur_pcb();
     int32_t bytes_read;
 	/* Read 0 byte if args are invalid */
@@ -261,8 +262,14 @@ int32_t open(const uint8_t* filename) {
     cur_pcb->file_descs[fd].flags = 1;
     cur_pcb->file_descs[fd].inode = dentry.inode_num;
     cur_pcb->file_descs[fd].file_position = 0;
+    if (dentry.filetype == 1){
+        cur_pcb->file_descs[fd].file_operation.open_file = dir_open;
+        cur_pcb->file_descs[fd].file_operation.close_file = dir_close;
+        cur_pcb->file_descs[fd].file_operation.read_file = dir_read;
+        cur_pcb->file_descs[fd].file_operation.write_file = dir_write;
+    }
     // 1 and 2is the filetype of d
-    if (dentry.filetype == 1 || dentry.filetype == 2){
+    else if (dentry.filetype == 2){
         cur_pcb->file_descs[fd].file_operation.open_file = fopen;
         cur_pcb->file_descs[fd].file_operation.close_file = fclose;
         cur_pcb->file_descs[fd].file_operation.read_file = fread;
