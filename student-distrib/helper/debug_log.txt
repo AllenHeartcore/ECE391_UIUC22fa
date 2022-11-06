@@ -83,3 +83,9 @@ BUG Log for mp3 ---- ZinixOS Group
     Reason: A typo causes us to pass -1 into get_pcb
     Solution: Change `parent_pcb->cur_pid` to `cur_pcb->cur_pid`
     Take Time: 30min
+
+5. 5/11/2022
+    Description: Page Fault after `halt`
+    Reason: A typo causes us to store current stack in TSS before returning
+    Solution: Change `cur_pcb->cur_pid` to `cur_pcb->parent_pid`
+    Take Time: 1h
