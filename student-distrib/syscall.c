@@ -343,16 +343,35 @@ int32_t sigreturn(void) {
 
 /* ------------ Helper functions --------------- */
 
+/*
+ *   get_pcb
+ *   get a pcb ptr with specific pid
+ *   input: pid -- a pid
+ *   output: a pointer to pcb
+ *   side effect: none
+ */
 pcb_t* get_pcb(uint32_t pid) {
     /* (8MB - (pid+1) * 8KB) */
     return (pcb_t*)(EIGHT_MB - (pid+1) * EIGHT_KB);
 }
-
+/*
+ *   get_cur_pid
+ *   get current pid according to the stack's address
+ *   input: none
+ *   output: pid
+ *   side effect: none
+ */
 uint32_t get_cur_pid(){
     register int32_t esp_val asm("esp");
     return ((EIGHT_MB-esp_val)/EIGHT_KB); 
 }
-
+/*
+ *   get_cur_pcb
+ *   get current pcb pointer according to the stack's address
+ *   input: none
+ *   output: a pointer to pcb
+ *   side effect: none
+ */
 pcb_t* get_cur_pcb(){
     uint32_t cur_pid;
     cur_pid = get_cur_pid();
