@@ -85,7 +85,7 @@ int32_t execute(const uint8_t* command) {
     uint8_t program_name[FILE_NAME_MAX] = {'\0'};
     dentry_t temp_dentry;
     pcb_t* pcb;
-    file_op file_op_init[MAX_OPENED_FILES];
+    // file_op file_op_init[MAX_OPENED_FILES];
     uint8_t elf_buff[4]; /* Testing ELF needs 4 bytes */
 
     if (command == NULL)
@@ -137,22 +137,26 @@ int32_t execute(const uint8_t* command) {
 
     /* Without an explicit declaration,
      * all "file_operation" pointers will be NULL */
-    for (i = 0; i < MAX_OPENED_FILES; i++) {
-        pcb->file_descs[i].file_operation = &file_op_init[i];
-    }
+    // for (i = 0; i < MAX_OPENED_FILES; i++) {
+    //     pcb->file_descs[i].file_operation = &file_op_init[i];
+    // }
 
     /* Open stdin stdout */
     pcb->file_descs[0].flags = 1;
-    pcb->file_descs[0].file_operation->open_file = terminal_open;
-    pcb->file_descs[0].file_operation->close_file = terminal_close;
-    pcb->file_descs[0].file_operation->read_file = terminal_read;
-    pcb->file_descs[0].file_operation->write_file = illegal_write;
+    pcb->file_descs[0].inode = 0;
+    pcb->file_descs[0].file_position = 0;
+    pcb->file_descs[0].file_operation.open_file = terminal_open;
+    pcb->file_descs[0].file_operation.close_file = terminal_close;
+    pcb->file_descs[0].file_operation.read_file = terminal_read;
+    pcb->file_descs[0].file_operation.write_file = illegal_write;
 
     pcb->file_descs[1].flags = 1;
-    pcb->file_descs[1].file_operation->open_file = terminal_open;
-    pcb->file_descs[1].file_operation->close_file = terminal_close;
-    pcb->file_descs[1].file_operation->read_file = illegal_read;
-    pcb->file_descs[1].file_operation->write_file = terminal_write;
+    pcb->file_descs[1].inode = 0;
+    pcb->file_descs[1].file_position = 0;
+    pcb->file_descs[1].file_operation.open_file = terminal_open;
+    pcb->file_descs[1].file_operation.close_file = terminal_close;
+    pcb->file_descs[1].file_operation.read_file = illegal_read;
+    pcb->file_descs[1].file_operation.write_file = terminal_write;
 
     /* Set up paging */
 	set_user_prog_page(target_pid);
@@ -211,7 +215,7 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes) {
 		return 0;
 	}
 
-	bytes_read = current_pcb->file_descs[fd].file_operation->read_file(fd, buf, nbytes);
+	bytes_read = current_pcb->file_descs[fd].file_operation.read_file(fd, buf, nbytes);
     current_pcb->file_descs[fd].file_position += bytes_read;
     return bytes_read;
 }
@@ -236,7 +240,7 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes) {
 		return 0;
 	}
 
-	return current_pcb->file_descs[fd].file_operation->write_file(fd, buf, nbytes);
+	return current_pcb->file_descs[fd].file_operation.write_file(fd, buf, nbytes);
 }
 
 int32_t open(const uint8_t* filename) {
@@ -261,17 +265,17 @@ int32_t open(const uint8_t* filename) {
     cur_pcb->file_descs[fd].file_position = 0;
     // 1 and 2is the filetype of d
     if (dentry.filetype == 1 || dentry.filetype == 2){
-        cur_pcb->file_descs[fd].file_operation->open_file = fopen;
-        cur_pcb->file_descs[fd].file_operation->close_file = fclose;
-        cur_pcb->file_descs[fd].file_operation->read_file = fread;
-        cur_pcb->file_descs[fd].file_operation->write_file = fwrite;
+        cur_pcb->file_descs[fd].file_operation.open_file = fopen;
+        cur_pcb->file_descs[fd].file_operation.close_file = fclose;
+        cur_pcb->file_descs[fd].file_operation.read_file = fread;
+        cur_pcb->file_descs[fd].file_operation.write_file = fwrite;
     }
     // 0 is the filetype of rtc
     else if (dentry.filetype == 0){
-        cur_pcb->file_descs[fd].file_operation->open_file = rtc_open;
-        cur_pcb->file_descs[fd].file_operation->close_file = rtc_close;
-        cur_pcb->file_descs[fd].file_operation->read_file = rtc_read;
-        cur_pcb->file_descs[fd].file_operation->write_file = rtc_write;
+        cur_pcb->file_descs[fd].file_operation.open_file = rtc_open;
+        cur_pcb->file_descs[fd].file_operation.close_file = rtc_close;
+        cur_pcb->file_descs[fd].file_operation.read_file = rtc_read;
+        cur_pcb->file_descs[fd].file_operation.write_file = rtc_write;
     }
     else{
         cur_pcb->file_descs[fd].flags = 0;

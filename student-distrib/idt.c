@@ -22,7 +22,7 @@ void exc_its() { printf("EXCEPTION 0x0A: Invalid TSS\n");                   halt
 void exc_snp() { printf("EXCEPTION 0x0B: Segment not present\n");           halt(1); }
 void exc_ssf() { printf("EXCEPTION 0x0C: Stack-segment fault\n");           halt(1); }
 void exc_gpf() { printf("EXCEPTION 0x0D: General protection fault\n");      halt(1); }
-void exc_pft() { printf("EXCEPTION 0x0E: Page fault\n");  while(1);                   halt(1); }
+void exc_pft() { printf("EXCEPTION 0x0E: Page fault\n");                    halt(1); }
 void exc_res() { printf("EXCEPTION 0x0F: Reserved\n");                      halt(1); }
 void exc_fpe() { printf("EXCEPTION 0x10: Floating-point error\n");          halt(1); }
 void exc_alc() { printf("EXCEPTION 0x11: Alignment check\n");               halt(1); }

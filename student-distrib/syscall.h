@@ -30,7 +30,7 @@ typedef struct file_operation
 /* file_descriptor entry */
 typedef struct file_desc_t 
 {
-    file_op* file_operation;
+    file_op file_operation;
     uint32_t inode;
     int32_t file_position;
     int32_t flags;   // valid_desc: 0 invalid, 1 valid
