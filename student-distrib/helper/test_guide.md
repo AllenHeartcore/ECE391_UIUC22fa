@@ -24,6 +24,11 @@
 | `terminal.c` | Terminal driver |
 | `filesys.c` | Read-only file system |
 
+### Checkpoint 3
+| File | Content |
+| - | - |
+| `syscall.c` | System call handler |
+
 ### Helpers
 | File | Content |
 | - | - |
@@ -59,3 +64,12 @@
 | Filesys | Print out the contents of<br>different sized files | Run `read_data_test`<br>and examine the echoed string |
 | Filesys | Print out a list of all files<br>in the file system | Run `read_directory_test` |
 | Filesys | Filesys driver functions | Run `*_file_test` (For now,<br>they should all PASS except for<br>nonexistant filenames in `read`) |
+
+### Checkpoint 3
+| Type | Tested Functionality | Testing Method |
+| - | - | - |
+| Syscall | Sanity check | Run `syserr` (#6 will fail since `vidmap`<br>is not implemented) |
+| Syscall | Execute a program | Run `shell` |
+| Syscall | Halt a program | Run `exit` |
+| Syscall | Read from the terminal | Run `hello` |
+| Syscall | Write to the terminal | Run `testprint`, `counter`, `pingpong` |

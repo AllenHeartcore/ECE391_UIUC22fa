@@ -30,21 +30,26 @@ int32_t halt(uint8_t status) {
     pcb_t* cur_pcb = get_cur_pcb();
     uint32_t cur_pid = cur_pcb->cur_pid;
     if (cur_pcb->cur_pid == 0){
-        printf("Shell is not allowed to halt");
-        ret_val = -1;
-        asm volatile("movl %0, %%eax \n\
-                      leave          \n\
-                      ret            \n"
-                      : /* no output */
-                      : "r" (ret_val)
-                      : "eax");
+
+        /* Halt and re-open the terminal.
+         * - This allows the shell to be repeatedly re-opened
+         *   after the previous instance has been closed.
+         * - pid_array[0] is cleared so that the newly executed
+         *   shell "inherits" pid #0, file descriptors, etc.
+         * - From the user's perspective, the new shell appears
+         *   identical to the old shell.
+         */
+        pid_array[0] = 0;           /* Close the current shell, */
+        execute((uint8_t*)"shell"); /* and open a new shell */
     }
 
     /* Close all file descriptors */
     for (i = 0; i < MAX_OPENED_FILES; i++)
     {
-        /* TODO: Close all opened files */
-        cur_pcb->file_descs[i].flags = 0;
+        if (cur_pcb->file_descs[i].flags == 1) {
+            cur_pcb->file_descs[i].file_operation.close_file(i);
+            cur_pcb->file_descs[i].flags = 0;
+        }
     }
 
     /* Deactivate current process */
@@ -85,7 +90,6 @@ int32_t execute(const uint8_t* command) {
     uint8_t program_name[FILE_NAME_MAX] = {'\0'};
     dentry_t temp_dentry;
     pcb_t* pcb;
-    // file_op file_op_init[MAX_OPENED_FILES];
     uint8_t elf_buff[4]; /* Testing ELF needs 4 bytes */
 
     if (command == NULL)
@@ -135,28 +139,25 @@ int32_t execute(const uint8_t* command) {
         pcb->parent_pid = get_cur_pid();
     }
 
-    /* Without an explicit declaration,
-     * all "file_operation" pointers will be NULL */
-    // for (i = 0; i < MAX_OPENED_FILES; i++) {
-    //     pcb->file_descs[i].file_operation = &file_op_init[i];
-    // }
-
     /* Open stdin stdout */
     pcb->file_descs[0].flags = 1;
     pcb->file_descs[0].inode = 0;
     pcb->file_descs[0].file_position = 0;
-    pcb->file_descs[0].file_operation.open_file = terminal_open;
-    pcb->file_descs[0].file_operation.close_file = terminal_close;
+    pcb->file_descs[0].file_operation.open_file = illegal_open;
+    pcb->file_descs[0].file_operation.close_file = illegal_close;
     pcb->file_descs[0].file_operation.read_file = terminal_read;
     pcb->file_descs[0].file_operation.write_file = illegal_write;
 
     pcb->file_descs[1].flags = 1;
     pcb->file_descs[1].inode = 0;
     pcb->file_descs[1].file_position = 0;
-    pcb->file_descs[1].file_operation.open_file = terminal_open;
-    pcb->file_descs[1].file_operation.close_file = terminal_close;
+    pcb->file_descs[1].file_operation.open_file = illegal_open;
+    pcb->file_descs[1].file_operation.close_file = illegal_close;
     pcb->file_descs[1].file_operation.read_file = illegal_read;
     pcb->file_descs[1].file_operation.write_file = terminal_write;
+
+    /* Terminal open calls are omitted.
+     * According to the document, they should be illegal after all */
 
     /* Set up paging */
 	set_user_prog_page(target_pid);
@@ -200,10 +201,11 @@ int32_t execute(const uint8_t* command) {
  *   INPUT: fd -- file descriptor
  *			buf -- buffer to read to
  *          nbytes -- number of bytes to read
- *   OUTPUT: None
+ *   OUTPUT: number of bytes read, or -1 if fail
  *   SIDE EFFECT: Change the buffer
  */
 int32_t read(int32_t fd, void* buf, int32_t nbytes) {
+    int i;
 	pcb_t	*current_pcb = get_cur_pcb();
     int32_t bytes_read;
 	/* Read 0 byte if args are invalid */
@@ -212,7 +214,7 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes) {
 		buf == NULL ||
 		nbytes <= 0 ||
 		!(current_pcb->file_descs[fd].flags)) {
-		return 0;
+		return -1;
 	}
 
 	bytes_read = current_pcb->file_descs[fd].file_operation.read_file(fd, buf, nbytes);
@@ -226,7 +228,7 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes) {
  *   input: fd -- file descriptor
  *			buf -- buffer to write to
  *          nbytes -- number of bytes to read
- *   output: None
+ *   output: number of bytes written, or -1 failed
  *   side effect: Change the buffer
  */
 int32_t write(int32_t fd, const void* buf, int32_t nbytes) {
@@ -237,19 +239,29 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes) {
 		buf == NULL ||
 		nbytes <= 0 ||
 		!current_pcb->file_descs[fd].flags) {
-		return 0;
+		return -1;
 	}
 
 	return current_pcb->file_descs[fd].file_operation.write_file(fd, buf, nbytes);
 }
 
+/*
+ *   open
+ *   open a file in a filesystem and put file description in file descriptor array
+ *   input: filename
+ *   output: 0 success, -1 fail
+ *   side effect: Change the buffer
+ */
 int32_t open(const uint8_t* filename) {
     int i;
     int fd;
     dentry_t dentry;
+    // check whether the filename is valid
     if (fopen(filename) == -1)
         return -1; 
+    // get the current pcb
     pcb_t* cur_pcb = get_cur_pcb();
+    // check whether number of opened files reach max
     for (i = 0; i < MAX_OPENED_FILES; i++){
         if (cur_pcb->file_descs[i].flags == 1)
             continue;
@@ -263,8 +275,15 @@ int32_t open(const uint8_t* filename) {
     cur_pcb->file_descs[fd].flags = 1;
     cur_pcb->file_descs[fd].inode = dentry.inode_num;
     cur_pcb->file_descs[fd].file_position = 0;
-    // 1 and 2is the filetype of d
-    if (dentry.filetype == 1 || dentry.filetype == 2){
+    // filetype = 1 is directory
+    if (dentry.filetype == 1){
+        cur_pcb->file_descs[fd].file_operation.open_file = dir_open;
+        cur_pcb->file_descs[fd].file_operation.close_file = dir_close;
+        cur_pcb->file_descs[fd].file_operation.read_file = dir_read;
+        cur_pcb->file_descs[fd].file_operation.write_file = dir_write;
+    }
+    // 2 is the normal file
+    else if (dentry.filetype == 2){
         cur_pcb->file_descs[fd].file_operation.open_file = fopen;
         cur_pcb->file_descs[fd].file_operation.close_file = fclose;
         cur_pcb->file_descs[fd].file_operation.read_file = fread;
@@ -277,18 +296,31 @@ int32_t open(const uint8_t* filename) {
         cur_pcb->file_descs[fd].file_operation.read_file = rtc_read;
         cur_pcb->file_descs[fd].file_operation.write_file = rtc_write;
     }
+    // abnormal filetype
     else{
         cur_pcb->file_descs[fd].flags = 0;
         return -1;
     }
+    cur_pcb->file_descs[fd].file_operation.open_file(filename);
     return fd;
 }
 
+/*
+ *   close
+ *   close a file, remove the file from file descriptor array
+ *   input: fd -- file descriptor
+ *   output: 0 means success, -1 means fail
+ *   side effect: Change the buffer
+ */
 int32_t close(int32_t fd) {
     // cannot delete file whose fd is 0 or 1 because they are stdin and stdout
     if (fd <= 1 || fd >= MAX_OPENED_FILES)
         return -1;
     pcb_t* pcb = get_cur_pcb();
+    // check whether fd is valid
+    if (!pcb->file_descs[fd].flags)
+        return -1;
+    pcb->file_descs[fd].file_operation.close_file(fd);
     pcb->file_descs[fd].flags = 0;
     return 0;
 }

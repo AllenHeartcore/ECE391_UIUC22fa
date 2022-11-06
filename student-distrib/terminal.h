@@ -30,6 +30,10 @@ extern void terminal_scroll();
 extern void terminal_clear();
 /* Get current terminal */
 extern terminal_t* get_current_terminal();
+/* terminal_open fault wrapper */
+extern int32_t illegal_open(const uint8_t* filename);
+/* terminal_close fault wrapper */
+extern int32_t illegal_close(int32_t fd);
 /* stdin_read fault wrapper */
 extern int32_t illegal_read(int32_t fd, void* buf, int32_t nbyte);
 /* stdout_write fault wrapper */

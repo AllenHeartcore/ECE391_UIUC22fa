@@ -8,6 +8,7 @@ boot_block_t* boot_block; // Pointer to the boot block
 inode_t* inodes;  // Pointer to the inodes
 data_block_t* data_blocks;  // Pointer to the data blocks
 dentry_t* dentries; // Pointer to the dentries
+int index_file = 0;
 
 /*
 *   file_system_init
@@ -168,12 +169,19 @@ int32_t read_data(uint32_t inode_index, uint32_t offset, uint8_t* buf, uint32_t 
  */
 int32_t read_directory(uint8_t* buf, int index){
     dentry_t dentry;                // initialize the dentry
+    int i;
     // get the certain dentry
     dentry = dentries[index];
     if (index >= boot_block->dir_num)
         return -1;
     // copy the filename into buffer
     memcpy(buf, &dentry.filename, FILE_NAME_MAX);
+    for (i = 0; i < FILE_NAME_MAX; i++){
+        if (buf[i] == 0){
+            buf[i] = '\n';
+            break;
+        }
+    }
     return 0;
 }
 
@@ -235,3 +243,63 @@ int32_t fread(int32_t fd, void* buf, int32_t n_bytes){
     uint32_t offset = file_desc[fd].file_position;
     return read_data(inode, offset, buf, n_bytes);
 }
+
+/*
+ * dir_open
+ * check whether we can open the directory with filename
+ * Inputs: directory name
+ * Output: 0 
+ * Side Effect: None
+ * Coverage: Check whether we can open the file
+ */
+int32_t dir_open(const uint8_t* filename){
+    return 0;
+}
+
+/*
+ * dir_read
+ * read directory
+ * Input: fd: file descriptor, buffer: written data , n_bytes: how many bytes written
+ * Output: 0 if success -1 if failure
+ * Side Effect: None
+ * Coverage: Read the files
+ */
+int32_t dir_read(int32_t fd, void* buf, int32_t n_bytes){
+    int ret_val;
+	// 63 is the max directory number in filesystem
+	ret_val = read_directory(buf, index_file);
+    index_file++;
+    if (ret_val == -1){
+        index_file = 0;
+        return 0;
+    }
+    return FILE_NAME_MAX;
+}
+
+/*
+ * dir_write
+ * write directory
+ * Input: fd: file descriptor, buffer: written data , n_bytes: how many bytes written
+ * Output: 0 if success -1 if failure
+ * Side Effect: None
+ * Coverage: Read the files
+ */
+int32_t dir_write(int32_t fd, const void* buf, int32_t n_bytes){
+    return 0;
+}
+
+/*
+ * dir_open
+ * check whether we can close the directory with filename
+ * Inputs: fd (file descriptor)
+ * Output: 0 if success -1 if fail
+ * Side Effect: None
+ * Coverage: Check whether we can close the file
+ */
+int32_t dir_close(int32_t fd){
+    return 0;
+}
+
+
+
+
