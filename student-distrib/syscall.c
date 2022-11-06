@@ -63,6 +63,7 @@ int32_t halt(uint8_t status) {
     asm volatile("movl %0, %%eax \n\
                   movl %1, %%ebp \n\
                   movl %2, %%esp \n\
+                  leave          \n\
                   ret            \n"
                 : /* no output */
                 : "r" (ret_val), \
