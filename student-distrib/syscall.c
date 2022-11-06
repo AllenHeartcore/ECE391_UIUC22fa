@@ -48,8 +48,10 @@ int32_t halt(uint8_t status) {
     /* Close all file descriptors */
     for (i = 0; i < MAX_OPENED_FILES; i++)
     {
-        /* TODO: Close all opened files */
-        cur_pcb->file_descs[i].flags = 0;
+        if (cur_pcb->file_descs[i].flags == 1) {
+            cur_pcb->file_descs[i].file_operation.close_file(i);
+            cur_pcb->file_descs[i].flags = 0;
+        }
     }
 
     /* Deactivate current process */
@@ -143,18 +145,21 @@ int32_t execute(const uint8_t* command) {
     pcb->file_descs[0].flags = 1;
     pcb->file_descs[0].inode = 0;
     pcb->file_descs[0].file_position = 0;
-    pcb->file_descs[0].file_operation.open_file = terminal_open;
-    pcb->file_descs[0].file_operation.close_file = terminal_close;
+    pcb->file_descs[0].file_operation.open_file = illegal_open;
+    pcb->file_descs[0].file_operation.close_file = illegal_close;
     pcb->file_descs[0].file_operation.read_file = terminal_read;
     pcb->file_descs[0].file_operation.write_file = illegal_write;
 
     pcb->file_descs[1].flags = 1;
     pcb->file_descs[1].inode = 0;
     pcb->file_descs[1].file_position = 0;
-    pcb->file_descs[1].file_operation.open_file = terminal_open;
-    pcb->file_descs[1].file_operation.close_file = terminal_close;
+    pcb->file_descs[1].file_operation.open_file = illegal_open;
+    pcb->file_descs[1].file_operation.close_file = illegal_close;
     pcb->file_descs[1].file_operation.read_file = illegal_read;
     pcb->file_descs[1].file_operation.write_file = terminal_write;
+
+    /* Terminal open calls are omitted.
+     * According to the document, they should be illegal after all */
 
     /* Set up paging */
 	set_user_prog_page(target_pid);
@@ -286,6 +291,7 @@ int32_t open(const uint8_t* filename) {
         cur_pcb->file_descs[fd].flags = 0;
         return -1;
     }
+    cur_pcb->file_descs[fd].file_operation.open_file(filename);
     return fd;
 }
 
@@ -296,6 +302,7 @@ int32_t close(int32_t fd) {
     pcb_t* pcb = get_cur_pcb();
     if (!pcb->file_descs[fd].flags)
         return -1;
+    pcb->file_descs[fd].file_operation.close_file(fd);
     pcb->file_descs[fd].flags = 0;
     return 0;
 }
