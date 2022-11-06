@@ -201,7 +201,7 @@ int32_t execute(const uint8_t* command) {
  *   INPUT: fd -- file descriptor
  *			buf -- buffer to read to
  *          nbytes -- number of bytes to read
- *   OUTPUT: None
+ *   OUTPUT: number of bytes read, or -1 if fail
  *   SIDE EFFECT: Change the buffer
  */
 int32_t read(int32_t fd, void* buf, int32_t nbytes) {
@@ -228,7 +228,7 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes) {
  *   input: fd -- file descriptor
  *			buf -- buffer to write to
  *          nbytes -- number of bytes to read
- *   output: None
+ *   output: number of bytes written, or -1 failed
  *   side effect: Change the buffer
  */
 int32_t write(int32_t fd, const void* buf, int32_t nbytes) {
@@ -245,13 +245,23 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes) {
 	return current_pcb->file_descs[fd].file_operation.write_file(fd, buf, nbytes);
 }
 
+/*
+ *   open
+ *   open a file in a filesystem and put file description in file descriptor array
+ *   input: filename
+ *   output: 0 success, -1 fail
+ *   side effect: Change the buffer
+ */
 int32_t open(const uint8_t* filename) {
     int i;
     int fd;
     dentry_t dentry;
+    // check whether the filename is valid
     if (fopen(filename) == -1)
         return -1; 
+    // get the current pcb
     pcb_t* cur_pcb = get_cur_pcb();
+    // check whether number of opened files reach max
     for (i = 0; i < MAX_OPENED_FILES; i++){
         if (cur_pcb->file_descs[i].flags == 1)
             continue;
@@ -265,13 +275,14 @@ int32_t open(const uint8_t* filename) {
     cur_pcb->file_descs[fd].flags = 1;
     cur_pcb->file_descs[fd].inode = dentry.inode_num;
     cur_pcb->file_descs[fd].file_position = 0;
+    // filetype = 1 is directory
     if (dentry.filetype == 1){
         cur_pcb->file_descs[fd].file_operation.open_file = dir_open;
         cur_pcb->file_descs[fd].file_operation.close_file = dir_close;
         cur_pcb->file_descs[fd].file_operation.read_file = dir_read;
         cur_pcb->file_descs[fd].file_operation.write_file = dir_write;
     }
-    // 1 and 2is the filetype of d
+    // 2 is the normal file
     else if (dentry.filetype == 2){
         cur_pcb->file_descs[fd].file_operation.open_file = fopen;
         cur_pcb->file_descs[fd].file_operation.close_file = fclose;
@@ -285,6 +296,7 @@ int32_t open(const uint8_t* filename) {
         cur_pcb->file_descs[fd].file_operation.read_file = rtc_read;
         cur_pcb->file_descs[fd].file_operation.write_file = rtc_write;
     }
+    // abnormal filetype
     else{
         cur_pcb->file_descs[fd].flags = 0;
         return -1;
@@ -293,11 +305,19 @@ int32_t open(const uint8_t* filename) {
     return fd;
 }
 
+/*
+ *   close
+ *   close a file, remove the file from file descriptor array
+ *   input: fd -- file descriptor
+ *   output: 0 means success, -1 means fail
+ *   side effect: Change the buffer
+ */
 int32_t close(int32_t fd) {
     // cannot delete file whose fd is 0 or 1 because they are stdin and stdout
     if (fd <= 1 || fd >= MAX_OPENED_FILES)
         return -1;
     pcb_t* pcb = get_cur_pcb();
+    // check whether fd is valid
     if (!pcb->file_descs[fd].flags)
         return -1;
     pcb->file_descs[fd].file_operation.close_file(fd);
