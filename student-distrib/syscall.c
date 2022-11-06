@@ -63,6 +63,7 @@ int32_t halt(uint8_t status) {
     asm volatile("movl %0, %%eax \n\
                   movl %1, %%ebp \n\
                   movl %2, %%esp \n\
+                  leave          \n\
                   ret            \n"
                 : /* no output */
                 : "r" (ret_val), \
@@ -84,7 +85,6 @@ int32_t execute(const uint8_t* command) {
     uint8_t program_name[FILE_NAME_MAX] = {'\0'};
     dentry_t temp_dentry;
     pcb_t* pcb;
-    // file_op file_op_init[MAX_OPENED_FILES];
     uint8_t elf_buff[4]; /* Testing ELF needs 4 bytes */
 
     if (command == NULL)
@@ -133,12 +133,6 @@ int32_t execute(const uint8_t* command) {
         /* If target pid is not 0, assign parent pid as current pid. */
         pcb->parent_pid = get_cur_pid();
     }
-
-    /* Without an explicit declaration,
-     * all "file_operation" pointers will be NULL */
-    // for (i = 0; i < MAX_OPENED_FILES; i++) {
-    //     pcb->file_descs[i].file_operation = &file_op_init[i];
-    // }
 
     /* Open stdin stdout */
     pcb->file_descs[0].flags = 1;
