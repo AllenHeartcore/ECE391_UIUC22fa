@@ -205,7 +205,7 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes) {
 		buf == NULL ||
 		nbytes <= 0 ||
 		!(current_pcb->file_descs[fd].flags)) {
-		return 0;
+		return -1;
 	}
 
 	bytes_read = current_pcb->file_descs[fd].file_operation.read_file(fd, buf, nbytes);
@@ -230,7 +230,7 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes) {
 		buf == NULL ||
 		nbytes <= 0 ||
 		!current_pcb->file_descs[fd].flags) {
-		return 0;
+		return -1;
 	}
 
 	return current_pcb->file_descs[fd].file_operation.write_file(fd, buf, nbytes);
@@ -282,6 +282,8 @@ int32_t close(int32_t fd) {
     if (fd <= 1 || fd >= MAX_OPENED_FILES)
         return -1;
     pcb_t* pcb = get_cur_pcb();
+    if (!pcb->file_descs[fd].flags)
+        return -1;
     pcb->file_descs[fd].flags = 0;
     return 0;
 }

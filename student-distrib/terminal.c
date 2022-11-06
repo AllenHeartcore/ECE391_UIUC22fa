@@ -141,11 +141,11 @@ terminal_t* get_current_terminal() {
 }
 
 int32_t illegal_read(int32_t fd, void* buf, int32_t nbyte){
-    printf("You cannot read in stdout.");
+    printf("You cannot read in stdout.\n");
     return -1;
 }
 
 int32_t illegal_write(int32_t fd, const void* buf, int32_t nbyte){
-    printf("You cannot write in stdin.");
+    printf("You cannot write in stdin.\n");
     return -1;
 }

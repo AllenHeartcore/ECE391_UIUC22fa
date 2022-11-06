@@ -41,9 +41,9 @@ syscall_lnk:
     pushl %ecx
     pushl %ebx
 
-    cmpl $0, %eax   # sanity check
+    cmpl $1, %eax   # sanity check
     jl invalid_callnum
-    cmpl $9, %eax
+    cmpl $10, %eax
     jg invalid_callnum
 
     pushl %edx      # push arguments
@@ -51,8 +51,12 @@ syscall_lnk:
     pushl %ebx
     call *syscall_jmptbl(, %eax, 4)
     addl $12, %esp
+    jmp syscall_done
 
-invalid_callnum:    # maybe we should raise an exception
+invalid_callnum:
+    movl $-1, %eax
+
+syscall_done:
     popl %ebx       # We don't save and restore eax, ...
     popl %ecx       # because it holds the return value
     popl %edx
