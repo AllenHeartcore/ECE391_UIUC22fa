@@ -30,14 +30,19 @@ int32_t halt(uint8_t status) {
     pcb_t* cur_pcb = get_cur_pcb();
     uint32_t cur_pid = cur_pcb->cur_pid;
     if (cur_pcb->cur_pid == 0){
-        printf("Shell is not allowed to halt");
-        ret_val = -1;
-        asm volatile("movl %0, %%eax \n\
-                      leave          \n\
-                      ret            \n"
-                      : /* no output */
-                      : "r" (ret_val)
-                      : "eax");
+
+        /* Halt and re-open the terminal.
+         * - This allows the shell to be repeatedly re-opened
+         *   after the previous instance has been closed.
+         * - pid_array[0] is cleared so that the newly executed
+         *   shell "inherits" pid #0, file descriptors, etc.
+         * - From the user's perspective, the new shell appears
+         *   identical to the old shell.
+         */
+        while (1) {
+            pid_array[0] = 0;           /* Close the current shell, */
+            execute((uint8_t*)"shell"); /* and open a new shell */
+        }
     }
 
     /* Close all file descriptors */
