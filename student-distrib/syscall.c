@@ -39,10 +39,8 @@ int32_t halt(uint8_t status) {
          * - From the user's perspective, the new shell appears
          *   identical to the old shell.
          */
-        while (1) {
-            pid_array[0] = 0;           /* Close the current shell, */
-            execute((uint8_t*)"shell"); /* and open a new shell */
-        }
+        pid_array[0] = 0;           /* Close the current shell, */
+        execute((uint8_t*)"shell"); /* and open a new shell */
     }
 
     /* Close all file descriptors */
