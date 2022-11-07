@@ -48,7 +48,7 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes) {
 	/* In 2 conditions will the read/write loop be broken:
 	 *     1. If more than 'nbytes' are read/written, or
 	 *     2. if a NUL is encountered. */
-	for (i = 0; i < nbytes && term.kbd_buf[i] != '\0'; i++) {
+	for (i = 0; i < nbytes && i < KBD_BUF_SIZE && term.kbd_buf[i] != '\0'; i++) {
 		((char*)buf)[i] = term.kbd_buf[i];
 	}
 	/* Fill the rest of the buffer with 0 */
