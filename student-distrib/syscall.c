@@ -39,6 +39,7 @@ int32_t halt(uint8_t status) {
          * - From the user's perspective, the new shell appears
          *   identical to the old shell.
          */
+        printf("WARNING: You cannot halt base shell.\n");
         pid_array[0] = 0;           /* Close the current shell, */
         execute((uint8_t*)"shell"); /* and open a new shell */
     }
@@ -64,6 +65,10 @@ int32_t halt(uint8_t status) {
     /* Prepare for the context switch */
     tss.ss0 = KERNEL_DS;
     tss.esp0 = EIGHT_MB - parent_pcb->cur_pid * EIGHT_KB - 4; /* Get the bottom of current process memory */
+    /* We're expanding the expression instead of using the
+     * "get_pcb(parent_pcb->cur_pid - 1)" function here, since
+     * the meaning of "get_pcb(-1)" is ambiguous, and the call
+     * would've failed had get_pcb checked argument validity. */
 
     asm volatile("movl %0, %%eax \n\
                   movl %1, %%ebp \n\
@@ -205,7 +210,6 @@ int32_t execute(const uint8_t* command) {
  *   SIDE EFFECT: Change the buffer
  */
 int32_t read(int32_t fd, void* buf, int32_t nbytes) {
-    int i;
 	pcb_t	*current_pcb = get_cur_pcb();
     int32_t bytes_read;
 	/* Read 0 byte if args are invalid */
