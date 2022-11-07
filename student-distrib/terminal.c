@@ -45,9 +45,10 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes) {
 	/* Read from the keyboard buffer */
 	/* User can only type up to 127 (KBD_BUF_SIZE - 1) characters */
 
-	/* In 2 conditions will the read/write loop be broken:
+	/* In 3 conditions will the read/write loop be broken:
 	 *     1. If more than 'nbytes' are read/written, or
-	 *     2. if a NUL is encountered. */
+	 *     2. if a NUL is encountered, or
+	 *     3. if we already read 128 (KBD_BUF_SIZE) bytes. */
 	for (i = 0; i < nbytes && i < KBD_BUF_SIZE && term.kbd_buf[i] != '\0'; i++) {
 		((char*)buf)[i] = term.kbd_buf[i];
 	}
