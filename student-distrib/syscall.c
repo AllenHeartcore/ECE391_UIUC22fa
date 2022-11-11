@@ -341,6 +341,14 @@ int32_t close(int32_t fd) {
     return 0;
 }
 
+/*
+ *   getargs
+ *   copy the command line arguments into the buffer given by user
+ *   input: fd -- file descriptor
+ *          nbytes -- number of bytes to copy
+ *   output: 0 means success, -1 means fail
+ *   side effect: Change the buffer
+ */
 int32_t getargs(uint8_t* buf, int32_t nbytes) {
     pcb_t* current_pcb = get_cur_pcb();
 
