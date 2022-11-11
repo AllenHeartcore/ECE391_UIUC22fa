@@ -6,7 +6,6 @@
 #include "rtc.h"
 #include "idt_lnk.h"
 #include "page.h"
-#include "terminal.h"
 
 /* Process id array */
 uint32_t pid_array[MAX_PROCESS] = {0};
@@ -93,6 +92,7 @@ int32_t halt(uint8_t status) {
 int32_t execute(const uint8_t* command) {
     int32_t i, program_start_addr, target_pid;
     uint8_t program_name[FILE_NAME_MAX] = {'\0'};
+    int8_t args[KBD_BUF_SIZE + 1] = {'\0'};
     dentry_t temp_dentry;
     pcb_t* pcb;
     uint8_t elf_buff[4]; /* Testing ELF needs 4 bytes */
@@ -101,11 +101,20 @@ int32_t execute(const uint8_t* command) {
         return -1;
 
     /* Parse command */
-    for (i = 0; i < strlen((int8_t*)command); i++) {
-        if(command[i] == ' ')
-            break;
+    for (i = 0;
+         i < strlen((int8_t*)command) &&
+            command[i] != '\0' &&
+            command[i] != ' ';
+         i++) {
         program_name[i] = command[i];
     }
+
+    /* Parse arguments */
+    for (; i < strlen((int8_t*)command) &&
+            command[i] != '\0' &&
+            command[i] == ' ';
+         i++);
+    strncpy(args, (int8_t*)(&(command[i])), KBD_BUF_SIZE);
 
     /* Check file validity */
     if (read_dentry_by_name(program_name, &temp_dentry) == -1)
@@ -160,6 +169,9 @@ int32_t execute(const uint8_t* command) {
     pcb->file_descs[1].file_operation.close_file = illegal_close;
     pcb->file_descs[1].file_operation.read_file = illegal_read;
     pcb->file_descs[1].file_operation.write_file = terminal_write;
+
+    /* Write arguments in pcb */
+    memcpy(pcb->args, args, KBD_BUF_SIZE + 1);
 
     /* Terminal open calls are omitted.
      * According to the document, they should be illegal after all */
@@ -330,6 +342,19 @@ int32_t close(int32_t fd) {
 }
 
 int32_t getargs(uint8_t* buf, int32_t nbytes) {
+    pcb_t* current_pcb = get_cur_pcb();
+
+    if (buf == NULL ||
+        buf < (uint8_t*) USER_SPACE ||
+        nbytes <= 0 ||
+        current_pcb == NULL ||
+        current_pcb->args[0] == '\0') {
+        return -1;
+    }
+
+    memcpy(buf, current_pcb->args,
+           nbytes > KBD_BUF_SIZE ? KBD_BUF_SIZE : nbytes);
+
     return 0;
 }
 
