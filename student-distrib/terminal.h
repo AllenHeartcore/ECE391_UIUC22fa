@@ -1,6 +1,10 @@
 /* terminal.h - Defines functions and structure for terminal driver
  * vim:ts=4 noexpandtab
  */
+
+#ifndef _TERMINAL_H
+#define _TERMINAL_H
+
 #include "types.h"
 
 #define KBD_BUF_SIZE 128
@@ -38,3 +42,5 @@ extern int32_t illegal_close(int32_t fd);
 extern int32_t illegal_read(int32_t fd, void* buf, int32_t nbyte);
 /* stdout_write fault wrapper */
 extern int32_t illegal_write(int32_t fd, const void* buf, int32_t nbyte);
+
+#endif /* _TERMINAL_H */
