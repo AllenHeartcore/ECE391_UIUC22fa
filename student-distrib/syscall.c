@@ -90,7 +90,7 @@ int32_t halt(uint8_t status) {
  * Function: Execute the issued command
  */
 int32_t execute(const uint8_t* command) {
-    int32_t i, program_start_addr, target_pid;
+    int32_t i, j, program_start_addr, target_pid;
     uint8_t program_name[FILE_NAME_MAX] = {'\0'};
     int8_t args[KBD_BUF_SIZE + 1] = {'\0'};
     dentry_t temp_dentry;
@@ -114,7 +114,13 @@ int32_t execute(const uint8_t* command) {
             command[i] != '\0' &&
             command[i] == ' ';
          i++);
-    strncpy(args, (int8_t*)(&(command[i])), KBD_BUF_SIZE);
+    for (j = 0; i < strlen((int8_t*)command) &&
+            command[i] != '\0' &&
+            command[i] != ' ';
+         i++) {
+        args[j++] = command[i];
+    }
+
 
     /* Check file validity */
     if (read_dentry_by_name(program_name, &temp_dentry) == -1)
