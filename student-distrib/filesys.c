@@ -163,7 +163,7 @@ int32_t read_data(uint32_t inode_index, uint32_t offset, uint8_t* buf, uint32_t 
  * 
  * Asserts that we can read data from data block
  * Inputs: buffer to store the file description data
- * Outputs: 0, always successful
+ * Outputs: Return filename's length
  * Side Effects: None
  * Coverage: Load all the filename in the directory
  */
@@ -176,13 +176,10 @@ int32_t read_directory(uint8_t* buf, int index){
         return -1;
     // copy the filename into buffer
     memcpy(buf, &dentry.filename, FILE_NAME_MAX);
-    for (i = 0; i < FILE_NAME_MAX; i++){
-        if (buf[i] == 0){
-            buf[i] = '\n';
-            break;
-        }
-    }
-    return 0;
+
+    if(strlen(dentry.filename)<FILE_NAME_MAX)
+        return strlen(dentry.filename);
+    return FILE_NAME_MAX;
 }
 
 
@@ -273,7 +270,7 @@ int32_t dir_read(int32_t fd, void* buf, int32_t n_bytes){
         index_file = 0;
         return 0;
     }
-    return FILE_NAME_MAX;
+    return ret_val;
 }
 
 /*
