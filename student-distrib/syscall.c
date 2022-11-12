@@ -367,6 +367,12 @@ int32_t getargs(uint8_t* buf, int32_t nbytes) {
 }
 
 int32_t vidmap(uint8_t** screen_start) {
+    if (screen_start == NULL ||
+        screen_start < (uint8_t**) USER_SPACE ||
+        screen_start > (uint8_t**) (USER_SPACE + FOUR_MB - 1)) {
+        return -1;
+    }
+    set_vidmap_page(screen_start);
     return 0;
 }
 

@@ -12,6 +12,8 @@
 pg_dir_t page_directory __attribute__((aligned (4 * 1024)));
 // 1024 entries. 
 pg_tbl_t page_table __attribute__((aligned (4 * 1024)));
+/* Page table for video mapping */
+pg_tbl_t video_page_table __attribute__((aligned (4 * 1024)));
 
 
 /*
@@ -130,4 +132,46 @@ void set_user_prog_page(uint32_t pid) {
 		: "r" (&page_directory)
 		: "%eax"
 	);
+}
+
+void set_vidmap_page(uint8_t** screen_start) {
+
+	/* Map user_video_addr to physical video address. */
+	/* Set page directory */
+	page_directory[USER_VIDEO_ADDR >> 22].present = 1;
+	page_directory[USER_VIDEO_ADDR >> 22].rw = 1;
+	page_directory[USER_VIDEO_ADDR >> 22].priviledge = 1;
+	page_directory[USER_VIDEO_ADDR >> 22].pwt = 0;
+	page_directory[USER_VIDEO_ADDR >> 22].pcd = 0;
+	page_directory[USER_VIDEO_ADDR >> 22].accessed = 0;
+	page_directory[USER_VIDEO_ADDR >> 22].dirty = 0;
+	page_directory[USER_VIDEO_ADDR >> 22].ps = 0;
+	page_directory[USER_VIDEO_ADDR >> 22].global = 0;
+	page_directory[USER_VIDEO_ADDR >> 22].avl = 0;
+	page_directory[USER_VIDEO_ADDR >> 22].addr = (uint32_t) &video_page_table >> 12;
+
+	/* Set page table */
+	video_page_table[(USER_VIDEO_ADDR & PG_TBL_NUMBER_MASK) >> 12].present = 1;
+	video_page_table[(USER_VIDEO_ADDR & PG_TBL_NUMBER_MASK) >> 12].rw = 1;
+	video_page_table[(USER_VIDEO_ADDR & PG_TBL_NUMBER_MASK) >> 12].priviledge = 1;
+	video_page_table[(USER_VIDEO_ADDR & PG_TBL_NUMBER_MASK) >> 12].pwt = 0;
+	video_page_table[(USER_VIDEO_ADDR & PG_TBL_NUMBER_MASK) >> 12].pcd = 0;
+	video_page_table[(USER_VIDEO_ADDR & PG_TBL_NUMBER_MASK) >> 12].accessed = 0;
+	video_page_table[(USER_VIDEO_ADDR & PG_TBL_NUMBER_MASK) >> 12].dirty = 0;
+	video_page_table[(USER_VIDEO_ADDR & PG_TBL_NUMBER_MASK) >> 12].pat = 0;
+	video_page_table[(USER_VIDEO_ADDR & PG_TBL_NUMBER_MASK) >> 12].global = 0;
+	video_page_table[(USER_VIDEO_ADDR & PG_TBL_NUMBER_MASK) >> 12].avl = 0;
+	video_page_table[(USER_VIDEO_ADDR & PG_TBL_NUMBER_MASK) >> 12].addr = VIDEO >> 12;
+
+	/* Update CR3 and flush TLB */
+	asm volatile(
+		"movl %0, %%eax \n\t"
+		"movl %%eax, %%cr3 \n\t"
+		: /* no output */
+		: "r" (&page_directory)
+		: "%eax"
+	);
+
+	/* Update screen_start */
+	*screen_start = (uint8_t*) USER_VIDEO_ADDR;
 }

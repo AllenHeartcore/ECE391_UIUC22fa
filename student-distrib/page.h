@@ -5,10 +5,16 @@
 #ifndef _PAGE_H
 #define _PAGE_H
 
+#include "syscall.h"
+
 /* Total number of page directory
  * entries and page table entries */
 #define NUM_PG_DIR_ENTRY 1024
 #define NUM_PG_TBL_ENTRY 1024
+
+/* Virtual address of user programs */
+#define USER_VIDEO_ADDR (USER_SPACE + FOUR_MB)
+#define PG_TBL_NUMBER_MASK 0x003FF000
 
 #include "types.h"
 
@@ -60,5 +66,7 @@ extern pg_tbl_t page_table;
 void page_init(void);
 /* Set paging for user program */
 void set_user_prog_page(uint32_t pid);
+/* Set video mapping for user program */
+void set_vidmap_page(uint8_t** screen_start);
 
 #endif
