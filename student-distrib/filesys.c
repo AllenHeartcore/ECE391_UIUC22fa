@@ -169,7 +169,7 @@ int32_t read_data(uint32_t inode_index, uint32_t offset, uint8_t* buf, uint32_t 
  */
 int32_t read_directory(uint8_t* buf, int index){
     dentry_t dentry;                // initialize the dentry
-    int i;
+    uint32_t string_length;
     // get the certain dentry
     dentry = dentries[index];
     if (index >= boot_block->dir_num)
@@ -177,9 +177,8 @@ int32_t read_directory(uint8_t* buf, int index){
     // copy the filename into buffer
     memcpy(buf, &dentry.filename, FILE_NAME_MAX);
 
-    if(strlen(dentry.filename)<FILE_NAME_MAX)
-        return strlen(dentry.filename);
-    return FILE_NAME_MAX;
+    string_length = strlen((int8_t*)dentry.filename);
+    return string_length < FILE_NAME_MAX ? string_length : FILE_NAME_MAX;
 }
 
 

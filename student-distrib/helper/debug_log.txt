@@ -95,3 +95,25 @@ BUG Log for mp3 ---- ZinixOS Group
     Reason: The "file_desc_t" object only holds a pointer to "file_op"
     Solution: Include a full "file_op" object in "file_desc_t"
     Take Time: 3h
+
+----------- check point 4 -----------
+1. 12/11/2022
+    Description: "File not found" when "cat <filename>" has trailing spaces
+    Reason: We did not trim the trailing spaces
+    Solution: Trim the first argument (stop at the next space)
+    Take Time: 20min
+
+2. 12/11/2022
+    Description: `grep` cannot open files
+    Reason: In Ckpt. 3, `ls` adds trailing '\n' to the filenames,
+            which prevents `grep` from identifying the right files;
+            but deleting this '\n' will cause the output of `ls` to cluster
+    Solution: Modify "read_data" to return the length of filename;
+            delete the trailing '\n' (and leave it to `ls`)
+    Take Time: 1h
+
+3. 12/11/2022
+    Description: "Expected identifier or '(' before numeric constant" in macros
+    Reason: The macro arguments and struct members share the same namespace
+    Solution: Rename the macro arguments. Specifically, add a leading '_'
+    Take Time: 30min
