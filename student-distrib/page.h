@@ -24,7 +24,7 @@ typedef union pg_dir_entr_t {
 	struct {
 		uint32_t present    :  1;  /* 1-bit present flag            */
 		uint32_t rw         :  1;  /* 1-bit read / write flag       */
-		uint32_t priviledge :  1;  /* 1-bit, user / supervisor      */
+		uint32_t privilege  :  1;  /* 1-bit, user / supervisor      */
 		uint32_t pwt        :  1;  /* 1-bit write through flag      */
 		uint32_t pcd        :  1;  /* 1-bit cache disable flag      */
 		uint32_t accessed   :  1;  /* 1-bit accessed flag           */
@@ -42,7 +42,7 @@ typedef union pg_tbl_entr_t {
 	struct {
 		uint8_t  present    :  1;  /* 1-bit present flag               */
 		uint8_t  rw         :  1;  /* 1-bit read/write flag            */
-		uint8_t  priviledge :  1;  /* 1-bit, user/supervisor           */
+		uint8_t  privilege  :  1;  /* 1-bit, user/supervisor           */
 		uint8_t  pwt        :  1;  /* 1-bit write through flag         */
 		uint8_t  pcd        :  1;  /* 1-bit cache disable flag         */
 		uint8_t  accessed   :  1;  /* 1-bit accessed flag              */

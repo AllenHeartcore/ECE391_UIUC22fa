@@ -15,6 +15,46 @@ pg_tbl_t page_table __attribute__((aligned (4 * 1024)));
 /* Page table for video mapping */
 pg_tbl_t video_page_table __attribute__((aligned (4 * 1024)));
 
+/* Set a page directory entry according to given value */
+#define SET_PDE(_pg_dir, _idx, _privilege, _ps, _global, _addr) do {    \
+    (_pg_dir)[(_idx)].present = 1;                                      \
+    (_pg_dir)[(_idx)].rw = 1;                                           \
+    (_pg_dir)[(_idx)].privilege = (_privilege);                         \
+    (_pg_dir)[(_idx)].pwt = 0;                                          \
+    (_pg_dir)[(_idx)].pcd = 0;                                          \
+    (_pg_dir)[(_idx)].accessed = 0;                                     \
+    (_pg_dir)[(_idx)].dirty = 0;                                        \
+    (_pg_dir)[(_idx)].ps = (_ps);                                       \
+    (_pg_dir)[(_idx)].global = (_global);                               \
+    (_pg_dir)[(_idx)].avl = 0;                                          \
+    (_pg_dir)[(_idx)].addr = (_addr);                                   \
+} while (0)
+
+/* Set a page table entry according to given value */
+#define SET_PTE(_pt, _idx, _privilege, _addr) do {  \
+    (_pt)[(_idx)].present = 1;                      \
+    (_pt)[(_idx)].rw = 1;                           \
+    (_pt)[(_idx)].privilege = (_privilege);         \
+    (_pt)[(_idx)].pwt = 0;                          \
+    (_pt)[(_idx)].pcd = 0;                          \
+    (_pt)[(_idx)].accessed = 0;                     \
+    (_pt)[(_idx)].dirty = 0;                        \
+    (_pt)[(_idx)].pat = 0;                          \
+    (_pt)[(_idx)].global = 0;                       \
+    (_pt)[(_idx)].avl = 0;                          \
+    (_pt)[(_idx)].addr = (_addr);                   \
+} while (0)
+
+/* Update CR3 to flush TLB */
+#define UPDATE_CR3() do {                   \
+    asm volatile(                           \
+        "movl %0, %%eax     \n\t"           \
+        "movl %%eax, %%cr3  \n\t"           \
+        :                                   \
+        : "r" (&page_directory)             \
+        : "%eax"                            \
+    );                                      \
+} while (0)
 
 /*
 *   page_init
@@ -26,7 +66,6 @@ pg_tbl_t video_page_table __attribute__((aligned (4 * 1024)));
 
 void page_init(void) {
     int i;
-	uint32_t pd_pointer;
     // initialize all the entries in page directory table and page table
     for (i = 0; i < NUM_PG_TBL_ENTRY; i++){
         page_table[i].val = 0;
@@ -35,63 +74,25 @@ void page_init(void) {
         page_directory[i].val = 0;
     }
 
-    // set up the entry 0xB8 in page table for video memory
-    // all these number are referenced in intel version 3
-	page_table[VIDEO >> 12].present = 1;
-	page_table[VIDEO >> 12].rw = 1;
-	page_table[VIDEO >> 12].priviledge = 0;
-	page_table[VIDEO >> 12].pwt = 0;
-	page_table[VIDEO >> 12].pcd = 0;
-	page_table[VIDEO >> 12].accessed = 0;
-	page_table[VIDEO >> 12].dirty = 0;
-	page_table[VIDEO >> 12].pat = 0;
-	page_table[VIDEO >> 12].global = 0;
-	page_table[VIDEO >> 12].avl = 0;
-	// get the high 20 bits of mem
-	page_table[VIDEO >> 12].addr = VIDEO >> 12;
+    /* Set page table and page directory for video memory */
+    SET_PTE(page_table, VIDEO >> 12, 0, VIDEO >> 12);
+    SET_PDE(page_directory, 0, 0, 0, 0, ((uint32_t) &page_table) >> 12);
 
-    // set up the page directory entry for kernel
-    page_directory[1].present = 1;
-    page_directory[1].rw = 1;
-    page_directory[1].priviledge = 0;
-    page_directory[1].pwt = 0;
-    page_directory[1].pcd = 1;
-    page_directory[1].accessed = 0;
-    page_directory[1].dirty = 0;
-    page_directory[1].ps = 1;
-    page_directory[1].global = 1;
-    page_directory[1].avl = 0;
-    // right shift for 22 because low 22 bits are all 0
-    page_directory[1].addr = (KERNEL_ADDR >> 22) << 10;
-    
-    // set up the page directory entry for page table
-    page_directory[0].present = 1;
-    page_directory[0].rw = 1;
-    page_directory[0].priviledge = 0;
-    page_directory[0].pwt = 1;
-    page_directory[0].pcd = 0;
-    page_directory[0].accessed = 0;
-    page_directory[0].dirty = 0;
-    page_directory[0].ps = 0;
-    page_directory[0].global = 0;
-    page_directory[0].avl = 0;
-    // get the high 20 bits for page_directory
-	pd_pointer = (uint32_t) &page_table;
-    page_directory[0].addr = pd_pointer >> 12;
+    /* Set page directory for kernel page (4MB) */
+    SET_PDE(page_directory, 1, 0, 1, 1, KERNEL_ADDR >> 12);
 
     // set the highest bit of cr0 to be 1
     // set the cr3 be the address of the page directory table
     // set the fifth bit of cr4 to be 1
-    __asm__ volatile(
-        " movl  %0, %%eax;\
-          movl  %%eax, %%cr3;\
-          movl  %%cr4, %%eax; \
-          orl   $0x00000010, %%eax;\
-          movl  %%eax, %%cr4; \
-          movl  %%cr0, %%eax;\
-          orl   $0x80000000, %%eax; \
-          movl  %%eax, %%cr0; \
-        "
+    asm volatile(
+        "movl  %0, %%eax;           \
+         movl  %%eax, %%cr3;        \
+         movl  %%cr4, %%eax;        \
+         orl   $0x00000010, %%eax;  \
+         movl  %%eax, %%cr4;        \
+         movl  %%cr0, %%eax;        \
+         orl   $0x80000000, %%eax;  \
+         movl  %%eax, %%cr0;"
         : /*no output*/
         : "r" (&page_directory)
         : "%eax"
@@ -107,31 +108,9 @@ void page_init(void) {
  *   side effect: Change the paging directory; Change CR3; flush TLB
  */
 void set_user_prog_page(uint32_t pid) {
-	/* Set the the PDE at USER_SPACE >> 22 because
-	 * the least 22 bits are all zeros */
-    page_directory[USER_SPACE >> 22].present = 1;
-    page_directory[USER_SPACE >> 22].rw = 1;
-    page_directory[USER_SPACE >> 22].priviledge = 1;
-    page_directory[USER_SPACE >> 22].pwt = 0;
-    page_directory[USER_SPACE >> 22].pcd = 1;
-    page_directory[USER_SPACE >> 22].accessed = 0;
-    page_directory[USER_SPACE >> 22].dirty = 0;
-    page_directory[USER_SPACE >> 22].ps = 1;
-    page_directory[USER_SPACE >> 22].global = 0;
-    page_directory[USER_SPACE >> 22].avl = 0;
-    // right shift for 22 because low 22 bits are all 0
-	/* the physical starting address of the process is the physical starting address of the
-	 * user space + number of process * 4MB (each process uses 4MB) */
-    page_directory[USER_SPACE >> 22].addr = ((EIGHT_MB + pid*FOUR_MB) >> 22) << 10;
-
-	/* Update CR3 and flush TLB */
-	asm volatile(
-		"movl %0, %%eax \n\t"
-		"movl %%eax, %%cr3 \n\t"
-		: /* no output */
-		: "r" (&page_directory)
-		: "%eax"
-	);
+    SET_PDE(page_directory, USER_SPACE >> 22, 1, 1, 0,
+            (EIGHT_MB + pid*FOUR_MB) >> 12);
+    UPDATE_CR3();
 }
 
 /*
@@ -143,42 +122,15 @@ void set_user_prog_page(uint32_t pid) {
  */
 void set_vidmap_page(uint8_t** screen_start) {
 
-	/* Map user_video_addr to physical video address. */
-	/* Set page directory */
-	page_directory[USER_VIDEO_ADDR >> 22].present = 1;
-	page_directory[USER_VIDEO_ADDR >> 22].rw = 1;
-	page_directory[USER_VIDEO_ADDR >> 22].priviledge = 1;
-	page_directory[USER_VIDEO_ADDR >> 22].pwt = 0;
-	page_directory[USER_VIDEO_ADDR >> 22].pcd = 0;
-	page_directory[USER_VIDEO_ADDR >> 22].accessed = 0;
-	page_directory[USER_VIDEO_ADDR >> 22].dirty = 0;
-	page_directory[USER_VIDEO_ADDR >> 22].ps = 0;
-	page_directory[USER_VIDEO_ADDR >> 22].global = 0;
-	page_directory[USER_VIDEO_ADDR >> 22].avl = 0;
-	page_directory[USER_VIDEO_ADDR >> 22].addr = (uint32_t) &video_page_table >> 12;
+    /* Set page table and page directory to map USER_VIDEO_ADDR to
+     * physical video memory (VIDEO) */
+    SET_PDE(page_directory, USER_VIDEO_ADDR >> 22, 1, 0, 0,
+            (uint32_t) &video_page_table >> 12);
+    SET_PTE(video_page_table,
+            (USER_VIDEO_ADDR & PG_TBL_NUMBER_MASK) >> 12, 1, VIDEO >> 12);
 
-	/* Set page table */
-	video_page_table[(USER_VIDEO_ADDR & PG_TBL_NUMBER_MASK) >> 12].present = 1;
-	video_page_table[(USER_VIDEO_ADDR & PG_TBL_NUMBER_MASK) >> 12].rw = 1;
-	video_page_table[(USER_VIDEO_ADDR & PG_TBL_NUMBER_MASK) >> 12].priviledge = 1;
-	video_page_table[(USER_VIDEO_ADDR & PG_TBL_NUMBER_MASK) >> 12].pwt = 0;
-	video_page_table[(USER_VIDEO_ADDR & PG_TBL_NUMBER_MASK) >> 12].pcd = 0;
-	video_page_table[(USER_VIDEO_ADDR & PG_TBL_NUMBER_MASK) >> 12].accessed = 0;
-	video_page_table[(USER_VIDEO_ADDR & PG_TBL_NUMBER_MASK) >> 12].dirty = 0;
-	video_page_table[(USER_VIDEO_ADDR & PG_TBL_NUMBER_MASK) >> 12].pat = 0;
-	video_page_table[(USER_VIDEO_ADDR & PG_TBL_NUMBER_MASK) >> 12].global = 0;
-	video_page_table[(USER_VIDEO_ADDR & PG_TBL_NUMBER_MASK) >> 12].avl = 0;
-	video_page_table[(USER_VIDEO_ADDR & PG_TBL_NUMBER_MASK) >> 12].addr = VIDEO >> 12;
+    UPDATE_CR3();
 
-	/* Update CR3 and flush TLB */
-	asm volatile(
-		"movl %0, %%eax \n\t"
-		"movl %%eax, %%cr3 \n\t"
-		: /* no output */
-		: "r" (&page_directory)
-		: "%eax"
-	);
-
-	/* Update screen_start */
-	*screen_start = (uint8_t*) USER_VIDEO_ADDR;
+    /* Update screen_start */
+    *screen_start = (uint8_t*) USER_VIDEO_ADDR;
 }
