@@ -366,6 +366,14 @@ int32_t getargs(uint8_t* buf, int32_t nbytes) {
     return 0;
 }
 
+/*
+ *   vidmap
+ *   map the text-mode video memory in kernel
+ *   into user space at a given virtual address
+ *   input: screen_start -- user-predefined virtual address
+ *   output: 0 means success, -1 means fail
+ *   side effect: Change the Page Directory and Page Table
+ */
 int32_t vidmap(uint8_t** screen_start) {
     if (screen_start == NULL ||
         screen_start < (uint8_t**) USER_SPACE ||

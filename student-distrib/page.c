@@ -134,6 +134,13 @@ void set_user_prog_page(uint32_t pid) {
 	);
 }
 
+/*
+ *   set_vidmap_page
+ *   Set page for video memory
+ *   input: screen_start -- starting address of the video memory
+ *   output: None
+ *   side effect: Change the paging directory; Change CR3; flush TLB
+ */
 void set_vidmap_page(uint8_t** screen_start) {
 
 	/* Map user_video_addr to physical video address. */

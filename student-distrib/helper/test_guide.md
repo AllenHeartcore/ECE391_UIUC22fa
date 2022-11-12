@@ -24,7 +24,7 @@
 | `terminal.c` | Terminal driver |
 | `filesys.c` | Read-only file system |
 
-### Checkpoint 3
+### Checkpoint 3 & 4
 | File | Content |
 | - | - |
 | `syscall.c` | System call handler |
@@ -36,6 +36,10 @@
 | `lib.c` | Basic library functions |
 | `types.h` | Type declarations |
 | `debug.h`<br>`debug.sh` | Useful debugging<br>macros and script |
+
+<br>
+
+---
 
 ## Testing Guidelines
 
@@ -73,3 +77,32 @@
 | Syscall | Halt a program | Run `exit` |
 | Syscall | Read from the terminal | Run `hello` |
 | Syscall | Write to the terminal | Run `testprint`, `counter`, `pingpong` |
+
+### Checkpoint 4
+| Type | Tested Functionality | Testing Method |
+| - | - | - |
+| Syscall | Multiple shells | Run `shell` on top of another |
+| Syscall | Get arguments | Run `cat <filename>` |
+| Syscall | Map video memory | Run `fish` |
+
+<br>
+
+---
+
+## Work Distribution
+
+<table>
+    <tr> <td rowspan="2"> <b>Checkpoint</b> </td> <td rowspan="2"> <b>Functionality</b> </td> <td rowspan="2"> <b>Branch</b> </td> <td colspan="4" align="center"> <b>Group Members</b> </td> </tr>
+    <tr> <td> <b>Ziyuan Chen</b> </td> <td> <b>Zhirong Chen</b> </td> <td> <b>Zicheng Ma</b> </td> <td> <b>Shihua Zeng</b> </td> </tr>
+    <tr> <td rowspan="3"> <b>Ckpt. 1</b> </td> <td> GDT, IDT </td> <td> <code>gdt_idt</code> </td> <td align="center"> ○ </td> <td align="center"> </td> <td align="center"> </td> <td align="center"> </td> </tr>
+    <tr> <td> Init Devices </td> <td> <code>device</code> </td> <td align="center"> </td> <td align="center"> </td> <td align="center"> ○ </td> <td align="center"> ○ </td> </tr>
+    <tr> <td> Init Paging </td> <td> <code>paging</code> </td> <td align="center"> </td> <td align="center"> ○ </td> <td align="center"> </td> <td align="center"> ○ </td> </tr>
+    <tr> <td rowspan="3"> <b>Ckpt. 2</b> </td> <td> RTC Driver </td> <td> <code>rtc_driver</code> </td> <td align="center"> ○ </td> <td align="center"> </td> <td align="center"> </td> <td align="center"> </td> </tr>
+    <tr> <td> Terminal </td> <td> <code>terminal_kbd</code> </td> <td align="center"> ○ </td> <td align="center"> </td> <td align="center"> </td> <td align="center"> ○ </td> </tr>
+    <tr> <td> File System </td> <td> <code>filesystem</code> </td> <td align="center"> </td> <td align="center"> ○ </td> <td align="center"> ○ </td> <td align="center"> </td> </tr>
+    <tr> <td rowspan="2"> <b>Ckpt. 3</b> </td> <td> Syscall (EH) </td> <td> <code>syscall_eh</code> </td> <td align="center"> ○ </td> <td align="center"> </td> <td align="center"> ○ </td> <td align="center"> </td> </tr>
+    <tr> <td> Syscall (OCRW) </td> <td> <code>syscall_eh</code> </td> <td align="center"> </td> <td align="center"> ○ </td> <td align="center"> </td> <td align="center"> ○ </td> </tr>
+    <tr> <td rowspan="1"> <b>Ckpt. 4</b> </td> <td> Syscall (GV) </td> <td> <code>master</code> </td> <td align="center"> </td> <td align="center"> </td> <td align="center"> </td> <td align="center"> ○ </td> </tr>align="center"> </td> </tr>
+    <tr> <td rowspan="2"> <b>Ckpt. 5</b> </td> <td> Multi Terminals </td> <td> <code></code> </td> <td align="center"> </td> <td align="center"> </td> <td align="center"> </td> <td align="center"> </td> </tr>
+    <tr> <td> Scheduling </td> <td> <code></code> </td> <td align="center"> </td> <td align="center"> </td> <td align="center"> </td> <td align="center"> </td> </tr>
+    <tr> <td rowspan="1"> <b>Extra</b> </td> <td> Syscall (SS) </td> <td> <code></code> </td> <td align="center"> </td> <td align="center"> </td> <td align="center"> </td> <td 
