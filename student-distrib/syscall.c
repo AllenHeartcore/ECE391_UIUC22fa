@@ -18,10 +18,10 @@ uint32_t pid_array[MAX_PROCESS] = {0};
  */
 int32_t halt(uint8_t status) {
     uint32_t ret_val, i;
-    ret_val = 0;
+    ret_val = (uint32_t)status;
 
     /* status = 0 means normal halt, status = 1 means exception */
-    if (status == 1)
+    if (status == 255)
         /* According to document, return value 256 means exception calls halt. */
         ret_val = 256; 
 
