@@ -117,3 +117,8 @@ BUG Log for mp3 ---- ZinixOS Group
     Reason: The macro arguments and struct members share the same namespace
     Solution: Rename the macro arguments. Specifically, add a leading '_'
     Take Time: 30min
+
+4. 12/11/2022
+    Description: Page Fault on executing `fish`
+    Reason: Privilege level in corresponding PDE and PTE to 1
+    Take Time: 30min
