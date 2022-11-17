@@ -123,16 +123,16 @@ void key_handler(void) {
 		case CAPS_LOCK_PRESSED:		caps = !caps;	break;
 		case CAPS_LOCK_RELEASED:					break;
 		case F1_PRESSED:
-						printf(alt? "ALT+F1 Pressed!\n":"Only F1\n");
-						terminal_switch(0);
+						if(alt)
+							terminal_switch(0);
 						break;
 		case F2_PRESSED:		
-						printf(alt? "ALT+F2 Pressed!\n":"Only F2\n");
-						terminal_switch(1);
+						if(alt)
+							terminal_switch(1);
 						break;
 		case F3_PRESSED:		
-						printf(alt? "ALT+F3 Pressed!\n":"Only F3\n");
-						terminal_switch(2);			
+						if(alt)
+							terminal_switch(2);
 						break;
 		default:
 			if (scan_code >= SCAN_CODE_NUM) break;	/* Invalid scan code */

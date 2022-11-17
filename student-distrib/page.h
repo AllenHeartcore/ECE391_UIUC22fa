@@ -74,5 +74,6 @@ void page_init(void);
 void set_user_prog_page(uint32_t pid);
 /* Set video mapping for user program */
 void set_vidmap_page(uint8_t** screen_start);
-
+/* Remap user video memory based on terminal */
+void remap_vidmap_page(uint8_t terminal_id);
 #endif

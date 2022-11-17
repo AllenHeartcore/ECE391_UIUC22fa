@@ -8,7 +8,7 @@
 #include "types.h"
 
 #define KBD_BUF_SIZE 128
-
+#define TERM_NUM 3
 /* Terminal struct, used to keep all informations related to a terminal */
 typedef struct terminal_t {
 	volatile uint8_t readkey;   /* enable/disable reading from kbd buffer   */
@@ -44,5 +44,10 @@ extern int32_t illegal_close(int32_t fd);
 extern int32_t illegal_read(int32_t fd, void* buf, int32_t nbyte);
 /* stdout_write fault wrapper */
 extern int32_t illegal_write(int32_t fd, const void* buf, int32_t nbyte);
+
+
+extern uint32_t backup_buf_add[3]; // Store backup buffers' address
+extern terminal_t terms[TERM_NUM]; // array for three terminals
+extern volatile uint8_t	current_term_id; // pointing out which is currently displayed terminal
 
 #endif /* _TERMINAL_H */

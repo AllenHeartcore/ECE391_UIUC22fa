@@ -4,6 +4,7 @@
 #include "types.h"
 #include "filesys.h"
 #include "terminal.h"
+#include "scheduler.h"
 
 #define MAX_PROCESS 6          // At most 6 processes and...
 #define MAX_OPENED_FILES 8     // 8 files can be concurrently opened
@@ -44,8 +45,9 @@ typedef struct pcb
     int32_t signal;
     uint32_t parent_pid;
     uint32_t cur_pid;
-    int32_t ex_esp; /* ESP for the process context when execute */
-    int32_t ex_ebp; /* EBP for the process context when execute */
+    int32_t ex_esp;  /* ESP for the process context when execute  */
+    int32_t ex_ebp;  /* EBP for the process context when execute  */
+    int32_t sch_ebp; /* EBP for the process context when schedule */
     int8_t args[KBD_BUF_SIZE + 1]; /* arguments passes to user programs */
 } pcb_t;
 

@@ -6,10 +6,9 @@
 #include "keyboard.h"
 #include "page.h"
 
-uint8_t	current_term_index; // pointing out which is currently displayed terminal
-terminal_t terms[3]; // array for three terminals
 uint32_t backup_buf_add[3] = {0x0BA000, 0xBB000, 0xBC000}; // Store backup buffers' address
-
+terminal_t terms[TERM_NUM]; // array for three terminals
+volatile uint8_t	current_term_id; // pointing out which is currently displayed terminal
 /* terminal_init
  *  Initialize the terminal
  *  INPUT: None
@@ -25,49 +24,39 @@ int32_t terminal_init() {
 		vga_enable_cursor(0, 14);							/* Set cursor shape */
 		vga_redraw_cursor(terms[i].cursor_x, terms[i].cursor_y);	/* Set cursor position */
 	}
-	current_term_index = 0; /* Set terminal0 as the first terminal displayed */
+	current_term_id = 0; /* Set terminal0 as the first terminal displayed */
 	return 0;
 }
 
 /* terminal_switch
  *  Switch the terminal
- *  INPUT: term_index -- which terminal is switched to
+ *  INPUT: term_id -- which terminal is switched to
  *  RETURN VALUE: none
  *  OUTPUT: display of VGA will change
  *  SIDE EFFECT: change the video memory's content and backup buffer's content
  */
-void terminal_switch(uint8_t term_index){
+void terminal_switch(uint8_t term_id){
 	/* Sanity check */
-	if(term_index>2)
+	if(term_id>2)
 		return;
-	if(term_index==current_term_index)
+	if(term_id==current_term_id)
 		return;
 	/* Backup current_term */
-	memcpy((void*)backup_buf_add[current_term_index],(void*)VIDEO, VIDEO_PAGE_SIZE );
+	memcpy((void*)backup_buf_add[current_term_id],(void*)VIDEO, VIDEO_PAGE_SIZE );
 
 	/* Load switch term's vdieo memory */
-	memcpy((void*)VIDEO, (void*)backup_buf_add[term_index], VIDEO_PAGE_SIZE );
+	memcpy((void*)VIDEO, (void*)backup_buf_add[term_id], VIDEO_PAGE_SIZE );
 
 	/* Update cursor */
-	get_cursor(&terms[current_term_index].cursor_x, &terms[current_term_index].cursor_y); // Store the old one
-	vga_redraw_cursor(terms[term_index].cursor_x, terms[term_index].cursor_y);            // Redraw the new one
+	get_cursor(&terms[current_term_id].cursor_x, &terms[current_term_id].cursor_y); // Store the old one
+	vga_redraw_cursor(terms[term_id].cursor_x, terms[term_id].cursor_y);            // Redraw the new one
 
-	/* Load user program ---- To be done */
-	
+	/* Update current_term_id */
+	current_term_id = term_id;
 
-	/* Update current_term_index */
-	current_term_index = term_index;
+	/* Remap user video memory */
+	remap_vidmap_page(term_id);
 }
-
-
-
-
-
-
-
-
-
-
 
 /* terminal_read
  *  Read from terminal
@@ -83,10 +72,10 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes) {
 
 	if (NULL == buf || nbytes <= 0) { return 0; }
 
-	memset(terms[current_term_index].kbd_buf, 0, KBD_BUF_SIZE);	/* Clear the buffer */
-	terms[current_term_index].kbd_buf_count = 0;					/* Reset the buffer count */
-	terms[current_term_index].readkey = 0;						/* Reset the "endline" flag */
-	while (!terms[current_term_index].readkey);					/* Wait on the flag */
+	memset(terms[current_term_id].kbd_buf, 0, KBD_BUF_SIZE);	/* Clear the buffer */
+	terms[current_term_id].kbd_buf_count = 0;					/* Reset the buffer count */
+	terms[current_term_id].readkey = 0;						/* Reset the "endline" flag */
+	while (!terms[current_term_id].readkey);					/* Wait on the flag */
 
 	/* Read from the keyboard buffer */
 	/* User can only type up to 127 (KBD_BUF_SIZE - 1) characters */
@@ -95,8 +84,8 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes) {
 	 *     1. If more than 'nbytes' are read/written, or
 	 *     2. if a NUL is encountered, or
 	 *     3. if we already read 128 (KBD_BUF_SIZE) bytes. */
-	for (i = 0; i < nbytes && i < KBD_BUF_SIZE && terms[current_term_index].kbd_buf[i] != '\0'; i++) {
-		((char*)buf)[i] = terms[current_term_index].kbd_buf[i];
+	for (i = 0; i < nbytes && i < KBD_BUF_SIZE && terms[current_term_id].kbd_buf[i] != '\0'; i++) {
+		((char*)buf)[i] = terms[current_term_id].kbd_buf[i];
 	}
 	/* Fill the rest of the buffer with 0 */
 	memset(&(((char*)buf)[i]), 0, KBD_BUF_SIZE - i);
@@ -125,7 +114,7 @@ int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes) {
 	}
 
 	/* Update cursor position */
-	get_cursor(&terms[current_term_index].cursor_x, &terms[current_term_index].cursor_y);
+	get_cursor(&terms[current_term_id].cursor_x, &terms[current_term_id].cursor_y);
 
 	return i;
 }
@@ -148,7 +137,7 @@ int32_t terminal_open(const uint8_t* filename) {
  *  SIDE EFFECT: close the terminal
  */
 int32_t terminal_close(int32_t fd) {
-	terms[current_term_index].kbd_buf_count = 0;
+	terms[current_term_id].kbd_buf_count = 0;
 	return 0;
 }
 
@@ -161,7 +150,7 @@ int32_t terminal_close(int32_t fd) {
  */
 void terminal_scroll() {
 	scroll();
-	get_cursor(&terms[current_term_index].cursor_x, &terms[current_term_index].cursor_y);
+	get_cursor(&terms[current_term_id].cursor_x, &terms[current_term_id].cursor_y);
 }
 
 /* terminal_clear
@@ -173,7 +162,7 @@ void terminal_scroll() {
  */
 void terminal_clear() {
 	clear();
-	get_cursor(&terms[current_term_index].cursor_x, &terms[current_term_index].cursor_y);
+	get_cursor(&terms[current_term_id].cursor_x, &terms[current_term_id].cursor_y);
 }
 
 /* get_current_terminal
@@ -184,7 +173,7 @@ void terminal_clear() {
  *  SIDE EFFECT: none
  */
 terminal_t* get_current_terminal() {
-	return &(terms[current_term_index]);
+	return &(terms[current_term_id]);
 }
 
 int32_t illegal_open(const uint8_t* filename) {

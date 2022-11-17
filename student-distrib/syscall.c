@@ -28,9 +28,9 @@ int32_t halt(uint8_t status) {
     /* Check if the program about to halt is shell */
     pcb_t* cur_pcb = get_cur_pcb();
     uint32_t cur_pid = cur_pcb->cur_pid;
-    if (cur_pcb->cur_pid == 0){
+    if (cur_pcb->cur_pid == 0 || cur_pcb->cur_pid == 1 || cur_pcb->cur_pid == 2){
 
-        /* Halt and re-open the terminal.
+        /* Halt and re-open the base terminal.
          * - This allows the shell to be repeatedly re-opened
          *   after the previous instance has been closed.
          * - pid_array[0] is cleared so that the newly executed
@@ -39,7 +39,7 @@ int32_t halt(uint8_t status) {
          *   identical to the old shell.
          */
         printf("WARNING: You cannot halt base shell.\n");
-        pid_array[0] = 0;           /* Close the current shell, */
+        pid_array[cur_pcb->cur_pid] = 0;           /* Close the current shell, */
         execute((uint8_t*)"shell"); /* and open a new shell */
     }
 
@@ -54,6 +54,11 @@ int32_t halt(uint8_t status) {
 
     /* Deactivate current process */
     pid_array[cur_pid] = 0;
+    for(i = 0; i < SCHEDULE_NUM; i++){
+        if(schedule_array[i] == cur_pid)
+            schedule_array[i] = cur_pcb->parent_pid;
+    }
+
 
     /* Get parent pcb */
     pcb_t* parent_pcb = get_pcb(cur_pcb->parent_pid);
@@ -96,7 +101,6 @@ int32_t execute(const uint8_t* command) {
     dentry_t temp_dentry;
     pcb_t* pcb;
     uint8_t elf_buff[4]; /* Testing ELF needs 4 bytes */
-
     if (command == NULL)
         return -1;
 
@@ -151,12 +155,24 @@ int32_t execute(const uint8_t* command) {
     pcb = get_pcb(target_pid);
     pcb->cur_pid = target_pid;
 
-    if(target_pid == 0){
-        /* If target pid = 0, which means it is shell, the parent is 0 itself. */
-        pcb->parent_pid = 0;
+    if(target_pid == 0 || target_pid == 1 || target_pid == 2){
+        /* If target pid = 0,1,2, which means it is base shell, the parent is 255. */
+        pcb->parent_pid = 255;
     }else{
         /* If target pid is not 0, assign parent pid as current pid. */
         pcb->parent_pid = get_cur_pid();
+    }
+
+    /* Set schedule array */
+    for(i = 0; i < 3; i++){
+        if(schedule_array[i] == -2){
+            schedule_array[i] = pcb->cur_pid;
+            break;
+        }
+        if(schedule_array[i] == pcb->parent_pid){
+            schedule_array[i] = pcb->cur_pid;
+            break;
+        }
     }
 
     /* Open stdin stdout */
@@ -197,7 +213,7 @@ int32_t execute(const uint8_t* command) {
     // PCB represents our source
     pcb->ex_ebp = saved_ebp;                 // so that we can return to the parent
     pcb->ex_esp = saved_esp;
-
+    sti();
     /* Enter user mode */
     // Push order: SS, ESP, EFLAGS, CS, EIP
     // ESP points to the base of user stack (132MB - 4B)
