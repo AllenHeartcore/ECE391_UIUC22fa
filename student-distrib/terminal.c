@@ -42,6 +42,7 @@ void terminal_switch(uint8_t term_id){
 	if(term_id==current_term_id)
 		return;
 	/* Backup current_term */
+	remap_vidmap_page(current_term_id);
 	memcpy((void*)backup_buf_add[current_term_id],(void*)VIDEO, VIDEO_PAGE_SIZE );
 
 	/* Load switch term's vdieo memory */

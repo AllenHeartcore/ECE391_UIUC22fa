@@ -39,6 +39,6 @@ void scheduler(){
                 leave          \n\
                 ret            \n"
             :  /* no output */
-            :  "r" (next_pcb ->sch_ebp) \
+            :  "r" (next_pcb->sch_ebp) \
             :  "ebp");
 }

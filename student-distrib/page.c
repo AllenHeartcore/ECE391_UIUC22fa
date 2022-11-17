@@ -81,11 +81,6 @@ void page_init(void) {
     /* Set page directory for kernel page (4MB) */
     SET_PDE(page_directory, 1, 0, 1, 1, KERNEL_ADDR >> 12);
 
-    /* Set up user video memory */
-    SET_PDE(page_directory, USER_VIDEO_ADDR >> 22, 1, 0, 0,
-        (uint32_t) &video_page_table >> 12);
-    SET_PTE(video_page_table,
-        (USER_VIDEO_ADDR & PG_TBL_NUMBER_MASK) >> 12, 1, VIDEO >> 12);
 
     // set the highest bit of cr0 to be 1
     // set the cr3 be the address of the page directory table
@@ -130,12 +125,12 @@ void set_vidmap_page(uint8_t** screen_start) {
     
     /* Set page table and page directory to map USER_VIDEO_ADDR to
      * physical video memory (VIDEO) */
-    // SET_PDE(page_directory, USER_VIDEO_ADDR >> 22, 1, 0, 0,
-    //         (uint32_t) &video_page_table >> 12);
-    // SET_PTE(video_page_table,
-    //         (USER_VIDEO_ADDR & PG_TBL_NUMBER_MASK) >> 12, 1, VIDEO >> 12);
+    SET_PDE(page_directory, USER_VIDEO_ADDR >> 22, 1, 0, 0,
+            (uint32_t) &video_page_table >> 12);
+    SET_PTE(video_page_table,
+            (USER_VIDEO_ADDR & PG_TBL_NUMBER_MASK) >> 12, 1, VIDEO >> 12);
 
-    // UPDATE_CR3();
+    UPDATE_CR3();
 
     /* Update screen_start */
     *screen_start = (uint8_t*) USER_VIDEO_ADDR;
@@ -154,16 +149,10 @@ void set_vidmap_page(uint8_t** screen_start) {
 void remap_vidmap_page(uint8_t terminal_id) {
 
     if(terminal_id == current_term_id){
-        SET_PDE(page_directory, USER_VIDEO_ADDR >> 22, 1, 0, 0,
-        (uint32_t) &video_page_table >> 12);
-        SET_PTE(video_page_table,
-        (USER_VIDEO_ADDR & PG_TBL_NUMBER_MASK) >> 12, 1, VIDEO >> 12);
+        SET_PTE(page_table, VIDEO >> 12, 0, VIDEO >> 12);
     }else{
         /* Set page table based on terminal_id */
-        SET_PDE(page_directory, USER_VIDEO_ADDR >> 22, 1, 0, 0,
-        (uint32_t) &video_page_table >> 12);
-        SET_PTE(video_page_table,
-        (USER_VIDEO_ADDR & PG_TBL_NUMBER_MASK) >> 12, 1, (VIDEO >> 12) + terminal_id + 2);
+        SET_PTE(page_table, VIDEO >> 12, 0, (VIDEO >> 12)+ 2 + terminal_id);
     }
 
     UPDATE_CR3();
