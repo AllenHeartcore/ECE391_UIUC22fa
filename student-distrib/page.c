@@ -1,11 +1,7 @@
 #include "page.h"
 #include "lib.h"
 #include "syscall.h"	/* MAX_PROCESS, etc */
-// begin at 4M
-#define KERNEL_ADDR (4*1024*1024)
-#define VIDEO_PAGE_SIZE (4*1024)
-// Start address is 0xB8000, end address is 0xC0000
-#define VIDEO_PAGE_NUM ((0xC0000 - 0xB8000) / VIDEO_PAGE_SIZE)
+
 // 1024 entries, 2 entries used
 // entry 0: 4m mapping, kernel
 // entry 1: 4k mapping, video memory
@@ -74,10 +70,13 @@ void page_init(void) {
         page_directory[i].val = 0;
     }
 
-    /* Set page table and page directory for video memory */
+    /* Set page table and page directory for video memory and backup buffer*/
     SET_PTE(page_table, VIDEO >> 12, 0, VIDEO >> 12);
+    SET_PTE(page_table, (VIDEO >> 12) + 2, 0, (VIDEO >> 12) + 2);
+    SET_PTE(page_table, (VIDEO >> 12) + 3, 0, (VIDEO >> 12) + 3);
+    SET_PTE(page_table, (VIDEO >> 12) + 4, 0, (VIDEO >> 12) + 4);
     SET_PDE(page_directory, 0, 0, 0, 0, ((uint32_t) &page_table) >> 12);
-
+    
     /* Set page directory for kernel page (4MB) */
     SET_PDE(page_directory, 1, 0, 1, 1, KERNEL_ADDR >> 12);
 

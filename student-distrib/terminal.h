@@ -20,6 +20,8 @@ typedef struct terminal_t {
 
 /* Initialize the terminal */
 extern int32_t terminal_init();
+/* Initialize the terminal */
+extern void terminal_switch(uint8_t term_index);
 /* Read from a terminal */
 extern int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes);
 /* Write to a terminal */

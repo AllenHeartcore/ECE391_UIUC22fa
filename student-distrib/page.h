@@ -12,6 +12,12 @@
 #define NUM_PG_DIR_ENTRY 1024
 #define NUM_PG_TBL_ENTRY 1024
 
+// begin at 4M
+#define KERNEL_ADDR (4*1024*1024)
+#define VIDEO_PAGE_SIZE (4*1024)
+// Start address is 0xB8000, end address is 0xC0000
+#define VIDEO_PAGE_NUM ((0xC0000 - 0xB8000) / VIDEO_PAGE_SIZE)
+
 /* Virtual address of user programs */
 #define USER_VIDEO_ADDR (USER_SPACE + FOUR_MB)
 #define PG_TBL_NUMBER_MASK 0x003FF000
