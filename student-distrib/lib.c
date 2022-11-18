@@ -1,5 +1,6 @@
 /* lib.c - Some basic library functions (printf, strlen, etc.)
- * vim:ts=4 noexpandtab */
+ * vim:ts=4 noexpandtab
+ */
 
 #include "lib.h"
 #include "rtc.h"
@@ -274,32 +275,6 @@ int32_t puts(int8_t* s) {
 		index++;
 	}
 	return index;
-}
-
-/* void putc_buf(uint8_t c);
- * Inputs: uint_8* c = character to print
- *         uint_8* buf = buffer to print to
- * Return Value: void
- *  Function: Output a character to the buffer */
-void putc_buf(uint8_t c, uint8_t* buf) {
-	/* Go to a new line if get line break or if the
-	 * cursor is already at the end of the current line */
-	if (c == '\0') {
-		return;
-	} else if (c == '\n' || c == '\r') {
-		handle_newline();
-	} else if (c == '\b') {				/* Handle backspace */
-		handle_backspace();
-	} else {                            /* Handle regular characters */
-		if (terms[current_term_id].cursor_x >= NUM_COLS) {
-			handle_newline();
-		}
-		*(uint8_t *)(buf + ((NUM_COLS * terms[current_term_id].cursor_y + terms[current_term_id].cursor_x) << 1)) = c;
-		*(uint8_t *)(buf + ((NUM_COLS * terms[current_term_id].cursor_y + terms[current_term_id].cursor_x) << 1) + 1) = ATTRIB;
-		terms[current_term_id].cursor_x++;
-	}
-
-	vga_redraw_cursor(terms[current_term_id].cursor_x, terms[current_term_id].cursor_y);
 }
 
 /* void putc(uint8_t c);
