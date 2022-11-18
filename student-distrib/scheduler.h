@@ -11,5 +11,5 @@
 void scheduler();
 /* Schedule array */
 extern int32_t schedule_array[SCHEDULE_NUM];
-extern int8_t  cur_sch_index;
+extern int32_t  cur_sch_index;
 #endif

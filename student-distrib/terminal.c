@@ -42,7 +42,7 @@ void terminal_switch(uint8_t term_id){
 	if(term_id==current_term_id)
 		return;
 	/* Backup current_term */
-
+	remap_vidmap_page(current_term_id);
 	memcpy((void*)backup_buf_add[current_term_id],(void*)VIDEO, VIDEO_PAGE_SIZE );
 
 	/* Load switch term's vdieo memory */
@@ -56,7 +56,7 @@ void terminal_switch(uint8_t term_id){
 	current_term_id = term_id;
 
 	/* Remap user video memory */
-
+	remap_vidmap_page(current_term_id);
 }
 
 /* terminal_read
@@ -70,13 +70,12 @@ void terminal_switch(uint8_t term_id){
  */
 int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes) {
 	int32_t i = 0;
-
 	if (NULL == buf || nbytes <= 0) { return 0; }
 
-	memset(terms[current_term_id].kbd_buf, 0, KBD_BUF_SIZE);	/* Clear the buffer */
-	terms[current_term_id].kbd_buf_count = 0;					/* Reset the buffer count */
-	terms[current_term_id].readkey = 0;						/* Reset the "endline" flag */
-	while (!terms[current_term_id].readkey);					/* Wait on the flag */
+	memset(terms[cur_sch_index].kbd_buf, 0, KBD_BUF_SIZE);	/* Clear the buffer */
+	terms[cur_sch_index].kbd_buf_count = 0;					/* Reset the buffer count */
+	terms[cur_sch_index].readkey = 0;						/* Reset the "endline" flag */
+	while (!terms[cur_sch_index].readkey);					/* Wait on the flag */
 	// printf("The terminal is %d\n",current_term_id);
 	/* Read from the keyboard buffer */
 	/* User can only type up to 127 (KBD_BUF_SIZE - 1) characters */
@@ -85,8 +84,8 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes) {
 	 *     1. If more than 'nbytes' are read/written, or
 	 *     2. if a NUL is encountered, or
 	 *     3. if we already read 128 (KBD_BUF_SIZE) bytes. */
-	for (i = 0; i < nbytes && i < KBD_BUF_SIZE && terms[current_term_id].kbd_buf[i] != '\0'; i++) {
-		((char*)buf)[i] = terms[current_term_id].kbd_buf[i];
+	for (i = 0; i < nbytes && i < KBD_BUF_SIZE && terms[cur_sch_index].kbd_buf[i] != '\0'; i++) {
+		((char*)buf)[i] = terms[cur_sch_index].kbd_buf[i];
 	}
 	/* Fill the rest of the buffer with 0 */
 	memset(&(((char*)buf)[i]), 0, KBD_BUF_SIZE - i);
@@ -111,14 +110,11 @@ int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes) {
 	/* Write to the screen */
 	/* See above for loop-breaking conditions */
 	for (i = 0; i < nbytes && ((char*)buf)[i] != '\0'; i++) {
-		if (current_term_id == cur_sch_index)
 			putc(((char*)buf)[i]);
-		else
-			putc_buf(((char*)buf)[i], backup_buf_add[current_term_id]);
 	}
 
 	/* Update cursor position */
-	get_cursor(&terms[current_term_id].cursor_x, &terms[current_term_id].cursor_y);
+	get_cursor(&terms[cur_sch_index].cursor_x, &terms[cur_sch_index].cursor_y);
 
 	return i;
 }
@@ -141,7 +137,7 @@ int32_t terminal_open(const uint8_t* filename) {
  *  SIDE EFFECT: close the terminal
  */
 int32_t terminal_close(int32_t fd) {
-	terms[current_term_id].kbd_buf_count = 0;
+	terms[cur_sch_index].kbd_buf_count = 0;
 	return 0;
 }
 
@@ -154,7 +150,7 @@ int32_t terminal_close(int32_t fd) {
  */
 void terminal_scroll() {
 	scroll();
-	get_cursor(&terms[current_term_id].cursor_x, &terms[current_term_id].cursor_y);
+	get_cursor(&terms[cur_sch_index].cursor_x, &terms[cur_sch_index].cursor_y);
 }
 
 /* terminal_clear
@@ -166,11 +162,11 @@ void terminal_scroll() {
  */
 void terminal_clear() {
 	clear();
-	get_cursor(&terms[current_term_id].cursor_x, &terms[current_term_id].cursor_y);
+	get_cursor(&terms[cur_sch_index].cursor_x, &terms[cur_sch_index].cursor_y);
 }
 
 /* get_current_terminal
- *  Get the pointer to current terminal
+ *  Get the pointer to currently displayed terminal
  *  INPUT: none
  *  RETURN VALUE: pointer to current terminal
  *  OUTPUT: none
