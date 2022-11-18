@@ -46,7 +46,7 @@ extern int32_t illegal_read(int32_t fd, void* buf, int32_t nbyte);
 extern int32_t illegal_write(int32_t fd, const void* buf, int32_t nbyte);
 
 
-extern uint32_t backup_buf_add[3]; // Store backup buffers' address
+extern uint8_t* backup_buf_add[3]; // Store backup buffers' address
 extern terminal_t terms[TERM_NUM]; // array for three terminals
 extern volatile uint8_t	current_term_id; // pointing out which is currently displayed terminal
 

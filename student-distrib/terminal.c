@@ -6,7 +6,7 @@
 #include "keyboard.h"
 #include "page.h"
 
-uint32_t backup_buf_add[3] = {0x0BA000, 0xBB000, 0xBC000}; // Store backup buffers' address
+uint8_t* backup_buf_add[3] = {(uint8_t*)0x0BA000, (uint8_t*)0xBB000, (uint8_t*)0xBC000}; // Store backup buffers' address
 terminal_t terms[TERM_NUM]; // array for three terminals
 volatile uint8_t	current_term_id; // pointing out which is currently displayed terminal
 /* terminal_init
@@ -42,7 +42,7 @@ void terminal_switch(uint8_t term_id){
 	if(term_id==current_term_id)
 		return;
 	/* Backup current_term */
-	remap_vidmap_page(current_term_id);
+
 	memcpy((void*)backup_buf_add[current_term_id],(void*)VIDEO, VIDEO_PAGE_SIZE );
 
 	/* Load switch term's vdieo memory */
@@ -56,7 +56,7 @@ void terminal_switch(uint8_t term_id){
 	current_term_id = term_id;
 
 	/* Remap user video memory */
-	remap_vidmap_page(term_id);
+
 }
 
 /* terminal_read
@@ -77,7 +77,7 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes) {
 	terms[current_term_id].kbd_buf_count = 0;					/* Reset the buffer count */
 	terms[current_term_id].readkey = 0;						/* Reset the "endline" flag */
 	while (!terms[current_term_id].readkey);					/* Wait on the flag */
-
+	// printf("The terminal is %d\n",current_term_id);
 	/* Read from the keyboard buffer */
 	/* User can only type up to 127 (KBD_BUF_SIZE - 1) characters */
 
@@ -111,7 +111,10 @@ int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes) {
 	/* Write to the screen */
 	/* See above for loop-breaking conditions */
 	for (i = 0; i < nbytes && ((char*)buf)[i] != '\0'; i++) {
-		putc(((char*)buf)[i]);
+		if (current_term_id == cur_sch_index)
+			putc(((char*)buf)[i]);
+		else
+			putc_buf(((char*)buf)[i], backup_buf_add[current_term_id]);
 	}
 
 	/* Update cursor position */

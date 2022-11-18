@@ -148,12 +148,17 @@ void set_vidmap_page(uint8_t** screen_start) {
  */
 void remap_vidmap_page(uint8_t terminal_id) {
 
-    if(terminal_id == current_term_id){
-        SET_PTE(page_table, VIDEO >> 12, 0, VIDEO >> 12);
-    }else{
-        /* Set page table based on terminal_id */
-        SET_PTE(page_table, VIDEO >> 12, 0, (VIDEO >> 12)+ 2 + terminal_id);
-    }
+    // if(terminal_id == current_term_id){
+    //     /* Make virtual 0xB8000 = physical 0xB8000 */
+    //     SET_PTE(page_table, VIDEO >> 12, 0, VIDEO >> 12);
+    //     /* Make virtual displayed terminal backup buffer = physical backup buffer */
+    //     SET_PTE(page_table, VIDEO >> 12 + 2 + current_term_id, 0, (VIDEO >> 12)+ 2 + current_term_id);
+    // }else{
+    //     /* Make virtual 0xB8000 point to backup buffer */
+    //     SET_PTE(page_table, VIDEO >> 12, 0, (VIDEO >> 12)+ 2 + terminal_id);
+    //     // /* Make display terminal point to physical 0xB8000 */
+    //     SET_PTE(page_table, VIDEO >> 12 + 2 + current_term_id, 0, (VIDEO >> 12));
+    // }
 
     UPDATE_CR3();
 

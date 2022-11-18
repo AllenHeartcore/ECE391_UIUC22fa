@@ -8,5 +8,5 @@
 extern void int_kbd_lnk(void);
 extern void int_rtc_lnk(void);
 extern void syscall_lnk(void);
-
+extern void pit_handler_linkage(void);
 #endif

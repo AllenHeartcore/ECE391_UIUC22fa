@@ -3,6 +3,12 @@
 .globl int_kbd_lnk
 .globl int_rtc_lnk
 .globl syscall_lnk
+.global  pit_handler_linkage
+pit_handler_linkage:
+    pushal
+    call pit_handler
+    popal
+    iret
 
 int_kbd_lnk:
     pushal

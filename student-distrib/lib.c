@@ -3,7 +3,8 @@
 
 #include "lib.h"
 #include "rtc.h"
-
+#include "terminal.h"
+#include "scheduler.h"
 static int screen_x;
 static int screen_y;
 static char* video_mem = (char *)VIDEO;
@@ -275,6 +276,36 @@ int32_t puts(int8_t* s) {
 	}
 	return index;
 }
+
+/* void putc_buf(uint8_t c);
+ * Inputs: uint_8* c = character to print
+ *         uint_8* buf = buffer to print to
+ * Return Value: void
+ *  Function: Output a character to the buffer */
+void putc_buf(uint8_t c, uint8_t* buf) {
+	/* Go to a new line if get line break or if the
+	 * cursor is already at the end of the current line */
+	if (c == '\0') {
+		return;
+	} else if (c == '\n' || c == '\r') {
+		handle_newline();
+	} else if (c == '\b') {				/* Handle backspace */
+		handle_backspace();
+	} else {                            /* Handle regular characters */
+		if (screen_x >= NUM_COLS) {
+			handle_newline();
+		}
+		*(uint8_t *)(buf + ((NUM_COLS * screen_y + screen_x) << 1)) = c;
+		*(uint8_t *)(buf + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
+		screen_x++;
+	}
+
+	vga_redraw_cursor(screen_x, screen_y);
+}
+
+
+
+
 
 /* void putc(uint8_t c);
  * Inputs: uint_8* c = character to print

@@ -18,7 +18,6 @@ void scheduler(){
     /* If next terminal has not been initialized, execute shell */
     if(next_pid==TERM_NOT_INIT){
         /* For a new terminal, it should write to backup buffer */
-        remap_vidmap_page(cur_sch_index);
         execute((uint8_t*)"shell");
     }
 
@@ -27,7 +26,6 @@ void scheduler(){
     set_user_prog_page(next_pid);
     
     /* Check backup buffer and video memory */
-    remap_vidmap_page(cur_sch_index);
 
     /* Set tss */
     tss.ss0 = KERNEL_DS;
