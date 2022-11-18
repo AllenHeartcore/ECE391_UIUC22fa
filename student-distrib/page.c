@@ -127,6 +127,7 @@ void set_vidmap_page(uint8_t** screen_start) {
      * physical video memory (VIDEO) */
     SET_PDE(page_directory, USER_VIDEO_ADDR >> 22, 1, 0, 0,
             (uint32_t) &video_page_table >> 12);
+    UPDATE_CR3();
 
     /* Update screen_start */
     *screen_start = (uint8_t*) USER_VIDEO_ADDR;

@@ -164,12 +164,8 @@ int32_t execute(const uint8_t* command) {
     }
 
     /* Set schedule array */
-    for(i = 0; i < 3; i++){
-        if(schedule_array[i] == -2){
-            schedule_array[i] = pcb->cur_pid;
-            break;
-        }
-        if(schedule_array[i] == pcb->parent_pid){
+    for(i = 0; i < SCHEDULE_NUM; i++){
+        if(schedule_array[i] == TERM_NOT_INIT || schedule_array[i] == pcb->parent_pid){
             schedule_array[i] = pcb->cur_pid;
             break;
         }

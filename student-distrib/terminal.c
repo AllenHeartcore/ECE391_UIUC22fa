@@ -6,9 +6,10 @@
 #include "keyboard.h"
 #include "page.h"
 
-uint8_t* backup_buf_add[3] = {(uint8_t*)0x0BA000, (uint8_t*)0xBB000, (uint8_t*)0xBC000}; // Store backup buffers' address
+uint8_t* backup_buf_add[3] = {(uint8_t*)0xBA000, (uint8_t*)0xBB000, (uint8_t*)0xBC000}; // Store backup buffers' address
 terminal_t terms[TERM_NUM]; // array for three terminals
 volatile uint8_t	current_term_id; // pointing out which is currently displayed terminal
+
 /* terminal_init
  *  Initialize the terminal
  *  INPUT: None
@@ -37,9 +38,7 @@ int32_t terminal_init() {
  */
 void terminal_switch(uint8_t term_id){
 	/* Sanity check */
-	if(term_id>2)
-		return;
-	if(term_id==current_term_id)
+	if(term_id > 2 || term_id == current_term_id)
 		return;
 	/* Backup current_term */
 	remap_vidmap_page(current_term_id);

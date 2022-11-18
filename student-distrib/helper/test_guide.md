@@ -103,6 +103,6 @@
     <tr> <td rowspan="2"> <b>Ckpt. 3</b> </td> <td> Syscall (EH) </td> <td> <code>syscall_eh</code> </td> <td align="center"> ○ </td> <td align="center"> </td> <td align="center"> ○ </td> <td align="center"> </td> </tr>
     <tr> <td> Syscall (OCRW) </td> <td> <code>syscall_eh</code> </td> <td align="center"> </td> <td align="center"> ○ </td> <td align="center"> </td> <td align="center"> ○ </td> </tr>
     <tr> <td rowspan="1"> <b>Ckpt. 4</b> </td> <td> Syscall (GV) </td> <td> <code>master</code> </td> <td align="center"> </td> <td align="center"> </td> <td align="center"> </td> <td align="center"> ○ </td> </tr>align="center"> </td> </tr>
-    <tr> <td rowspan="2"> <b>Ckpt. 5</b> </td> <td> Multi Terminals </td> <td> <code></code> </td> <td align="center"> </td> <td align="center"> </td> <td align="center"> </td> <td align="center"> </td> </tr>
-    <tr> <td> Scheduling </td> <td> <code></code> </td> <td align="center"> </td> <td align="center"> </td> <td align="center"> </td> <td align="center"> </td> </tr>
+    <tr> <td rowspan="2"> <b>Ckpt. 5</b> </td> <td> Multi Terminals </td> <td> <code>multi_terminal</code> </td> <td align="center"> ○ </td> <td align="center"> </td> <td align="center"> ○ </td> <td align="center"> </td> </tr>
+    <tr> <td> Scheduling </td> <td> <code>multi_terminal</code> </td> <td align="center"> </td> <td align="center"> ○ </td> <td align="center"> ○ </td> <td align="center"> ○ </td> </tr>
     <tr> <td rowspan="1"> <b>Extra</b> </td> <td> Syscall (SS) </td> <td> <code></code> </td> <td align="center"> </td> <td align="center"> </td> <td align="center"> </td> <td 

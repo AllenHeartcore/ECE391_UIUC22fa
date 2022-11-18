@@ -122,3 +122,17 @@ BUG Log for mp3 ---- ZinixOS Group
     Description: Page Fault on executing `fish`
     Reason: Privilege level in corresponding PDE and PTE to 1
     Take Time: 30min
+
+----------- check point 5 -----------
+1. 18/11/2022
+    Description: Keyboard buffer is partially echoed to the screen
+    Reason: When scheduler pauses a program, its corresponding terminal
+            is not switched back to the foreground
+    Solution: Implement `putc_force_to_vmem` to do the mapping
+    Take Time: 40min
+
+1. 18/11/2022
+    Description: One terminal's cursor can affect another
+    Reason: We still pass the global `screen_x`, `screen_y` in `lib.c` functions
+    Solution: Pass in `terms[current_term_id].cursor_x/y` instead
+    Take Time: 20min

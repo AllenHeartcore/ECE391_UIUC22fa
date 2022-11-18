@@ -2,12 +2,9 @@
 #include "types.h"
 #include "pit.h"
 #include "i8259.h"
-// Add more if necessary
-/* 
-reference: https://wiki.osdev.org/PIT
-*/
+#include "scheduler.h"
 
-/* 
+/*
  * pic_init
  *  DESCRIPTION: Initialize pit timer chip
  *  INPUTS: none
@@ -17,30 +14,19 @@ reference: https://wiki.osdev.org/PIT
  */
 void pit_init(void)
 {
-    /* set the flag
-     * since cli_and_save needs long type, use 32 bits */
-    // uint32_t flag;
+    /* Set Mode/Command Register */
+    outb(READ_BACK_STATUS, MODE_REG);
 
-    /* create the critical section */
-	// cli_and_save(flag);     // disable interrupts
+    /* Set interrupt period to 10ms */
+    uint16_t period = DEFAULT_RATE / 100;
+    outb((period & 0xFF), PIT_DATA_PORT);
+    outb(((period & 0xFF00) >> 8), PIT_DATA_PORT);
 
-    // Set Mode/Command Register
-    outb(READ_BACK_STATUS,MODE_REG);
-
-    // Set interrupt period to 10ms
-    uint16_t count = DEFAULT_RATE/TEN_MS;
-    outb((count&HIGH_MASK),PIT_DATA_PORT);    // low bytes
-    outb(((count&LOW_MASK)>>HIGH_SHIFT),PIT_DATA_PORT);   // high bytes
-
-    // Connect to PIC
+    /* Enable IRQ0 */
     enable_irq(PIT_IRQ);
-    /* end the critical section */
-	// restore_flags(flag);
-	// sti();
 }
 
-
-/* 
+/*
  * pit_handler
  *  DESCRIPTION: handles interrupt and execute test_interrupt handler
  *  INPUTS: none
@@ -50,14 +36,6 @@ void pit_init(void)
  */
 void pit_handler(void)
 {
-    // Send EOI
     send_eoi(PIT_IRQ);
-    // Guarantee interrupts can happens
-    // cli();
-    // Change the next line to schedule handler later...
-    //printf("PIT interrupt received!\n");
     scheduler();
-    // sti();
 }
-
-
