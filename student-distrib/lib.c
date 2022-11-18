@@ -3,10 +3,9 @@
 
 #include "lib.h"
 #include "rtc.h"
+#include "page.h"
 #include "terminal.h"
 #include "scheduler.h"
-static int screen_x;
-static int screen_y;
 static char* video_mem = (char *)VIDEO;
 
 /* (The following 3 text mode cursor functions)
@@ -55,8 +54,8 @@ void get_cursor(uint8_t* x, uint8_t* y) {
 	if (x == NULL || y == NULL) {
 		return;
 	}
-	*x = screen_x;
-	*y = screen_y;
+	*x = terms[current_term_id].cursor_x;
+	*y = terms[current_term_id].cursor_y;
 }
 
 /* void clear(void);
@@ -68,12 +67,12 @@ void get_cursor(uint8_t* x, uint8_t* y) {
  */
 void clear(void) {
 	int32_t i;
-	screen_x = screen_y = 0;
+	terms[current_term_id].cursor_x = terms[current_term_id].cursor_y = 0;
 	for (i = 0; i < NUM_ROWS * NUM_COLS; i++) {
 		*(uint8_t *)(video_mem + (i << 1)) = ' ';
 		*(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
 	}
-	vga_redraw_cursor(screen_x, screen_y);
+	vga_redraw_cursor(terms[current_term_id].cursor_x, terms[current_term_id].cursor_y);
 }
 
 /* void scroll(void)
@@ -100,10 +99,10 @@ void scroll(void) {
 
 	/* Move the cursor up one line,
 	 * but don't move it off the screen */
-	if (--screen_y < 0) {
-		++screen_y;
+	if (--terms[current_term_id].cursor_y == 255) {
+		++terms[current_term_id].cursor_y;
 	}
-	vga_redraw_cursor(screen_x, screen_y);
+	vga_redraw_cursor(terms[current_term_id].cursor_x, terms[current_term_id].cursor_y);
 }
 
 /* handle_backspace
@@ -112,15 +111,15 @@ void scroll(void) {
  * Function: Handles backspace key press
  */
 void handle_backspace() {
-	if (screen_x == 0 && screen_y == 0) {
+	if (terms[current_term_id].cursor_x == 0 && terms[current_term_id].cursor_y == 0) {
 		return;
 	}
-	screen_x--;
-	if (screen_x < 0) {
-		screen_y--;
-		screen_x = NUM_COLS - 1;
+	terms[current_term_id].cursor_x--;
+	if (terms[current_term_id].cursor_x == 255) {
+		terms[current_term_id].cursor_y--;
+		terms[current_term_id].cursor_x = NUM_COLS - 1;
 	}
-	*(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = ' ';
+	*(uint8_t *)(video_mem + ((NUM_COLS * terms[current_term_id].cursor_y + terms[current_term_id].cursor_x) << 1)) = ' ';
 }
 
 /* handle_newline
@@ -129,12 +128,12 @@ void handle_backspace() {
  * Function: Handles newline events
  */
 void handle_newline() {
-	screen_x = 0;
-	screen_y++;
-	if (screen_y >= NUM_ROWS) {
+	terms[current_term_id].cursor_x = 0;
+	terms[current_term_id].cursor_y++;
+	if (terms[current_term_id].cursor_y >= NUM_ROWS) {
 		scroll();
 	}
-	vga_redraw_cursor(screen_x, screen_y);
+	vga_redraw_cursor(terms[current_term_id].cursor_x, terms[current_term_id].cursor_y);
 }
 
 
@@ -292,20 +291,16 @@ void putc_buf(uint8_t c, uint8_t* buf) {
 	} else if (c == '\b') {				/* Handle backspace */
 		handle_backspace();
 	} else {                            /* Handle regular characters */
-		if (screen_x >= NUM_COLS) {
+		if (terms[current_term_id].cursor_x >= NUM_COLS) {
 			handle_newline();
 		}
-		*(uint8_t *)(buf + ((NUM_COLS * screen_y + screen_x) << 1)) = c;
-		*(uint8_t *)(buf + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
-		screen_x++;
+		*(uint8_t *)(buf + ((NUM_COLS * terms[current_term_id].cursor_y + terms[current_term_id].cursor_x) << 1)) = c;
+		*(uint8_t *)(buf + ((NUM_COLS * terms[current_term_id].cursor_y + terms[current_term_id].cursor_x) << 1) + 1) = ATTRIB;
+		terms[current_term_id].cursor_x++;
 	}
 
-	vga_redraw_cursor(screen_x, screen_y);
+	vga_redraw_cursor(terms[current_term_id].cursor_x, terms[current_term_id].cursor_y);
 }
-
-
-
-
 
 /* void putc(uint8_t c);
  * Inputs: uint_8* c = character to print
@@ -321,15 +316,27 @@ void putc(uint8_t c) {
 	} else if (c == '\b') {				/* Handle backspace */
 		handle_backspace();
 	} else {                            /* Handle regular characters */
-		if (screen_x >= NUM_COLS) {
+		if (terms[current_term_id].cursor_x >= NUM_COLS) {
 			handle_newline();
 		}
-		*(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = c;
-		*(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
-		screen_x++;
+		*(uint8_t *)(video_mem + ((NUM_COLS * terms[current_term_id].cursor_y + terms[current_term_id].cursor_x) << 1)) = c;
+		*(uint8_t *)(video_mem + ((NUM_COLS * terms[current_term_id].cursor_y + terms[current_term_id].cursor_x) << 1) + 1) = ATTRIB;
+		terms[current_term_id].cursor_x++;
 	}
 
-	vga_redraw_cursor(screen_x, screen_y);
+	vga_redraw_cursor(terms[current_term_id].cursor_x, terms[current_term_id].cursor_y);
+}
+
+/* void putc_force_to_vmem(uint8_t c);
+ * Inputs: uint_8* c = character to print
+ * Return Value: void
+ * Function: Forcefully output a character to video memory */
+void putc_force_to_vmem(uint8_t c) {
+	cli();
+	remap_vidmap_page(current_term_id);
+	putc(c);
+	remap_vidmap_page(cur_sch_index);
+	sti();
 }
 
 /* int8_t* itoa(uint32_t value, int8_t* buf, int32_t radix);
