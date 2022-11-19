@@ -1,29 +1,25 @@
 #include "lib.h"
 #include "types.h"
 #include "pit.h"
-#include "i8259.h"
 #include "scheduler.h"
+#include "i8259.h"
 
 /*
- * pic_init
- *  DESCRIPTION: Initialize pit timer chip
+ * pit_init
+ *  DESCRIPTION: initialize the pit 
  *  INPUTS: none
  *  OUTPUTS: none
  *  RETURN VALUE: none
- *  SIDE EFFECTS: enable pic IRQ and set interrupt rate to 10ms
+ *  SIDE EFFECTS: preempt the IRQ0
  */
 void pit_init(void)
 {
-    /* Set Mode/Command Register */
-    outb(READ_BACK_STATUS, MODE_REG);
-
-    /* Set interrupt period to 10ms */
-    uint16_t period = DEFAULT_RATE / 100;
-    outb((period & 0xFF), PIT_DATA_PORT);
-    outb(((period & 0xFF00) >> 8), PIT_DATA_PORT);
-
-    /* Enable IRQ0 */
+    outb(PIT_MODE, PIT_MODE_PORT);
+    outb(PIT_FREQ & LOW_EIGHT_BIT, PIT_DATA_PORT);
+    // right shift 8 to get high eight bit of freq
+    outb((PIT_FREQ & HIGH_EIGHT_BIT) >> 8, PIT_DATA_PORT);
     enable_irq(PIT_IRQ);
+    return ;
 }
 
 /*
@@ -36,6 +32,7 @@ void pit_init(void)
  */
 void pit_handler(void)
 {
+    // end the interrupt to let the next interrupt work
     send_eoi(PIT_IRQ);
     scheduler();
 }
