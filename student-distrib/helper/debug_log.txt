@@ -131,8 +131,18 @@ BUG Log for mp3 ---- ZinixOS Group
     Solution: Implement `putc_force_to_vmem` to do the mapping
     Take Time: 40min
 
-1. 18/11/2022
+2. 18/11/2022
     Description: One terminal's cursor can affect another
     Reason: We still pass the global `screen_x`, `screen_y` in `lib.c` functions
     Solution: Pass in `terms[current_term_id].cursor_x/y` instead
     Take Time: 20min
+
+3. 18/11/2022
+    Description: Cursor position wrong under multiple terminal
+    Reason: We did not distinguish between current focused terminal
+        (current_term_id) and current running terminal (cur_sch_index) and
+        set the cursor position of the wrong terminal.
+    Solution: Add 'userkey' argument to distinguish a putc called by a
+        user keystroke and a putc called by a program, handle these two cases
+        differently.
+    Take Time: 1h
