@@ -22,7 +22,7 @@ int8_t *itoa(uint32_t value, int8_t* buf, int32_t radix);
 int8_t *strrev(int8_t* s);
 uint32_t strlen(const int8_t* s);
 void clear(void);
-void scroll(void);
+void scroll(int8_t userkey);
 void handle_newline(int8_t userkey);
 void handle_backspace(int8_t userkey);
 

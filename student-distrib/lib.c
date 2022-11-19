@@ -56,7 +56,7 @@ void __putc(uint8_t c, uint8_t userkey) {
 			terms[term_id].cursor_x++;
 	}
 
-	vga_redraw_cursor(terms[term_id].cursor_x, terms[term_id].cursor_y);
+	vga_redraw_cursor(terms[current_term_id].cursor_x, terms[current_term_id].cursor_y);
 
 	if (userkey) {
 		remap_vidmap_page(cur_sch_index);
@@ -123,14 +123,20 @@ void clear(void) {
 }
 
 /* void scroll(void)
- * Inputs: void
+ * Inputs: userkey -- indicate if called by user keystroke
  * Return Value: none
  * Function: Scrolls the screen up one line;
  *           Moves the cursor up one line.
  *           (if the cursor is not on the top line)
  */
-void scroll(void) {
-	int32_t i;
+void scroll(int8_t userkey) {
+	int term_id, i;
+	switch(userkey) {
+		case PUTC_USRKEY: term_id = current_term_id; break;
+		case PUTC_PROG: term_id = cur_sch_index; break;
+		default: return;
+	}
+
 	for (i = 0; i < NUM_ROWS - 1; i++) {
 		memcpy((uint8_t *)(video_mem + (i * NUM_COLS * 2)),
 			   (uint8_t *)(video_mem + ((i + 1) * NUM_COLS * 2)),
@@ -146,10 +152,9 @@ void scroll(void) {
 
 	/* Move the cursor up one line,
 	 * but don't move it off the screen */
-	if (--terms[current_term_id].cursor_y == 255) {
-		++terms[current_term_id].cursor_y;
+	if (--terms[term_id].cursor_y == 255) {
+		++terms[term_id].cursor_y;
 	}
-	vga_redraw_cursor(terms[current_term_id].cursor_x, terms[current_term_id].cursor_y);
 }
 
 /* handle_backspace
@@ -192,9 +197,10 @@ void handle_newline(int8_t userkey) {
 	terms[term_id].cursor_x = 0;
 	terms[term_id].cursor_y++;
 	if (terms[term_id].cursor_y >= NUM_ROWS) {
-		scroll();
+		scroll(userkey);
 	}
-	vga_redraw_cursor(terms[term_id].cursor_x, terms[term_id].cursor_y);
+
+	vga_redraw_cursor(terms[current_term_id].cursor_x, terms[current_term_id].cursor_y);
 }
 
 
