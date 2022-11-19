@@ -174,6 +174,6 @@ void key_handler(void) {
 	}
 
 	send_eoi(KEY_IRQ_NUM);
-	// sti();
+	sti();
 }
 

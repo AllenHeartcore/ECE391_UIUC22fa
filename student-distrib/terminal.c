@@ -21,9 +21,11 @@ int32_t terminal_init() {
 	for(i = 0; i<3; i++){
 		terms[i].readkey = 0;
 		terms[i].kbd_buf_count = 0;
-		get_cursor(&terms[i].cursor_x, &terms[i].cursor_y);
-		vga_enable_cursor(0, 14);							/* Set cursor shape */
-		vga_redraw_cursor(terms[i].cursor_x, terms[i].cursor_y);	/* Set cursor position */
+		terms[i].cursor_x = 0;
+		terms[i].cursor_y = 0;
+		vga_enable_cursor(0, 14);					/* Set cursor shape */
+		printf("init terminal");					/* debug */
+		vga_redraw_cursor(terms[i].cursor_x, terms[i].cursor_y);	/* Set initial cursor position */
 	}
 	current_term_id = 0; /* Set terminal0 as the first terminal displayed */
 	return 0;
@@ -48,7 +50,6 @@ void terminal_switch(uint8_t term_id){
 	memcpy((void*)VIDEO, (void*)backup_buf_add[term_id], VIDEO_PAGE_SIZE );
 
 	/* Update cursor */
-	get_cursor(&terms[current_term_id].cursor_x, &terms[current_term_id].cursor_y); // Store the old one
 	vga_redraw_cursor(terms[term_id].cursor_x, terms[term_id].cursor_y);            // Redraw the new one
 
 	/* Update current_term_id */
@@ -112,9 +113,6 @@ int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes) {
 			putc(((char*)buf)[i]);
 	}
 
-	/* Update cursor position */
-	get_cursor(&terms[cur_sch_index].cursor_x, &terms[cur_sch_index].cursor_y);
-
 	return i;
 }
 
@@ -149,7 +147,6 @@ int32_t terminal_close(int32_t fd) {
  */
 void terminal_scroll() {
 	scroll();
-	get_cursor(&terms[cur_sch_index].cursor_x, &terms[cur_sch_index].cursor_y);
 }
 
 /* terminal_clear
@@ -161,7 +158,6 @@ void terminal_scroll() {
  */
 void terminal_clear() {
 	clear();
-	get_cursor(&terms[cur_sch_index].cursor_x, &terms[cur_sch_index].cursor_y);
 }
 
 /* get_current_terminal

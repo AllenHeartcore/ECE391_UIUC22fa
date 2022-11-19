@@ -14,7 +14,6 @@
 void vga_enable_cursor(uint8_t cursor_start, uint8_t cursor_end);
 void vga_disable_cursor();
 void vga_redraw_cursor(int x, int y);
-void get_cursor(uint8_t* x, uint8_t* y);
 int32_t printf(int8_t *format, ...);
 void putc(uint8_t c);
 void putc_force_to_vmem(uint8_t c);
@@ -24,8 +23,8 @@ int8_t *strrev(int8_t* s);
 uint32_t strlen(const int8_t* s);
 void clear(void);
 void scroll(void);
-void handle_newline(void);
-void handle_backspace(void);
+void handle_newline(int8_t user);
+void handle_backspace(int8_t user);
 
 void* memset(void* s, int32_t c, uint32_t n);
 void* memset_word(void* s, int32_t c, uint32_t n);
