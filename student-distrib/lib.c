@@ -11,10 +11,63 @@
 
 /* If putc is called by user
  * keystroke or by programs */
-#define PUTC_USER 1
-#define PUTC_PROG 0
+#define PUTC_USRKEY 1
+#define PUTC_PROG   0
 
 static char* video_mem = (char *)VIDEO;
+
+/* -------------- Private helper functions -------------- */
+
+/* void __putc(uint8_t c);
+ * Inputs: uint_8* c: character to print
+ *         uint8_t userkey: indicating if __putc is
+ *          called by user keystroke or by programs
+ * Return Value: void
+ *  Function: change video memory or backup buffer */
+void __putc(uint8_t c, uint8_t userkey) {
+	int flags;
+	int term_id;
+
+	switch(userkey) {
+		case PUTC_USRKEY: term_id = current_term_id; break;
+		case PUTC_PROG: term_id = cur_sch_index; break;
+		default: return;
+	}
+
+	/* Critical section begins */
+	cli_and_save(flags);
+
+	if (userkey) {
+		remap_vidmap_page(current_term_id);
+	}
+
+	/* Go to a new line if get line break or if the
+	 * cursor is already at the end of the current line */
+	switch (c) {
+		case '\0':
+			return;
+		case '\n': case '\r':
+			handle_newline(userkey); break;
+		default:
+			if (terms[term_id].cursor_x >= NUM_COLS) {
+				handle_newline(userkey);
+			}
+			*(uint8_t *)(video_mem + ((NUM_COLS * terms[term_id].cursor_y + terms[term_id].cursor_x) << 1)) = c;
+			*(uint8_t *)(video_mem + ((NUM_COLS * terms[term_id].cursor_y + terms[term_id].cursor_x) << 1) + 1) = ATTRIB;
+			terms[term_id].cursor_x++;
+	}
+
+	vga_redraw_cursor(terms[term_id].cursor_x, terms[term_id].cursor_y);
+
+	if (userkey) {
+		remap_vidmap_page(cur_sch_index);
+	}
+
+	restore_flags(flags);
+	/* Critical section ends */
+}
+
+/* ------------ Private helper functions end ------------ */
 
 /* (The following 3 text mode cursor functions)
  * Reference: https://wiki.osdev.org/Text_Mode_Cursor */
@@ -278,56 +331,15 @@ int32_t puts(int8_t* s) {
  * Return Value: void
  *  Function: Output a character to the console */
 void putc(uint8_t c) {
-	/* Go to a new line if get line break or if the
-	 * cursor is already at the end of the current line */
-	if (c == '\0') {
-		return;
-	} else if (c == '\n' || c == '\r') {
-		handle_newline(PUTC_PROG);
-	} else if (c == '\b') {				/* Handle backspace */
-		handle_backspace(PUTC_PROG);
-	} else {                            /* Handle regular characters */
-		if (terms[cur_sch_index].cursor_x >= NUM_COLS) {
-			handle_newline(PUTC_PROG);
-		}
-		*(uint8_t *)(video_mem + ((NUM_COLS * terms[cur_sch_index].cursor_y + terms[cur_sch_index].cursor_x) << 1)) = c;
-		*(uint8_t *)(video_mem + ((NUM_COLS * terms[cur_sch_index].cursor_y + terms[cur_sch_index].cursor_x) << 1) + 1) = ATTRIB;
-		terms[cur_sch_index].cursor_x++;
-	}
-
-	vga_redraw_cursor(terms[cur_sch_index].cursor_x, terms[cur_sch_index].cursor_y);
+	__putc(c, PUTC_PROG);
 }
 
-/* void putc_force_to_vmem(uint8_t c);
+/* void putc_userkey(uint8_t c);
  * Inputs: uint_8* c = character to print
  * Return Value: void
  * Function: Forcefully output a character to video memory */
-void putc_force_to_vmem(uint8_t c) {
-	int32_t flags;
-	cli_and_save(flags);
-	remap_vidmap_page(current_term_id);
-
-	/* Go to a new line if get line break or if the
-	 * cursor is already at the end of the current line */
-	if (c == '\0') {
-		return;
-	} else if (c == '\n' || c == '\r') {
-		handle_newline(PUTC_USER);
-	} else if (c == '\b') {				/* Handle backspace */
-		handle_backspace(PUTC_USER);
-	} else {                            /* Handle regular characters */
-		if (terms[current_term_id].cursor_x >= NUM_COLS) {
-			handle_newline(PUTC_USER);
-		}
-		*(uint8_t *)(video_mem + ((NUM_COLS * terms[current_term_id].cursor_y + terms[current_term_id].cursor_x) << 1)) = c;
-		*(uint8_t *)(video_mem + ((NUM_COLS * terms[current_term_id].cursor_y + terms[current_term_id].cursor_x) << 1) + 1) = ATTRIB;
-		terms[current_term_id].cursor_x++;
-	}
-
-	vga_redraw_cursor(terms[current_term_id].cursor_x, terms[current_term_id].cursor_y);
-
-	remap_vidmap_page(cur_sch_index);
-	restore_flags(flags);
+void putc_userkey(uint8_t c) {
+	__putc(c, PUTC_USRKEY);
 }
 
 /* int8_t* itoa(uint32_t value, int8_t* buf, int32_t radix);

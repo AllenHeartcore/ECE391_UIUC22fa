@@ -16,7 +16,7 @@ void vga_disable_cursor();
 void vga_redraw_cursor(int x, int y);
 int32_t printf(int8_t *format, ...);
 void putc(uint8_t c);
-void putc_force_to_vmem(uint8_t c);
+void putc_userkey(uint8_t c);
 int32_t puts(int8_t *s);
 int8_t *itoa(uint32_t value, int8_t* buf, int32_t radix);
 int8_t *strrev(int8_t* s);

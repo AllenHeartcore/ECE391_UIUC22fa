@@ -150,24 +150,24 @@ void key_handler(void) {
 				terminal_clear();							/* Ctrl + L cleans the screen */
 				break;
 			} else if (ascii == '\n') {
-				putc_force_to_vmem(ascii);
+				putc_userkey(ascii);
 				term->kbd_buf[term->kbd_buf_count++] = '\n';
 				term->readkey = 1;							/* Set the "endline" flag */
 			} else if (ascii == '\b') {
 				if (term->kbd_buf_count > 0) {
-					putc_force_to_vmem(ascii);
+					putc_userkey(ascii);
 					term->kbd_buf[--term->kbd_buf_count] = '\0';
 				}
 			} else if (ascii == '\t') {
 				for (i = 0; i < 4; i++) {
 					if (term->kbd_buf_count < KBD_BUF_SIZE - 1) {
-						putc_force_to_vmem(' ');
+						putc_userkey(' ');
 						term->kbd_buf[term->kbd_buf_count++] = ' ';
 					}
 				}
 			} else if (ascii != '\0') {
 				if (term->kbd_buf_count < KBD_BUF_SIZE - 1) {
-					putc_force_to_vmem(ascii);
+					putc_userkey(ascii);
 					term->kbd_buf[term->kbd_buf_count++] = ascii;
 				}
 			}
