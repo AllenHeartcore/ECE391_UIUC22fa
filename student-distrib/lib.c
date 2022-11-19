@@ -154,12 +154,18 @@ void scroll(void) {
 }
 
 /* handle_backspace
- * Inputs: user -- indicate if called by user keystroke
+ * Inputs: userkey -- indicate if called by user keystroke
  * Return Value: none
  * Function: Handles backspace key press
  */
-void handle_backspace(int8_t user) {
-	int term_id = user ? current_term_id : cur_sch_index;
+void handle_backspace(int8_t userkey) {
+	int term_id;
+	switch(userkey) {
+		case PUTC_USRKEY: term_id = current_term_id; break;
+		case PUTC_PROG: term_id = cur_sch_index; break;
+		default: return;
+	}
+
 	if (terms[term_id].cursor_x == 0 && terms[term_id].cursor_y == 0) {
 		return;
 	}
@@ -172,12 +178,18 @@ void handle_backspace(int8_t user) {
 }
 
 /* handle_newline
- * Inputs: void
+ * Inputs: userkey -- indicate if called by user keystroke
  * Return Value: none
  * Function: Handles newline events
  */
-void handle_newline(int8_t user) {
-	int term_id = user ? current_term_id : cur_sch_index;
+void handle_newline(int8_t userkey) {
+	int term_id;
+	switch(userkey) {
+		case PUTC_USRKEY: term_id = current_term_id; break;
+		case PUTC_PROG: term_id = cur_sch_index; break;
+		default: return;
+	}
+
 	terms[term_id].cursor_x = 0;
 	terms[term_id].cursor_y++;
 	if (terms[term_id].cursor_y >= NUM_ROWS) {
