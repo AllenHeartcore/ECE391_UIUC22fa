@@ -138,17 +138,6 @@ int32_t terminal_close(int32_t fd) {
 	return 0;
 }
 
-/* terminal_scroll
- *  Scroll the screen up by one line
- *  INPUT: none
- *  OUTPUT: change the contents on the screen
- *  RETURN VALUE: none
- *  SIDE EFFECT: change the contents on the screen
- */
-void terminal_scroll() {
-	scroll();
-}
-
 /* terminal_clear
  *  Clear the screen and reset the cursor position
  *  INPUT: none

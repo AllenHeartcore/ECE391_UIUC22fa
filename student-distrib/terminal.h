@@ -30,8 +30,6 @@ extern int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes);
 extern int32_t terminal_open(const uint8_t* filename);
 /* Close a terminal */
 extern int32_t terminal_close(int32_t fd);
-/* Scroll the terminal */
-extern void terminal_scroll();
 /* Clear the screen and reset the cursor position */
 extern void terminal_clear();
 /* Get current terminal */
