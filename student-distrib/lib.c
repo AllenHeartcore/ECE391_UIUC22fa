@@ -44,10 +44,9 @@ void __putc(uint8_t c, uint8_t userkey) {
 	/* Go to a new line if get line break or if the
 	 * cursor is already at the end of the current line */
 	switch (c) {
-		case '\0':
-			return;
-		case '\n': case '\r':
-			handle_newline(userkey); break;
+		case '\0': return;
+		case '\n': case '\r': handle_newline(userkey); break;
+		case '\b': handle_backspace(userkey); break;
 		default:
 			if (terms[term_id].cursor_x >= NUM_COLS) {
 				handle_newline(userkey);
