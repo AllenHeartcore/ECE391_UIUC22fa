@@ -5,6 +5,7 @@
 #include "lib.h"
 #include "keyboard.h"
 #include "page.h"
+#include "scheduler.h"
 
 uint8_t* backup_buf_add[3] = {(uint8_t*)0xBA000, (uint8_t*)0xBB000, (uint8_t*)0xBC000}; // Store backup buffers' address
 terminal_t terms[TERM_NUM]; // array for three terminals
@@ -54,9 +55,9 @@ void terminal_switch(uint8_t term_id){
 
 	/* Update current_term_id */
 	current_term_id = term_id;
+	remap_vidmap_page(cur_sch_index);
 
-	/* Remap user video memory */
-	remap_vidmap_page(current_term_id);
+
 }
 
 /* terminal_read
