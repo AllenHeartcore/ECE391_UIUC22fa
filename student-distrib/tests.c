@@ -4,6 +4,8 @@
 #include "rtc.h"
 #include "terminal.h"
 #include "filesys.h"
+#include "memory.h"
+
 
 #define PASS 1
 #define FAIL 0
@@ -360,6 +362,37 @@ int terminal_kbd_test_newline(int32_t write_nbytes) {
 /* Checkpoint 5 tests */
 
 
+/* Memory allocation test
+ * 
+ * Check if the terminal automatically wraps to the next line
+ * Inputs: None
+ * Outputs: PASS/FAIL
+ * Side Effects: None
+ * Coverage: Terminal, Keyboard
+ * Files: terminal.c/h, keyboard.c/h
+ */
+
+int memory_allocation_test() {
+	TEST_HEADER;
+	int32_t i,flag;
+	void* ptr;
+	flag = 1;
+	for(i=0; i<100000; i++){
+		ptr = malloc_fixlen();
+		if(free_fixlen(ptr) == 0)
+			flag = 0;
+	}
+	ptr = 100;
+	if(free_fixlen(ptr) == 1)
+		flag = 0;
+
+	if(flag)
+		return PASS;
+	return FAIL;
+}
+
+
+
 /* Test suite entry point */
 void launch_tests(){
 	/* Checkpoint 1 tests */
@@ -391,12 +424,13 @@ void launch_tests(){
 	// TEST_OUTPUT("terminal_kbd_test_newline", terminal_kbd_test_newline(100));
 
 	/* Checkpoint 3 tests */
-	uint8_t cmd[128] = "ls";
-	asm volatile("movl %0, %%ebx; \n\
-				  movl $1, %%eax; \n\
-				  int $0x80;"
-				 :
-				 : "r" (cmd)
-				 : "eax", "ebx"
-				 );
+	// uint8_t cmd[128] = "ls";
+	// asm volatile("movl %0, %%ebx; \n\
+	// 			  movl $1, %%eax; \n\
+	// 			  int $0x80;"
+	// 			 :
+	// 			 : "r" (cmd)
+	// 			 : "eax", "ebx"
+	// 			 );
+	TEST_OUTPUT("memory_allocation_test", memory_allocation_test());
 }

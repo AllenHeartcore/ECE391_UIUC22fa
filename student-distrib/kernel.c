@@ -17,6 +17,7 @@
 #include "filesys.h"
 #include "terminal.h"
 #include "syscall.h"
+#include "memory.h"
 
 // #define RUN_TESTS 1
 
@@ -155,6 +156,7 @@ void entry(unsigned long magic, unsigned long addr) {
 
 	/* Init paging */
 	page_init();
+	mem_init(FIX_LEN_MEMORY_START, FIX_LEN_MEMORY_MAX_SIZE);
 
 	/* Initialize devices, memory, filesystem, enable device interrupts on the
 	 * PIC, any other initialization stuff... */
