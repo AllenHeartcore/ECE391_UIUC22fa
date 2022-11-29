@@ -12,46 +12,6 @@ pg_tbl_t page_table __attribute__((aligned (4 * 1024)));
 /* Page table for video mapping */
 pg_tbl_t video_page_table __attribute__((aligned (4 * 1024)));
 
-/* Set a page directory entry according to given value */
-#define SET_PDE(_pg_dir, _idx, _privilege, _ps, _global, _addr) do {    \
-    (_pg_dir)[(_idx)].present = 1;                                      \
-    (_pg_dir)[(_idx)].rw = 1;                                           \
-    (_pg_dir)[(_idx)].privilege = (_privilege);                         \
-    (_pg_dir)[(_idx)].pwt = 0;                                          \
-    (_pg_dir)[(_idx)].pcd = 0;                                          \
-    (_pg_dir)[(_idx)].accessed = 0;                                     \
-    (_pg_dir)[(_idx)].dirty = 0;                                        \
-    (_pg_dir)[(_idx)].ps = (_ps);                                       \
-    (_pg_dir)[(_idx)].global = (_global);                               \
-    (_pg_dir)[(_idx)].avl = 0;                                          \
-    (_pg_dir)[(_idx)].addr = (_addr);                                   \
-} while (0)
-
-/* Set a page table entry according to given value */
-#define SET_PTE(_pt, _idx, _privilege, _addr) do {  \
-    (_pt)[(_idx)].present = 1;                      \
-    (_pt)[(_idx)].rw = 1;                           \
-    (_pt)[(_idx)].privilege = (_privilege);         \
-    (_pt)[(_idx)].pwt = 0;                          \
-    (_pt)[(_idx)].pcd = 0;                          \
-    (_pt)[(_idx)].accessed = 0;                     \
-    (_pt)[(_idx)].dirty = 0;                        \
-    (_pt)[(_idx)].pat = 0;                          \
-    (_pt)[(_idx)].global = 0;                       \
-    (_pt)[(_idx)].avl = 0;                          \
-    (_pt)[(_idx)].addr = (_addr);                   \
-} while (0)
-
-/* Update CR3 to flush TLB */
-#define UPDATE_CR3() do {                   \
-    asm volatile(                           \
-        "movl %0, %%eax     \n\t"           \
-        "movl %%eax, %%cr3  \n\t"           \
-        :                                   \
-        : "r" (&page_directory)             \
-        : "%eax"                            \
-    );                                      \
-} while (0)
 
 /*
 *   page_init

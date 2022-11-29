@@ -382,9 +382,20 @@ int memory_allocation_test() {
 		if(free_fixlen(ptr) == 0)
 			flag = 0;
 	}
-	ptr = 100;
-	if(free_fixlen(ptr) == 1)
+	i = 100;
+	if(free_fixlen((void*)i) == 1)
 		flag = 0;
+
+
+	uint8_t* p1,p2,p3;
+	p1 = malloc_varlen(100);
+	p2 = malloc_varlen(200);
+	p3 = malloc_varlen(300);
+	
+	free_varlen(p1);
+	free_varlen(p2);
+	free_varlen(p3);
+	
 
 	if(flag)
 		return PASS;
@@ -425,8 +436,8 @@ void launch_tests(){
 
 	/* Checkpoint 3 tests */
 	// uint8_t cmd[128] = "ls";
-	// asm volatile("movl %0, %%ebx; \n\
-	// 			  movl $1, %%eax; \n\
+	// asm volatile("movl %0, %%ebx; \n
+	// 			  movl $1, %%eax; \n
 	// 			  int $0x80;"
 	// 			 :
 	// 			 : "r" (cmd)
