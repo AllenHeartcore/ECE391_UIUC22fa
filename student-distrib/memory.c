@@ -51,10 +51,10 @@ void* malloc_fixlen(fmem_list* memlist){
     ptr -- the pointer we want to free
     size -- size of the structure in current slab cache
  */
-int32_t free_fixlen(fmem_list* memlist, void* ptr, uint32_t size){
+int32_t free_fixlen(fmem_list* memlist, void* ptr){
     int32_t ret = 0;
     if( ptr != NULL){
-        uint32_t index = ((uint32_t)ptr - (uint32_t)memlist->unit_base) / size;
+        uint32_t index = ((uint32_t)ptr - (uint32_t)memlist->unit_base) / memlist->size;
         fmem_node* free_node = memlist->node_base + index;
         if(index < memlist->max_units && free_node->ptr == ptr){
             /* We can free a chunk of memory only if it is assigned by us */
@@ -94,7 +94,7 @@ slab_cache* slab_cache_create(const char* name, uint32_t size){
     ret = (slab_cache*)malloc_fixlen(&slab_cache_list);
     ret->slabs = (fmem_list*)malloc_fixlen(&slabs_list);
     ret->size = size;
-    strcpy(ret->name, name);
+    strcpy((int8_t*)ret->name, (int8_t*)name);
     /* Assign a new 4kb space for this cache */
     fmem_init(i*SLAB_SIZE + FIX_LEN_MEMORY_START, size, ret->slabs);
 
@@ -135,9 +135,56 @@ void* slab_cache_alloc(slab_cache* cache){
     return ret;
 }
 
+int32_t slab_cache_free(slab_cache* cache, void* ptr){
+    int32_t ret = 0;
+    /* Sanity check */
+    if( cache == NULL || ptr == NULL)
+        return ret;
+    /* Find which slab owns this ptr */
+    fmem_list* cur_slab = cache->slabs;
+    fmem_list* prev_slab = cur_slab; // Used to shrink slab cache
+    while(cur_slab != NULL){
+        if((uint32_t)cur_slab->node_base + SLAB_SIZE > (uint32_t)ptr)
+            break;
+        prev_slab = cur_slab;
+        cur_slab = cur_slab->next;  // Update current and previous slab ptr
+    }
+    if(cur_slab == NULL) // This ptr doesn't belong to this cache
+        return ret; 
+    /* Free the ptr */
+    ret = free_fixlen(cur_slab, ptr);
+    /* If current slab is empty, slab cache should shrink */
+    if(cur_slab->head == cur_slab->node_base){
+        uint32_t page_index;
+        page_index =  ((uint32_t)cur_slab->head - FIX_LEN_MEMORY_START) / (SLAB_SIZE);
+        slab_page_table[page_index].present = 0;  // Free page
+        prev_slab->next = cur_slab->next;   // Update linked list
+        free_fixlen(&slabs_list, cur_slab); // Free current slab in the slabs_list
+    }
+    return ret;
+}
 
-
-
+void slab_cache_destroy(slab_cache* cache){
+    /* Sanity check */
+    if(cache == NULL)
+        return;
+    /* Check if there is any slabs are still used */
+    fmem_list* cur_slab = cache->slabs;
+    while(cur_slab != NULL){
+        if(cur_slab->head != cur_slab->node_base){
+            printf("The slab cache is not empty now, you can not destroy it!\n");
+            return;
+        }
+        cur_slab = cur_slab->next;
+    }
+    /* Free slab structs in slabs_list */
+    if( !free_fixlen(&slabs_list, (void*)cache->slabs))
+        printf("Something goes wrong with your slab destroy!\n");
+        return;
+    /* Free cache itself */
+    if( !free_fixlen(&slab_cache_list, (void*)cache))
+        printf("Something goes wrong with your slab destroy!\n");
+}
 
 
 
@@ -217,3 +264,4 @@ int32_t free_varlen(void* ptr){
         
     return ret;
 }
+

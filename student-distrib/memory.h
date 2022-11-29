@@ -81,7 +81,7 @@ typedef struct  vmem_node {
 /* Fixed length functions */
 void fmem_init(uint32_t mem, uint32_t size, fmem_list* memlist);
 void* malloc_fixlen(fmem_list* memlist);
-int32_t free_fixlen(fmem_list* memlist, void* ptr, uint32_t size);
+int32_t free_fixlen(fmem_list* memlist, void* ptr);
 /* Variable length functions */
 void vmem_init(uint32_t mem, uint32_t size);
 void* malloc_varlen(uint32_t size);
@@ -90,7 +90,8 @@ int32_t free_varlen(void* ptr);
 void slab_cache_init();
 slab_cache* slab_cache_create(const char* name, uint32_t size);
 void* slab_cache_alloc(slab_cache* cache);
-
+int32_t slab_cache_free(slab_cache* cache, void* ptr);
+void slab_cache_destroy(slab_cache* cache);
 
 extern vmem_node* vmem_head;
 extern fmem_list slab_cache_list;

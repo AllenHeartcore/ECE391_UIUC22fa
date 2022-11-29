@@ -379,15 +379,15 @@ int memory_allocation_test() {
 	flag = 1;
 	for(i=0; i<100000; i++){
 		ptr = malloc_fixlen(&slab_cache_list);
-		if(free_fixlen(&slab_cache_list,ptr, sizeof(slab_cache)) == 0)
+		if(free_fixlen(&slab_cache_list,ptr) == 0)
 			flag = 0;
 	}
 	i = 100;
-	if(free_fixlen(&slab_cache_list, (void*)i, sizeof(slab_cache)) == 1)
+	if(free_fixlen(&slab_cache_list, (void*)i) == 1)
 		flag = 0;
 
 
-	uint8_t* p1,p2,p3;
+	void *p1,*p2,*p3;
 	p1 = malloc_varlen(100);
 	p2 = malloc_varlen(200);
 	p3 = malloc_varlen(300);
@@ -403,13 +403,27 @@ int memory_allocation_test() {
 }
 
 int slab_cache_test(){
+	TEST_HEADER;
 	char name[20] = {"TestCache"};
 	slab_cache* test = slab_cache_create(name, 32);
 	int32_t i;
+	int32_t* ptr;
 	for(i = 0; i <500; i++){
-		slab_cache_alloc(test);
+		ptr = (int32_t*)slab_cache_alloc(test);
+		slab_cache_free(test, ptr);
 	}
+	slab_cache_destroy(test);
 
+	char name2[20] = {"TestCache2"};
+	slab_cache* test2 = slab_cache_create(name2, 32);
+	slab_cache_destroy(test2); // Should succeed
+
+	char name3[20] = {"TestCache3"};
+	slab_cache* test3 = slab_cache_create(name3, 32);
+	slab_cache_alloc(test3);
+	slab_cache_destroy(test3); // Should fail and print error
+
+	return PASS;
 }
 
 
