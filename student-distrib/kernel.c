@@ -19,7 +19,7 @@
 #include "syscall.h"
 #include "memory.h"
 
-// #define RUN_TESTS 1
+#define RUN_TESTS 1
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
@@ -156,8 +156,8 @@ void entry(unsigned long magic, unsigned long addr) {
 
 	/* Init paging */
 	page_init();
-	mem_init(FIX_LEN_MEMORY_START, FIX_LEN_MEMORY_MAX_SIZE);
-
+	slab_cache_init();
+	vmem_init(VAR_LEN_MEMORY_START, VAR_LEN_MEMORY_MAX_SIZE);
 	/* Initialize devices, memory, filesystem, enable device interrupts on the
 	 * PIC, any other initialization stuff... */
 	terminal_init();

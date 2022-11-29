@@ -11,7 +11,8 @@ pg_dir_t page_directory __attribute__((aligned (4 * 1024)));
 pg_tbl_t page_table __attribute__((aligned (4 * 1024)));
 /* Page table for video mapping */
 pg_tbl_t video_page_table __attribute__((aligned (4 * 1024)));
-
+// Slab Cache. 
+pg_tbl_t slab_page_table __attribute__((aligned (4 * 1024)));
 
 /*
 *   page_init
@@ -38,6 +39,15 @@ void page_init(void) {
     SET_PTE(page_table, (VIDEO >> 12) + 4, 0, (VIDEO >> 12) + 4);
     SET_PDE(page_directory, 0, 0, 0, 0, ((uint32_t) &page_table) >> 12);
     
+    /* Set page directory and page table for slab cache memory allocation */
+    SET_PDE(page_directory, FIX_LEN_MEMORY_START>>22, 0, 0, 0, ((uint32_t) &slab_page_table) >> 12);
+    for (i = 0; i < NUM_PG_TBL_ENTRY; i++){
+        SET_PTE(slab_page_table, i, 0, (FIX_LEN_MEMORY_START>>12) + i);
+        slab_page_table[i].present = 0;
+    }
+    slab_page_table[0].present = 1; // slab cache page
+    slab_page_table[1].present = 1; // slab lists page
+
     /* Set page directory for kernel page (4MB) */
     SET_PDE(page_directory, 1, 0, 1, 1, KERNEL_ADDR >> 12);
 

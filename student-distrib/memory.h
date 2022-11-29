@@ -38,44 +38,33 @@ Slab cache's implementation is based on fixed length memory allocation.
 #define UNIT_FIXED_LEN_SIZE 32 // Each memory unit in fixed length memory allocation is 32 bytes
 #define NODE_SIZE sizeof(fmem_node) // Size of a memory management node in linked list
 #define FIX_LEN_MEMORY_START 160*1024*1024  // 160MB
+#define SLAB_SIZE 4*1024      // A slab's zie is 4kb = a page size
 #define FIX_LEN_MEMORY_MAX_SIZE 4*1024*1024 // 4MB
 #define VAR_LEN_MEMORY_START 164*1024*1024  // 164MB
 #define VAR_LEN_MEMORY_MAX_SIZE 4*1024*1024 // 4MB
 
-void fmem_init(uint32_t mem, uint32_t size);
-void* malloc_fixlen();
-int32_t free_fixlen(void* ptr);
-
-
-void vmem_init(uint32_t mem, uint32_t size);
-void* malloc_varlen(uint32_t size);
-int32_t free_varlen(void* ptr);
- 
-/* Memory unit for fixed length memory allocation */
-typedef struct  fmem_unit {
-    uint8_t data[UNIT_FIXED_LEN_SIZE];
-}  fmem_unit;
 
 /* Memory management structure node (node of a linked list) */
 typedef struct  fmem_node {
     struct fmem_node* next;
-    fmem_unit* ptr;
+    void* ptr;
 }  fmem_node;
 
 /* Linked list storing memory's information */
 typedef struct  fmem_list {
-    fmem_node* head;
-    fmem_node* node_base;
-    fmem_unit* unit_base;
-    uint32_t  max_units;
+    fmem_node* head;    // Head of the linked list
+    fmem_node* node_base; // Start address of memory management struct
+    void* unit_base;     // Start address of useable memory
+    uint32_t  max_units;  // Max number of units in a slab can have
+    uint32_t  size;   // Structure's size
+    struct fmem_list* next;
 }  fmem_list;
 
 /* Definition of a slab cache */
 typedef struct  slab_cache {
-    fmem_node* head;
-    fmem_node* node_base;
-    fmem_unit* unit_base;
-    uint32_t  max_units;
+    uint8_t   name[20];  // Name has at most 20 chars
+    fmem_list* slabs; // Each cache use at most 10 slabs
+    uint32_t size; // Structure's size in this slab cache
 }  slab_cache;
 
 
@@ -89,7 +78,23 @@ typedef struct  vmem_node {
     uint32_t  free;
 }  vmem_node;
 
+/* Fixed length functions */
+void fmem_init(uint32_t mem, uint32_t size, fmem_list* memlist);
+void* malloc_fixlen(fmem_list* memlist);
+int32_t free_fixlen(fmem_list* memlist, void* ptr, uint32_t size);
+/* Variable length functions */
+void vmem_init(uint32_t mem, uint32_t size);
+void* malloc_varlen(uint32_t size);
+int32_t free_varlen(void* ptr);
+/* Slab cache's functions */
+void slab_cache_init();
+slab_cache* slab_cache_create(const char* name, uint32_t size);
+void* slab_cache_alloc(slab_cache* cache);
 
+
+extern vmem_node* vmem_head;
+extern fmem_list slab_cache_list;
+extern fmem_list slabs_list;
 
 #endif
 

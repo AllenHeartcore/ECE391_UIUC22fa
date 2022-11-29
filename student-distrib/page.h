@@ -23,6 +23,7 @@
 #define PG_TBL_NUMBER_MASK 0x003FF000
 
 #include "types.h"
+#include "memory.h"
 
 /* Page directory entry, each entry points to a page table */
 typedef union pg_dir_entr_t {
@@ -67,6 +68,7 @@ typedef pg_tbl_entr_t pg_tbl_t[NUM_PG_TBL_ENTRY];
 
 extern pg_dir_t page_directory;
 extern pg_tbl_t page_table;
+extern pg_tbl_t slab_page_table;
 
 /* Initialize paging */
 void page_init(void);

@@ -378,12 +378,12 @@ int memory_allocation_test() {
 	void* ptr;
 	flag = 1;
 	for(i=0; i<100000; i++){
-		ptr = malloc_fixlen();
-		if(free_fixlen(ptr) == 0)
+		ptr = malloc_fixlen(&slab_cache_list);
+		if(free_fixlen(&slab_cache_list,ptr, sizeof(slab_cache)) == 0)
 			flag = 0;
 	}
 	i = 100;
-	if(free_fixlen((void*)i) == 1)
+	if(free_fixlen(&slab_cache_list, (void*)i, sizeof(slab_cache)) == 1)
 		flag = 0;
 
 
@@ -400,6 +400,16 @@ int memory_allocation_test() {
 	if(flag)
 		return PASS;
 	return FAIL;
+}
+
+int slab_cache_test(){
+	char name[20] = {"TestCache"};
+	slab_cache* test = slab_cache_create(name, 32);
+	int32_t i;
+	for(i = 0; i <500; i++){
+		slab_cache_alloc(test);
+	}
+
 }
 
 
@@ -444,4 +454,5 @@ void launch_tests(){
 	// 			 : "eax", "ebx"
 	// 			 );
 	TEST_OUTPUT("memory_allocation_test", memory_allocation_test());
+	slab_cache_test();
 }
