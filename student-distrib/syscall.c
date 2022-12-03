@@ -119,8 +119,7 @@ int32_t execute(const uint8_t* command) {
             command[i] == ' ';
          i++);
     for (j = 0; i < strlen((int8_t*)command) &&
-            command[i] != '\0' &&
-            command[i] != ' ';
+            command[i] != '\0';
          i++) {
         args[j++] = command[i];
     }
@@ -408,6 +407,76 @@ int32_t set_handler(int32_t signum, void* handler_address) {
 
 int32_t sigreturn(void) {
     return 0;
+}
+
+
+int32_t clear_sys(){
+    clear();
+    return 1;
+}
+
+/* Allocate a memory space based on the size */
+void* user_malloc(int32_t size){
+    int32_t i;
+    /* Firstly, find if there is a slab cache fits the size. If so, use fixed length memory allocation */
+    fmem_node* cur_node;
+    slab_cache* temp_slab_cache;
+    cur_node = slab_cache_list.node_base;
+    for(i=0; i<slab_cache_list.max_units; i++){
+        temp_slab_cache = (slab_cache*)(cur_node->ptr);
+        if(temp_slab_cache != NULL){
+            if(temp_slab_cache->size == size){
+                /* Size matches */
+                return slab_cache_alloc(temp_slab_cache);
+            }
+        }
+        cur_node = cur_node + 1;
+    }
+
+    /* If we can not find a slab cache, use variable length malloc */
+    return malloc_varlen(size);
+}
+
+/* Create a slab cache based on the name and size provided by user */
+void* user_slab_create(uint8_t* name ,int32_t size){
+    return slab_cache_create(name, size);
+}
+
+/* Free a pointer provided by user */
+int32_t user_free(void* ptr){
+    if(ptr>=VAR_LEN_MEMORY_START)
+        return free_varlen(ptr);
+
+    /* Go through slab cache, find a needed one */
+    fmem_node* cur_node;
+    slab_cache* temp_slab_cahe;
+    fmem_list* temp_slab;
+    int32_t i;
+    cur_node = slab_cache_list.node_base;
+    for(i=0; i<slab_cache_list.max_units; i++){
+        temp_slab_cahe = (slab_cache*)(cur_node->ptr);
+        if(temp_slab_cahe != NULL){
+            temp_slab = temp_slab_cahe->slabs;
+            while (temp_slab != NULL)
+            {
+                /* If ptr is in a range */
+                if( (uint32_t)(temp_slab->unit_base)<= (uint32_t)ptr && 
+                    (uint32_t)(temp_slab->node_base)+SLAB_SIZE > (uint32_t)ptr)
+                    return slab_cache_free(temp_slab_cahe,ptr);
+                temp_slab = temp_slab->next;
+            }
+        }
+        cur_node = cur_node + 1;
+    }
+    return 0; // Fail
+}
+
+/* 
+    show memory status
+ */
+void memstat(){
+    visual_slab_caches();
+    visual_varmem();
 }
 
 /* ------------ Helper functions --------------- */

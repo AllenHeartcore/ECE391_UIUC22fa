@@ -19,7 +19,7 @@
 #include "syscall.h"
 #include "memory.h"
 
-#define RUN_TESTS 1
+// #define RUN_TESTS 1
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */

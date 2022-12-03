@@ -1,7 +1,6 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 #include "types.h"
-#include "memory.h"
 #include "syscall.h"
 #include "page.h"
 
@@ -56,13 +55,14 @@ typedef struct  fmem_list {
     fmem_node* node_base; // Start address of memory management struct
     void* unit_base;     // Start address of useable memory
     uint32_t  max_units;  // Max number of units in a slab can have
+    uint32_t  used_units;
     uint32_t  size;   // Structure's size
     struct fmem_list* next;
 }  fmem_list;
 
 /* Definition of a slab cache */
 typedef struct  slab_cache {
-    uint8_t   name[20];  // Name has at most 20 chars
+    uint8_t   name[20+1];  // Name has at most 20 chars, 1 for EOS
     fmem_list* slabs; // Each cache use at most 10 slabs
     uint32_t size; // Structure's size in this slab cache
 }  slab_cache;
@@ -93,9 +93,15 @@ void* slab_cache_alloc(slab_cache* cache);
 int32_t slab_cache_free(slab_cache* cache, void* ptr);
 void slab_cache_destroy(slab_cache* cache);
 
+/* Static variables */
 extern vmem_node* vmem_head;
 extern fmem_list slab_cache_list;
 extern fmem_list slabs_list;
+
+
+/* Functions for visualize */
+extern void visual_slab_caches();
+extern void visual_varmem();
 
 #endif
 

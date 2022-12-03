@@ -15,6 +15,7 @@ void fmem_init(uint32_t mem, uint32_t size, fmem_list* memlist){
 
     /* Initialize linked list */
     memlist->max_units = max;
+    memlist->used_units = 0;
     memlist->node_base = (fmem_node*)mem;
     memlist->unit_base = (void*)(mem + max*NODE_SIZE);
     memlist->head = (fmem_node*)mem;
@@ -23,7 +24,7 @@ void fmem_init(uint32_t mem, uint32_t size, fmem_list* memlist){
     for(i=0; i<max-1; i++){
         cur_node = memlist->head + i;
         cur_node->next = memlist->head + i + 1;  // Make each next ptr pointing to next node
-
+        cur_node->ptr= 0;
     }
     cur_node = memlist->head + max;
     cur_node->next = NULL; // The last node points to NULL
@@ -42,6 +43,7 @@ void* malloc_fixlen(fmem_list* memlist){
 
         /* Update head of the linked list */
         memlist->head = alloc->next;
+        memlist->used_units +=1;
     }
     return ret;
 }
@@ -62,6 +64,8 @@ int32_t free_fixlen(fmem_list* memlist, void* ptr){
             free_node->next = memlist->head;
             memlist->head = free_node;
             ret = 1;
+            memlist->used_units -=1;
+            free_node->ptr = NULL;
         }
     }
     return ret;
@@ -94,7 +98,8 @@ slab_cache* slab_cache_create(const char* name, uint32_t size){
     ret = (slab_cache*)malloc_fixlen(&slab_cache_list);
     ret->slabs = (fmem_list*)malloc_fixlen(&slabs_list);
     ret->size = size;
-    strcpy((int8_t*)ret->name, (int8_t*)name);
+    strncpy((int8_t*)ret->name, (int8_t*)name, 20);
+    ret->name[20] = 0;
     /* Assign a new 4kb space for this cache */
     fmem_init(i*SLAB_SIZE + FIX_LEN_MEMORY_START, size, ret->slabs);
 
@@ -154,7 +159,7 @@ int32_t slab_cache_free(slab_cache* cache, void* ptr){
     /* Free the ptr */
     ret = free_fixlen(cur_slab, ptr);
     /* If current slab is empty, slab cache should shrink */
-    if(cur_slab->head == cur_slab->node_base){
+    if(cur_slab->used_units == 0){
         uint32_t page_index;
         page_index =  ((uint32_t)cur_slab->head - FIX_LEN_MEMORY_START) / (SLAB_SIZE);
         slab_page_table[page_index].present = 0;  // Free page
@@ -265,3 +270,65 @@ int32_t free_varlen(void* ptr){
     return ret;
 }
 
+/* ------------------------Visualization--------------------- */
+void visual_slab_caches(){
+    /* Go through all the nodes in slab_cache_list and find those are used */
+    fmem_node* cur_node;
+    cur_node = slab_cache_list.node_base;
+    int32_t i;
+    printf("\n---------------Info of current slab caches---------------\n");
+    for(i=0; i<slab_cache_list.max_units; i++){
+        if(cur_node->ptr != 0){
+            show_slab_cache((slab_cache*)cur_node->ptr);
+        }
+        cur_node = cur_node + 1;
+    }
+}
+
+void visual_varmem(){
+    vmem_node* cur_vnode;
+    int32_t vnode_num;
+    cur_vnode = vmem_head;
+    vnode_num = 0;
+    printf("\n-------------Info about variable length memory allocation------------\n");
+    while(1){
+        vnode_num +=1;
+        printf("Variable length memory unit%d ---  free:%d  used:%d  address:%x\n", vnode_num, cur_vnode->free, cur_vnode->used, (uint32_t)cur_vnode->ptr);
+        cur_vnode = cur_vnode->next;
+        if(cur_vnode == vmem_head)
+            break;
+    }
+    printf("--------------------------------------------------------------\n");
+}
+
+/* 
+    input: slab_cache* slab
+    return: none
+    result: print some infomation about a specific slab
+ */
+void show_slab_cache(slab_cache* slab_cache){
+    printf("Slab name: %s  slab_cache's ptr:%x ",slab_cache->name, (uint32_t)slab_cache);
+    printf("size = %d \n", slab_cache->size);
+    /* Go through all the slabs owned by this slab cache */
+    int32_t slabs_num, used_unit_num,i;
+    fmem_list* cur_slab;
+    slabs_num = 0;
+    used_unit_num = 0;
+    cur_slab = slab_cache->slabs;
+    while(cur_slab!=NULL){
+        slabs_num +=1;
+        fmem_node* temp_node;
+        temp_node = cur_slab->node_base;
+        for(i=0; i<cur_slab->max_units; i++){
+            if(temp_node->ptr != 0){
+                printf("ptr:%x  ",temp_node->ptr);
+            }
+            temp_node = temp_node + 1;
+        }
+        used_unit_num += cur_slab->used_units;
+        cur_slab = cur_slab->next;
+    }
+    printf("\n%d slabs in total and  each slab has max %d units\n", slabs_num, slab_cache->slabs->max_units);
+    printf("Until now, %d units have been allocated\n", used_unit_num);
+    printf("---------------------------------------------------------\n"); 
+}
