@@ -115,10 +115,12 @@ void vga_redraw_cursor(int x, int y) {
 void clear(void) {
 	int32_t i;
 	terms[current_term_id].cursor_x = terms[current_term_id].cursor_y = 0;
+	remap_vidmap_page(current_term_id);
 	for (i = 0; i < NUM_ROWS * NUM_COLS; i++) {
 		*(uint8_t *)(video_mem + (i << 1)) = ' ';
 		*(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
 	}
+	remap_vidmap_page(cur_sch_index);
 	vga_redraw_cursor(terms[current_term_id].cursor_x, terms[current_term_id].cursor_y);
 }
 

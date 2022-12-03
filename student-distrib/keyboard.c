@@ -5,6 +5,7 @@
 #include "lib.h"
 #include "i8259.h"
 #include "terminal.h"
+#include "signal.h"
 
 /* Modifier keys */
 #define LEFT_CTRL_PRESSED    0x1D
@@ -144,6 +145,10 @@ void key_handler(void) {
 				ascii = scan_code_table_caps[scan_code];
 			} else {
 				ascii = scan_code_table[scan_code];
+			}
+			if (ctrl && (ascii == 'z' || ascii == 'Z')){
+				send_signal(SIG_INTERRUPT);
+				break;
 			}
 
 			if (ctrl && (ascii == 'l' || ascii == 'L')) {

@@ -6,6 +6,7 @@
 #include "rtc.h"
 #include "idt_lnk.h"
 #include "page.h"
+#include "signal.h"
 
 /* Process id array */
 uint32_t pid_array[MAX_PROCESS] = {0};
@@ -188,6 +189,13 @@ int32_t execute(const uint8_t* command) {
     pcb->file_descs[1].file_operation.read_file = illegal_read;
     pcb->file_descs[1].file_operation.write_file = terminal_write;
 
+
+    /* Initialize the signal and */
+    for (i = 0; i < SIG_NUM; i++){
+        pcb->signal[i] = SIG_DEACTIVATE;
+        pcb->signal_handler[i] = default_signal_handler;
+        pcb->sig_mask[i] = SIG_UNMASK;
+    }
     /* Write arguments in pcb */
     memcpy(pcb->args, args, KBD_BUF_SIZE + 1);
 
@@ -402,7 +410,12 @@ int32_t vidmap(uint8_t** screen_start) {
     return 0;
 }
 
+
 int32_t set_handler(int32_t signum, void* handler_address) {
+    if (signum < 0 || signum > 4)
+        return -1;
+    pcb_t* cur_pcb = get_cur_pcb();
+    cur_pcb->signal_handler[signum] = handler_address;
     return 0;
 }
 
