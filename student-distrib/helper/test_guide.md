@@ -13,10 +13,10 @@
 | File | Content |
 | - | - |
 | `idt.c`<br>`idt_lnk.S` | IDT initialization<br>with assembly linkage |
-| `i8259.c` | PIC initialization |
-| `keyboard.c` | Keyboard initialization |
-| `rtc.c` | RTC initialization |
-| `page.c` | Paging initialization |
+| `i8259.c` | PIC chip driver |
+| `keyboard.c` | Keyboard driver |
+| `rtc.c` | RTC driver |
+| `page.c` | Paging settings |
 
 ### Checkpoint 2
 | File | Content |
@@ -28,6 +28,12 @@
 | File | Content |
 | - | - |
 | `syscall.c` | System call handler |
+
+### Checkpoint 5
+| File | Content |
+| - | - |
+| `scheduler.c` | Round-robin scheduler |
+| `pit.c` | PIT chip driver |
 
 ### Helpers
 | File | Content |
@@ -43,9 +49,7 @@
 
 ## Testing Guidelines
 
-### **IMPORTANT NOTES**
-- ***Backup** `mp3.img` in a safe place and **restore** it each time the OS crashes.*
-- *An exception immediately freezes the system and should appear as the **last** testpoint.*
+***IMPORTANT**: Backup `mp3.img` in a safe place and restore it each time the OS crashes.*
 
 ### Checkpoint 1
 | Type | Tested Functionality | Testing Method |
@@ -102,7 +106,10 @@
     <tr> <td> File System </td> <td> <code>filesystem</code> </td> <td align="center"> </td> <td align="center"> ○ </td> <td align="center"> ○ </td> <td align="center"> </td> </tr>
     <tr> <td rowspan="2"> <b>Ckpt. 3</b> </td> <td> Syscall (EH) </td> <td> <code>syscall_eh</code> </td> <td align="center"> ○ </td> <td align="center"> </td> <td align="center"> ○ </td> <td align="center"> </td> </tr>
     <tr> <td> Syscall (OCRW) </td> <td> <code>syscall_eh</code> </td> <td align="center"> </td> <td align="center"> ○ </td> <td align="center"> </td> <td align="center"> ○ </td> </tr>
-    <tr> <td rowspan="1"> <b>Ckpt. 4</b> </td> <td> Syscall (GV) </td> <td> <code>master</code> </td> <td align="center"> </td> <td align="center"> </td> <td align="center"> </td> <td align="center"> ○ </td> </tr>align="center"> </td> </tr>
+    <tr> <td rowspan="1"> <b>Ckpt. 4</b> </td> <td> Syscall (GV) </td> <td> <code>master</code> </td> <td align="center"> </td> <td align="center"> </td> <td align="center"> </td> <td align="center"> ○ </td> </tr>
     <tr> <td rowspan="2"> <b>Ckpt. 5</b> </td> <td> Multi Terminals </td> <td> <code>multi_terminal</code> </td> <td align="center"> ○ </td> <td align="center"> </td> <td align="center"> ○ </td> <td align="center"> </td> </tr>
     <tr> <td> Scheduling </td> <td> <code>multi_terminal</code> </td> <td align="center"> </td> <td align="center"> ○ </td> <td align="center"> ○ </td> <td align="center"> ○ </td> </tr>
-    <tr> <td rowspan="1"> <b>Extra</b> </td> <td> Syscall (SS) </td> <td> <code></code> </td> <td align="center"> </td> <td align="center"> </td> <td align="center"> </td> <td 
+    <tr> <td rowspan="3"> <b>Extra</b> </td> <td> Dynamic Malloc </td> <td> <code>memory</code> </td> <td align="center"> </td> <td align="center"> </td> <td align="center"> ○ </td> <td align="center"> </td> </tr>
+    <tr> <td> Speaker </td> <td> <code>multi_terminal</code> </td> <td align="center"> ○ </td> <td align="center"> </td> <td align="center"> </td> <td align="center"> </td> </tr>
+    <tr> <td> </td> <td> <code></code> </td> <td align="center"> </td> <td align="center"> </td> <td align="center"> </td> <td align="center"> </td> </tr>
+</table>

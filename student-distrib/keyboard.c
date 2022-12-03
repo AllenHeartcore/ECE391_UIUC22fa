@@ -5,6 +5,7 @@
 #include "lib.h"
 #include "i8259.h"
 #include "terminal.h"
+#include "speaker.h"
 
 /* Modifier keys */
 #define LEFT_CTRL_PRESSED    0x1D
@@ -17,9 +18,21 @@
 #define RIGHT_SHIFT_RELEASED 0xB6
 #define CAPS_LOCK_PRESSED    0x3A
 #define CAPS_LOCK_RELEASED   0xBA
+
 #define F1_PRESSED 0x3B
 #define F2_PRESSED 0x3C
 #define F3_PRESSED 0x3D
+#define F4_PRESSED 0x3E
+#define F5_PRESSED 0x3F
+#define F6_PRESSED 0x40
+#define F7_PRESSED 0x41
+#define F8_PRESSED 0x42
+#define F9_PRESSED 0x43
+#define F10_PRESSED 0x44
+#define F11_PRESSED 0x57
+#define F12_PRESSED 0x58
+
+#define RELEASED 0x80
 
 /* Flags that indicate if a modifier key is pressed.
  */
@@ -122,18 +135,51 @@ void key_handler(void) {
 		case RIGHT_SHIFT_RELEASED:	shift = 0;		break;
 		case CAPS_LOCK_PRESSED:		caps = !caps;	break;
 		case CAPS_LOCK_RELEASED:					break;
+
+		// functional keys become piano keys!
 		case F1_PRESSED:
 						if(alt)
 							terminal_switch(0);
+						else
+							speaker_play(FREQ_C4);
 						break;
 		case F2_PRESSED:		
 						if(alt)
 							terminal_switch(1);
+						else
+							speaker_play(FREQ_D4);
 						break;
 		case F3_PRESSED:		
 						if(alt)
 							terminal_switch(2);
+						else
+							speaker_play(FREQ_E4);
 						break;
+		case F4_PRESSED:	speaker_play(FREQ_F4);	break;
+		case F5_PRESSED:	speaker_play(FREQ_G4);	break;
+		case F6_PRESSED:	speaker_play(FREQ_A4);	break;
+		case F7_PRESSED:	speaker_play(FREQ_B4);	break;
+		case F8_PRESSED:	speaker_play(FREQ_C5);	break;
+		case F9_PRESSED:	speaker_play(FREQ_D5);	break;
+		case F10_PRESSED:	speaker_play(FREQ_E5);	break;
+		case F11_PRESSED:	speaker_play(FREQ_F5);	break;
+		case F12_PRESSED:	speaker_play(FREQ_G5);	break;
+
+		case F1_PRESSED | RELEASED:
+		case F2_PRESSED | RELEASED:
+		case F3_PRESSED | RELEASED:
+		case F4_PRESSED | RELEASED:
+		case F5_PRESSED | RELEASED:
+		case F6_PRESSED | RELEASED:
+		case F7_PRESSED | RELEASED:
+		case F8_PRESSED | RELEASED:
+		case F9_PRESSED | RELEASED:
+		case F10_PRESSED | RELEASED:
+		case F11_PRESSED | RELEASED:
+		case F12_PRESSED | RELEASED:
+						speaker_stop();
+						break;
+
 		default:
 			if (scan_code >= SCAN_CODE_NUM) break;	/* Invalid scan code */
 			if (shift && caps) {
