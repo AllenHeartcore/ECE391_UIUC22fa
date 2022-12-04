@@ -5,11 +5,12 @@
 #include "rtc.h"
 #include "lib.h"
 #include "i8259.h"
+#include "scheduler.h"
 
 volatile uint32_t rtc_time_tic; // (aka. "ms") Each time RTC interrupt happens, it increases 1.
 volatile uint32_t rtc_sec;      // (aka. "s") How many seconds since the RTC has been initialized.
-volatile uint32_t rtc_int_occurred; // Flag to indicate if a **virtual** RTC interrupt has occurred.
-uint32_t freq;                  // This is VIRTUALIZED (actual freq is always 1024 Hz)
+volatile uint32_t rtc_int_occurred[SCHEDULE_NUM]; // Flag to indicate if a **virtual** RTC interrupt has occurred.
+uint32_t freq[SCHEDULE_NUM];                  // This is VIRTUALIZED (actual freq is always 1024 Hz)
 
 /*  More on virtual interrupts:
  *  The `rtc_int_occurred` flag is to be used by `rtc_open`
@@ -30,6 +31,7 @@ uint32_t freq;                  // This is VIRTUALIZED (actual freq is always 10
 */
 void rtc_init(void) {
     char prev;
+    int i;
     outb(REG_B,RTC_REG_PORT);
     prev = inb(RTC_DATA_PORT);  // Read current value from RegB
     outb(REG_B,RTC_REG_PORT);
@@ -42,8 +44,12 @@ void rtc_init(void) {
     /* Only change the bits related to rate in RegA(low 4 bits)*/
     outb((prev & 0xF0)|ACTUAL_RATE, RTC_DATA_PORT); 
 
-    /* Change the state variable freq */
-    freq = 2;                   // the default VIRTUAL value (same as "rtc_open")
+    for(i = 0; i<3; i++){
+        freq[i] = 2;
+    }
+    for(i = 0; i<3; i++){
+        rtc_int_occurred[i] = 0;
+    }
 
     rtc_time_tic = 0;
     rtc_sec = 0;
@@ -57,7 +63,8 @@ void rtc_init(void) {
  *  side effect: "freq" will be reset to default (2 Hz)
  */
 int rtc_open(const uint8_t* filename) {
-	freq = 2;
+    freq[cur_sch_index] = 2;
+    rtc_int_occurred[cur_sch_index] = 0;
 	return 0;
 }
 
@@ -81,8 +88,8 @@ int rtc_close(int32_t fd) {
  *  side effect: None
  */
 int rtc_read(int32_t fd, void* buf, int32_t nbytes) {
-	rtc_int_occurred = 0;
-	while (!rtc_int_occurred);	// return at the virtual interrupt
+	while (rtc_int_occurred[cur_sch_index] == 0);	// return at the virtual interrupt
+    rtc_int_occurred[cur_sch_index] = 0;
 	return 0;
 }
 
@@ -99,7 +106,7 @@ int rtc_write(int32_t fd, const void* buf, int32_t nbytes) {
 	if (freq_requested <= 0 || freq_requested > ACTUAL_FREQ || \
 		(freq_requested & (freq_requested - 1)))
 		return -1;	// fail if "out of range" or "not power of 2"
-	freq = freq_requested;
+	freq[cur_sch_index] = freq_requested;
 	return 0;
 }
 
@@ -114,9 +121,13 @@ void rtc_handler(void) {
     cli();
     char temp;
     rtc_time_tic++;
-    if (rtc_time_tic % ACTUAL_FREQ == 0) rtc_sec++;	// one second has passed
-	if (rtc_time_tic % (ACTUAL_FREQ / freq) == 0)
-		rtc_int_occurred = 1;	// delayed virtual interrupt
+    // if (rtc_time_tic % ACTUAL_FREQ == 0) rtc_sec++;	// one second has passed
+	if (rtc_time_tic % (ACTUAL_FREQ / freq[0]) == 0)
+		rtc_int_occurred[0] = 1;	// delayed virtual interrupt
+    if (rtc_time_tic % (ACTUAL_FREQ / freq[1]) == 0)
+		rtc_int_occurred[1] = 1;	// delayed virtual interrupt
+    if (rtc_time_tic % (ACTUAL_FREQ / freq[2]) == 0)
+		rtc_int_occurred[2] = 1;	// delayed virtual interrupt
     /* To make sure rtc can raise intterrupt later */
     outb(REG_C&0xF,RTC_REG_PORT);
     temp = inb(RTC_DATA_PORT);

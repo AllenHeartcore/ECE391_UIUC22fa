@@ -3,6 +3,12 @@
 .globl int_kbd_lnk
 .globl int_rtc_lnk
 .globl syscall_lnk
+.global  pit_handler_linkage
+pit_handler_linkage:
+    pushal
+    call pit_handler
+    popal
+    iret
 
 int_kbd_lnk:
     pushal
@@ -32,6 +38,11 @@ syscall_jmptbl:
     .long vidmap
     .long set_handler
     .long sigreturn
+    .long clear_sys
+    .long user_malloc
+    .long user_slab_create
+    .long user_free
+    .long memstat
 
 syscall_lnk:
     pushfl
@@ -43,7 +54,7 @@ syscall_lnk:
 
     cmpl $1, %eax   # sanity check
     jl invalid_callnum
-    cmpl $10, %eax
+    cmpl $15, %eax
     jg invalid_callnum
 
     pushl %edx      # push arguments

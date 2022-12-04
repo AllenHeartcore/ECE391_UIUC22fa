@@ -17,6 +17,9 @@
 #define RIGHT_SHIFT_RELEASED 0xB6
 #define CAPS_LOCK_PRESSED    0x3A
 #define CAPS_LOCK_RELEASED   0xBA
+#define F1_PRESSED 0x3B
+#define F2_PRESSED 0x3C
+#define F3_PRESSED 0x3D
 
 /* Flags that indicate if a modifier key is pressed.
  */
@@ -119,6 +122,18 @@ void key_handler(void) {
 		case RIGHT_SHIFT_RELEASED:	shift = 0;		break;
 		case CAPS_LOCK_PRESSED:		caps = !caps;	break;
 		case CAPS_LOCK_RELEASED:					break;
+		case F1_PRESSED:
+						if(alt)
+							terminal_switch(0);
+						break;
+		case F2_PRESSED:		
+						if(alt)
+							terminal_switch(1);
+						break;
+		case F3_PRESSED:		
+						if(alt)
+							terminal_switch(2);
+						break;
 		default:
 			if (scan_code >= SCAN_CODE_NUM) break;	/* Invalid scan code */
 			if (shift && caps) {
@@ -135,24 +150,24 @@ void key_handler(void) {
 				terminal_clear();							/* Ctrl + L cleans the screen */
 				break;
 			} else if (ascii == '\n') {
-				putc(ascii);
+				putc_userkey(ascii);
 				term->kbd_buf[term->kbd_buf_count++] = '\n';
 				term->readkey = 1;							/* Set the "endline" flag */
 			} else if (ascii == '\b') {
 				if (term->kbd_buf_count > 0) {
-					putc(ascii);								/* Backspace */
+					putc_userkey(ascii);
 					term->kbd_buf[--term->kbd_buf_count] = '\0';
 				}
 			} else if (ascii == '\t') {
 				for (i = 0; i < 4; i++) {
 					if (term->kbd_buf_count < KBD_BUF_SIZE - 1) {
-						putc(' ');
+						putc_userkey(' ');
 						term->kbd_buf[term->kbd_buf_count++] = ' ';
 					}
 				}
 			} else if (ascii != '\0') {
 				if (term->kbd_buf_count < KBD_BUF_SIZE - 1) {
-					putc(ascii);								/* Leave \b and \t to putc */
+					putc_userkey(ascii);
 					term->kbd_buf[term->kbd_buf_count++] = ascii;
 				}
 			}

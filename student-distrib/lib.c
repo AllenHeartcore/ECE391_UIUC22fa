@@ -1,12 +1,72 @@
 /* lib.c - Some basic library functions (printf, strlen, etc.)
- * vim:ts=4 noexpandtab */
+ * vim:ts=4 noexpandtab
+ */
 
 #include "lib.h"
 #include "rtc.h"
+#include "page.h"
+#include "terminal.h"
+#include "scheduler.h"
+#include "lib.h"
 
-static int screen_x;
-static int screen_y;
+/* If putc is called by user
+ * keystroke or by programs */
+#define PUTC_USRKEY 1
+#define PUTC_PROG   0
+
 static char* video_mem = (char *)VIDEO;
+
+/* -------------- Private helper functions -------------- */
+
+/* void __putc(uint8_t c);
+ * Inputs: uint_8* c: character to print
+ *         uint8_t userkey: indicating if __putc is
+ *          called by user keystroke or by programs
+ * Return Value: void
+ *  Function: change video memory or backup buffer */
+void __putc(uint8_t c, uint8_t userkey) {
+	int flags;
+	int term_id;
+
+	switch(userkey) {
+		case PUTC_USRKEY: term_id = current_term_id; break;
+		case PUTC_PROG: term_id = cur_sch_index; break;
+		default: return;
+	}
+
+	/* Critical section begins */
+	cli_and_save(flags);
+
+	if (userkey) {
+		remap_vidmap_page(current_term_id);
+	}
+
+	/* Go to a new line if get line break or if the
+	 * cursor is already at the end of the current line */
+	switch (c) {
+		case '\0': break;
+		case '\n': case '\r': handle_newline(userkey); break;
+		case '\b': handle_backspace(userkey); break;
+		default:
+			if (terms[term_id].cursor_x >= NUM_COLS) {
+				handle_newline(userkey);
+			}
+			*(uint8_t *)(video_mem + ((NUM_COLS * terms[term_id].cursor_y + terms[term_id].cursor_x) << 1)) = c;
+			*(uint8_t *)(video_mem + ((NUM_COLS * terms[term_id].cursor_y + terms[term_id].cursor_x) << 1) + 1) = ATTRIB;
+			terms[term_id].cursor_x++;
+	}
+
+	vga_redraw_cursor(terms[current_term_id].cursor_x, terms[current_term_id].cursor_y);
+
+	if (userkey) {
+		remap_vidmap_page(cur_sch_index);
+	}
+
+	restore_flags(flags);
+	/* Critical section ends */
+}
+
+/* ------------ Private helper functions end ------------ */
 
 /* (The following 3 text mode cursor functions)
  * Reference: https://wiki.osdev.org/Text_Mode_Cursor */
@@ -45,19 +105,6 @@ void vga_redraw_cursor(int x, int y) {
 	outb((uint8_t) ((pos >> 8) & 0xFF), 0x3D5);
 }
 
-/* void get_cursor(void);
- * Inputs: x -- pointer to x coordinate of cursor
- *         y -- pointer to y coordinate of cursor
- * Return Value: none
- * Function: Get cursor from external coords */
-void get_cursor(uint8_t* x, uint8_t* y) {
-	if (x == NULL || y == NULL) {
-		return;
-	}
-	*x = screen_x;
-	*y = screen_y;
-}
-
 /* void clear(void);
  * Inputs: void
  * Return Value: none
@@ -67,23 +114,29 @@ void get_cursor(uint8_t* x, uint8_t* y) {
  */
 void clear(void) {
 	int32_t i;
-	screen_x = screen_y = 0;
+	terms[current_term_id].cursor_x = terms[current_term_id].cursor_y = 0;
 	for (i = 0; i < NUM_ROWS * NUM_COLS; i++) {
 		*(uint8_t *)(video_mem + (i << 1)) = ' ';
 		*(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
 	}
-	vga_redraw_cursor(screen_x, screen_y);
+	vga_redraw_cursor(terms[current_term_id].cursor_x, terms[current_term_id].cursor_y);
 }
 
 /* void scroll(void)
- * Inputs: void
+ * Inputs: userkey -- indicate if called by user keystroke
  * Return Value: none
  * Function: Scrolls the screen up one line;
  *           Moves the cursor up one line.
  *           (if the cursor is not on the top line)
  */
-void scroll(void) {
-	int32_t i;
+void scroll(int8_t userkey) {
+	int term_id, i;
+	switch(userkey) {
+		case PUTC_USRKEY: term_id = current_term_id; break;
+		case PUTC_PROG: term_id = cur_sch_index; break;
+		default: return;
+	}
+
 	for (i = 0; i < NUM_ROWS - 1; i++) {
 		memcpy((uint8_t *)(video_mem + (i * NUM_COLS * 2)),
 			   (uint8_t *)(video_mem + ((i + 1) * NUM_COLS * 2)),
@@ -99,41 +152,55 @@ void scroll(void) {
 
 	/* Move the cursor up one line,
 	 * but don't move it off the screen */
-	if (--screen_y < 0) {
-		++screen_y;
+	if (--terms[term_id].cursor_y == 255) {
+		++terms[term_id].cursor_y;
 	}
-	vga_redraw_cursor(screen_x, screen_y);
 }
 
 /* handle_backspace
- * Inputs: void
+ * Inputs: userkey -- indicate if called by user keystroke
  * Return Value: none
  * Function: Handles backspace key press
  */
-void handle_backspace() {
-	if (screen_x == 0 && screen_y == 0) {
+void handle_backspace(int8_t userkey) {
+	int term_id;
+	switch(userkey) {
+		case PUTC_USRKEY: term_id = current_term_id; break;
+		case PUTC_PROG: term_id = cur_sch_index; break;
+		default: return;
+	}
+
+	if (terms[term_id].cursor_x == 0 && terms[term_id].cursor_y == 0) {
 		return;
 	}
-	screen_x--;
-	if (screen_x < 0) {
-		screen_y--;
-		screen_x = NUM_COLS - 1;
+	terms[term_id].cursor_x--;
+	if (terms[term_id].cursor_x == 255) {
+		terms[term_id].cursor_y--;
+		terms[term_id].cursor_x = NUM_COLS - 1;
 	}
-	*(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = ' ';
+	*(uint8_t *)(video_mem + ((NUM_COLS * terms[term_id].cursor_y + terms[term_id].cursor_x) << 1)) = ' ';
 }
 
 /* handle_newline
- * Inputs: void
+ * Inputs: userkey -- indicate if called by user keystroke
  * Return Value: none
  * Function: Handles newline events
  */
-void handle_newline() {
-	screen_x = 0;
-	screen_y++;
-	if (screen_y >= NUM_ROWS) {
-		scroll();
+void handle_newline(int8_t userkey) {
+	int term_id;
+	switch(userkey) {
+		case PUTC_USRKEY: term_id = current_term_id; break;
+		case PUTC_PROG: term_id = cur_sch_index; break;
+		default: return;
 	}
-	vga_redraw_cursor(screen_x, screen_y);
+
+	terms[term_id].cursor_x = 0;
+	terms[term_id].cursor_y++;
+	if (terms[term_id].cursor_y >= NUM_ROWS) {
+		scroll(userkey);
+	}
+
+	vga_redraw_cursor(terms[current_term_id].cursor_x, terms[current_term_id].cursor_y);
 }
 
 
@@ -281,24 +348,15 @@ int32_t puts(int8_t* s) {
  * Return Value: void
  *  Function: Output a character to the console */
 void putc(uint8_t c) {
-	/* Go to a new line if get line break or if the
-	 * cursor is already at the end of the current line */
-	if (c == '\0') {
-		return;
-	} else if (c == '\n' || c == '\r') {
-		handle_newline();
-	} else if (c == '\b') {				/* Handle backspace */
-		handle_backspace();
-	} else {                            /* Handle regular characters */
-		if (screen_x >= NUM_COLS) {
-			handle_newline();
-		}
-		*(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = c;
-		*(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
-		screen_x++;
-	}
+	__putc(c, PUTC_PROG);
+}
 
-	vga_redraw_cursor(screen_x, screen_y);
+/* void putc_userkey(uint8_t c);
+ * Inputs: uint_8* c = character to print
+ * Return Value: void
+ * Function: Forcefully output a character to video memory */
+void putc_userkey(uint8_t c) {
+	__putc(c, PUTC_USRKEY);
 }
 
 /* int8_t* itoa(uint32_t value, int8_t* buf, int32_t radix);

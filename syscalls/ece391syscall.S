@@ -27,8 +27,11 @@ DO_CALL(ece391_getargs,SYS_GETARGS)
 DO_CALL(ece391_vidmap,SYS_VIDMAP)
 DO_CALL(ece391_set_handler,SYS_SET_HANDLER)
 DO_CALL(ece391_sigreturn,SYS_SIGRETURN)
-
-
+DO_CALL(ece391_clear,SYS_CLEAR)
+DO_CALL(ece391_malloc,SYS_MALLOC)
+DO_CALL(ece391_slab_create,SYS_SLAB_CREATE)
+DO_CALL(ece391_free,SYS_FREE)
+DO_CALL(ece391_memstat,SYS_MEMSTAT)
 /* Call the main() function, then halt with its return value. */
 
 .GLOBAL _start

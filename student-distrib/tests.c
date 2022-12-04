@@ -4,6 +4,8 @@
 #include "rtc.h"
 #include "terminal.h"
 #include "filesys.h"
+#include "memory.h"
+
 
 #define PASS 1
 #define FAIL 0
@@ -360,6 +362,72 @@ int terminal_kbd_test_newline(int32_t write_nbytes) {
 /* Checkpoint 5 tests */
 
 
+/* Memory allocation test
+ * 
+ * Check if the terminal automatically wraps to the next line
+ * Inputs: None
+ * Outputs: PASS/FAIL
+ * Side Effects: None
+ * Coverage: Terminal, Keyboard
+ * Files: terminal.c/h, keyboard.c/h
+ */
+
+int memory_allocation_test() {
+	TEST_HEADER;
+	int32_t i,flag;
+	void* ptr;
+	flag = 1;
+	for(i=0; i<100000; i++){
+		ptr = malloc_fixlen(&slab_cache_list);
+		if(free_fixlen(&slab_cache_list,ptr) == 0)
+			flag = 0;
+	}
+	i = 100;
+	if(free_fixlen(&slab_cache_list, (void*)i) == 1)
+		flag = 0;
+
+
+	void *p1,*p2,*p3;
+	p1 = malloc_varlen(100);
+	p2 = malloc_varlen(200);
+	p3 = malloc_varlen(300);
+	
+	free_varlen(p1);
+	free_varlen(p2);
+	free_varlen(p3);
+	
+
+	if(flag)
+		return PASS;
+	return FAIL;
+}
+
+int slab_cache_test(){
+	TEST_HEADER;
+	char name[20] = {"TestCache"};
+	slab_cache* test = slab_cache_create(name, 32);
+	int32_t i;
+	int32_t* ptr;
+	for(i = 0; i <500; i++){
+		ptr = (int32_t*)slab_cache_alloc(test);
+		slab_cache_free(test, ptr);
+	}
+	slab_cache_destroy(test);
+
+	char name2[20] = {"TestCache2"};
+	slab_cache* test2 = slab_cache_create(name2, 32);
+	slab_cache_destroy(test2); // Should succeed
+
+	char name3[20] = {"TestCache3"};
+	slab_cache* test3 = slab_cache_create(name3, 32);
+	slab_cache_alloc(test3);
+	slab_cache_destroy(test3); // Should fail and print error
+
+	return PASS;
+}
+
+
+
 /* Test suite entry point */
 void launch_tests(){
 	/* Checkpoint 1 tests */
@@ -391,12 +459,14 @@ void launch_tests(){
 	// TEST_OUTPUT("terminal_kbd_test_newline", terminal_kbd_test_newline(100));
 
 	/* Checkpoint 3 tests */
-	uint8_t cmd[128] = "ls";
-	asm volatile("movl %0, %%ebx; \n\
-				  movl $1, %%eax; \n\
-				  int $0x80;"
-				 :
-				 : "r" (cmd)
-				 : "eax", "ebx"
-				 );
+	// uint8_t cmd[128] = "ls";
+	// asm volatile("movl %0, %%ebx; \n
+	// 			  movl $1, %%eax; \n
+	// 			  int $0x80;"
+	// 			 :
+	// 			 : "r" (cmd)
+	// 			 : "eax", "ebx"
+	// 			 );
+	TEST_OUTPUT("memory_allocation_test", memory_allocation_test());
+	slab_cache_test();
 }

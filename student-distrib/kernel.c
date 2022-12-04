@@ -13,9 +13,11 @@
 #include "idt.h"
 #include "keyboard.h"
 #include "rtc.h"
+#include "pit.h"
 #include "filesys.h"
 #include "terminal.h"
 #include "syscall.h"
+#include "memory.h"
 
 // #define RUN_TESTS 1
 
@@ -154,19 +156,21 @@ void entry(unsigned long magic, unsigned long addr) {
 
 	/* Init paging */
 	page_init();
-
+	slab_cache_init();
+	vmem_init(VAR_LEN_MEMORY_START, VAR_LEN_MEMORY_MAX_SIZE);
 	/* Initialize devices, memory, filesystem, enable device interrupts on the
 	 * PIC, any other initialization stuff... */
 	terminal_init();
 	key_init();
 	rtc_init();
-
+	pit_init();
 	/* Enable interrupts */
 	/* Do not enable the following until after you have set up your
 	 * IDT correctly otherwise QEMU will triple fault and simple close
 	 * without showing you any output */
-	printf("Enabling Interrupts\n");
-	sti();
+	clear();
+	// printf("Enabling Interrupts\n");
+	// sti();
 
 #ifdef RUN_TESTS
 	/* Run tests */

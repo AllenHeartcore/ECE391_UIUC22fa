@@ -14,17 +14,17 @@
 void vga_enable_cursor(uint8_t cursor_start, uint8_t cursor_end);
 void vga_disable_cursor();
 void vga_redraw_cursor(int x, int y);
-void get_cursor(uint8_t* x, uint8_t* y);
 int32_t printf(int8_t *format, ...);
 void putc(uint8_t c);
+void putc_userkey(uint8_t c);
 int32_t puts(int8_t *s);
 int8_t *itoa(uint32_t value, int8_t* buf, int32_t radix);
 int8_t *strrev(int8_t* s);
 uint32_t strlen(const int8_t* s);
 void clear(void);
-void scroll(void);
-void handle_newline(void);
-void handle_backspace(void);
+void scroll(int8_t userkey);
+void handle_newline(int8_t userkey);
+void handle_backspace(int8_t userkey);
 
 void* memset(void* s, int32_t c, uint32_t n);
 void* memset_word(void* s, int32_t c, uint32_t n);
