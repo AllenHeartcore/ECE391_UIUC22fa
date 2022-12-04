@@ -4,6 +4,7 @@
 #include "rtc.h"
 #include "terminal.h"
 #include "filesys.h"
+#include "syscall.h"
 
 #define PASS 1
 #define FAIL 0
@@ -250,11 +251,23 @@ int close_file_test(){
 * Side Effects: None
 * Coverage: Write the file
 */
-int write_file_test(){
+int write_file_test(uint8_t *filename, uint8_t *buf, uint32_t len){
 	TEST_HEADER;
-	if (fwrite(0, NULL, 0) == 0)
-		return PASS;
-	return FAIL;
+	// printf("[TEST]: rying to write %d bytes \"%s\" to file %s\n",
+	// 	len, buf, filename);
+	int32_t fd = -1;
+	int32_t bytes_written;
+	uint8_t read_buf[1024] = {'\0'};
+	/* first open a file */
+	fd = open(filename);
+	if (-1 == fd)
+		return FAIL;
+	bytes_written = write(fd, buf, len);
+	// printf("[TEST]: bytes written: %d\n", bytes_written);
+	// read(fd, read_buf, 1024);
+	// printf("[TEST]: contents of the file after writing:\n");
+	// printf("%s\n", read_buf);
+	return bytes_written;
 }
 
 /*
@@ -391,12 +404,14 @@ void launch_tests(){
 	// TEST_OUTPUT("terminal_kbd_test_newline", terminal_kbd_test_newline(100));
 
 	/* Checkpoint 3 tests */
-	uint8_t cmd[128] = "ls";
-	asm volatile("movl %0, %%ebx; \n\
-				  movl $1, %%eax; \n\
-				  int $0x80;"
-				 :
-				 : "r" (cmd)
-				 : "eax", "ebx"
-				 );
+	// uint8_t cmd[128] = "ls";
+	// asm volatile("movl %0, %%ebx; \n\
+	// 			  movl $1, %%eax; \n\
+	// 			  int $0x80;"
+	// 			 :
+	// 			 : "r" (cmd)
+	// 			 : "eax", "ebx"
+	// 			 );
+
+	TEST_OUTPUT("write_file_test", write_file_test("frame0.txt", "Fish says: Vim is the best editor in the world!", 47));
 }

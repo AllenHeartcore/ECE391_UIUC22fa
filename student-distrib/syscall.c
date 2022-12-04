@@ -258,10 +258,10 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes) {
 
 /*
  *   write
- *   Reads n bytes from buffer given. Returns the number of bytes written.
+ *   Writes n bytes from buffer given. Returns the number of bytes written.
  *   input: fd -- file descriptor
  *			buf -- buffer to write to
- *          nbytes -- number of bytes to read
+ *          nbytes -- number of bytes to write
  *   output: number of bytes written, or -1 failed
  *   side effect: Change the buffer
  */
@@ -283,7 +283,7 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes) {
  *   open
  *   open a file in a filesystem and put file description in file descriptor array
  *   input: filename
- *   output: 0 success, -1 fail
+ *   output: file descriptor for the opened file on success, -1 on fail
  *   side effect: Change the buffer
  */
 int32_t open(const uint8_t* filename) {

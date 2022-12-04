@@ -46,6 +46,10 @@ typedef struct  datablock_t {
     uint8_t data[BLOCK_SIZE];
 }   data_block_t;
 
+typedef struct datablock_track_t {
+	uint8_t used[64];
+	uint8_t num_datablocks;
+} datablock_track_t;
 
 
 
