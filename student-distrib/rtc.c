@@ -63,7 +63,6 @@ void rtc_init(void) {
  *  side effect: "freq" will be reset to default (2 Hz)
  */
 int rtc_open(const uint8_t* filename) {
-    int i;
     freq[cur_sch_index] = 2;
     rtc_int_occurred[cur_sch_index] = 0;
 	return 0;
