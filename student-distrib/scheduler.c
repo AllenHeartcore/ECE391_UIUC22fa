@@ -5,6 +5,14 @@
 #include "lib.h"
 int32_t schedule_array [SCHEDULE_NUM] = {TERM_NOT_INIT,TERM_NOT_INIT,TERM_NOT_INIT};
 int32_t  cur_sch_index=0; // current scheduled index
+
+/* scheduler
+ *  schedule processes
+ *  INPUT: none
+ *  RETURN none
+ *  OUTPUT: none
+ *  SIDE EFFECT: change kernel stack and will switch to another process
+ */
 void scheduler(){
 
     /* save ebp */
