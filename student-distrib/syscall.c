@@ -193,7 +193,11 @@ int32_t execute(const uint8_t* command) {
     /* Initialize the signal and */
     for (i = 0; i < SIG_NUM; i++){
         pcb->signal[i] = SIG_DEACTIVATE;
-        pcb->signal_handler[i] = default_signal_handler;
+        if (i <= 2)
+            pcb->signal_handler[i] = kill_task;
+        else
+            pcb->signal_handler[i] = ignore;
+
         pcb->sig_mask[i] = SIG_UNMASK;
     }
     /* Write arguments in pcb */
@@ -414,12 +418,24 @@ int32_t vidmap(uint8_t** screen_start) {
 int32_t set_handler(int32_t signum, void* handler_address) {
     if (signum < 0 || signum > 4)
         return -1;
+    if (handler_address == NULL)
+        return -1;
     pcb_t* cur_pcb = get_cur_pcb();
     cur_pcb->signal_handler[signum] = handler_address;
     return 0;
 }
 
 int32_t sigreturn(void) {
+    int i;
+    pcb_t* cur_pcb = get_cur_pcb();
+    register uint32_t ebp0 asm("ebp");
+    // get the h/w context for segreturn
+    hwcontext* context = (hwcontext*)(ebp0 + 20);
+    uint32_t user_esp = context->ESP;
+    hwcontext* oldcontext = (hwcontext*)(user_esp + 4);
+    memcpy(context, oldcontext, sizeof(hwcontext));
+    for (i = 0; i < SIG_NUM; i++)
+        cur_pcb->sig_mask[i] = SIG_UNMASK;
     return 0;
 }
 

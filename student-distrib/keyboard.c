@@ -146,7 +146,7 @@ void key_handler(void) {
 			} else {
 				ascii = scan_code_table[scan_code];
 			}
-			if (ctrl && (ascii == 'z' || ascii == 'Z')){
+			if (ctrl && (ascii == 'c' || ascii == 'C')){
 				send_signal(SIG_INTERRUPT);
 				break;
 			}

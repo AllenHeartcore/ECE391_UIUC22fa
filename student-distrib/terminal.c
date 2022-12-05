@@ -88,8 +88,6 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes) {
 	for (i = 0; i < nbytes && i < KBD_BUF_SIZE && terms[cur_sch_index].kbd_buf[i] != '\0'; i++) {
 		((char*)buf)[i] = terms[cur_sch_index].kbd_buf[i];
 	}
-	/* Fill the rest of the buffer with 0 */
-	memset(&(((char*)buf)[i]), 0, KBD_BUF_SIZE - i);
 
 	return i;
 }
