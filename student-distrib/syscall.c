@@ -414,7 +414,13 @@ int32_t vidmap(uint8_t** screen_start) {
     return 0;
 }
 
-
+/*
+ * set_handler
+ * api for user to set a handler for a signal number
+ * input: signal number, handler address
+ * output: 0 if success -1 if failure
+ * side effect: change the handler of a valid signal number
+ */
 int32_t set_handler(int32_t signum, void* handler_address) {
     if (signum < 0 || signum > 4)
         return -1;
@@ -425,6 +431,14 @@ int32_t set_handler(int32_t signum, void* handler_address) {
     return 0;
 }
 
+/*
+ * sigreturn
+ * reset the h/w context, reset the sig_mask for a program, 
+ * make signal handler return to user program
+ * input: None
+ * Output: None
+ * side effect: None
+ */
 int32_t sigreturn(void) {
     int i;
     pcb_t* cur_pcb = get_cur_pcb();

@@ -10,6 +10,12 @@ int get_size_dosigreturn(){
 }
 
 
+/*
+ * kill_task
+ * input: None
+ * Output: None
+ * default signal handler for signal number 0, 1 and 2
+ */
 void kill_task(){
     int i;
     pcb_t* cur_pcb = get_cur_pcb();
@@ -19,7 +25,12 @@ void kill_task(){
     halt(255);
     return ;
 }
-
+/*
+ * ignore
+ * input: None
+ * Output: None
+ * default signal handler for signal number 3 and 4
+ */
 void ignore(){
     int i;
     pcb_t* cur_pcb = get_cur_pcb();
@@ -28,6 +39,14 @@ void ignore(){
     }
     return ;
 }
+
+/*
+ * send_signal
+ * input: signum
+ * output: None
+ * send a signal to the current program
+ * side effect: None
+ */
 
 void send_signal(int sig_num){
     pcb_t* cur_pcb;
