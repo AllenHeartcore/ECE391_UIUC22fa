@@ -375,7 +375,21 @@ int terminal_kbd_test_newline(int32_t write_nbytes) {
 
 int ata_test() {
 	TEST_HEADER;
-	return ata_identify();
+	uint32_t i;
+	uint8_t flag;
+	uint8_t buf[512] = { 0 };
+	printf("buf created:\n");
+	for (i = 0; i < 512; i++) {
+		printf("%x", buf[i]);
+	}
+	printf("\n");
+	flag = ata_read_pio28(1, 1, buf);
+	printf("buf after reading:\n");
+	for (i = 0; i < 512; i++) {
+		printf("%x", buf[i]);
+	}
+	printf("\n");
+	return flag;
 }
 
 
