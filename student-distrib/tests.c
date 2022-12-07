@@ -5,6 +5,7 @@
 #include "terminal.h"
 #include "filesys.h"
 #include "syscall.h"
+#include "ata.h"
 
 #define PASS 1
 #define FAIL 0
@@ -372,6 +373,11 @@ int terminal_kbd_test_newline(int32_t write_nbytes) {
 /* Checkpoint 4 tests */
 /* Checkpoint 5 tests */
 
+int ata_test() {
+	TEST_HEADER;
+	return ata_identify();
+}
+
 
 /* Test suite entry point */
 void launch_tests(){
@@ -413,5 +419,5 @@ void launch_tests(){
 	// 			 : "eax", "ebx"
 	// 			 );
 
-	TEST_OUTPUT("write_file_test", write_file_test("frame0.txt", "Fish says: Vim is the best editor in the world!", 47));
+	TEST_OUTPUT("ata init test", ata_test());
 }
