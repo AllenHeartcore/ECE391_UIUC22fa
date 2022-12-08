@@ -22,7 +22,8 @@ void kill_task(){
     for (i = 0; i < SIG_NUM; i++){
         cur_pcb->sig_mask[i] = SIG_UNMASK;
     }
-    halt(255);
+    clear();
+    halt(0);
     return ;
 }
 /*
