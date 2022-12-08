@@ -33,6 +33,9 @@ void fmem_init(uint32_t mem, uint32_t size, fmem_list* memlist){
     memlist->size = size;
 }
 
+
+/* Allocate a memory in fixed length memory allocation
+    input: a fixed length memory list pointer */
 void* malloc_fixlen(fmem_list* memlist){
     void* ret = NULL;
     if(memlist->head != NULL){
@@ -72,12 +75,17 @@ int32_t free_fixlen(fmem_list* memlist, void* ptr){
 }
 
 
-
+/* Initialize slab cache */
 void slab_cache_init(){
     fmem_init(FIX_LEN_MEMORY_START, sizeof(slab_cache), &slab_cache_list);
     fmem_init(FIX_LEN_MEMORY_START + SLAB_SIZE, sizeof(fmem_list), &slabs_list);
 }
 
+/* 
+    Create a slab cache
+    input:  name -- name of the slab cache
+            size -- objects' size in this slab cache
+ */
 slab_cache* slab_cache_create(const char* name, uint32_t size){
     uint32_t i;
     slab_cache* ret = NULL;
@@ -106,6 +114,8 @@ slab_cache* slab_cache_create(const char* name, uint32_t size){
     return ret;
 }
 
+/* Allocate a object from slab cache
+    input: a pointer to a slab cache */
 void* slab_cache_alloc(slab_cache* cache){
     void* ret = NULL;
     /* Sanity check */
@@ -140,6 +150,8 @@ void* slab_cache_alloc(slab_cache* cache){
     return ret;
 }
 
+/* Free a memory from slab_cache
+    input: a pointer to slab cache and object pointer */
 int32_t slab_cache_free(slab_cache* cache, void* ptr){
     int32_t ret = 0;
     /* Sanity check */
@@ -169,6 +181,8 @@ int32_t slab_cache_free(slab_cache* cache, void* ptr){
     return ret;
 }
 
+/* Destroy a slab cache
+    input: a pointer to a slab cache */
 void slab_cache_destroy(slab_cache* cache){
     /* Sanity check */
     if(cache == NULL)
@@ -196,6 +210,12 @@ void slab_cache_destroy(slab_cache* cache){
 
 
 /* -------------------------Variable length memory allocation below----------------------- */
+
+
+/* Initialize variable length memory
+    input: mem -- start address of the variable length memory pool
+           size -- length of total variable length memory can be used
+ */
 void vmem_init(uint32_t mem, uint32_t size){
     /* Set up page directory */
     uint32_t pages,i;
@@ -213,6 +233,11 @@ void vmem_init(uint32_t mem, uint32_t size){
     vmem_head->ptr = (uint8_t*)(mem + sizeof(vmem_node));  //  Start add = mem + the pace owned by vmem_node
 
 }
+
+/* 
+    Allocate a variable length memory segment
+    input: size -- size of the memory
+ */
 
 void* malloc_varlen(uint32_t size){
     vmem_node* cur_node = vmem_head;
@@ -245,6 +270,12 @@ void* malloc_varlen(uint32_t size){
     return ret? ret->ptr:NULL;
 }
 
+/* 
+    Free a pointer of variable length memory allocation
+    input: ptr -- pointer address
+    return: 0 for fail and 1 for success
+ */
+
 int32_t free_varlen(void* ptr){
     int32_t ret = 0;
     vmem_node* cur_node = vmem_head;
@@ -271,35 +302,8 @@ int32_t free_varlen(void* ptr){
 }
 
 /* ------------------------Visualization--------------------- */
-void visual_slab_caches(){
-    /* Go through all the nodes in slab_cache_list and find those are used */
-    fmem_node* cur_node;
-    cur_node = slab_cache_list.node_base;
-    int32_t i;
-    printf("\n---------------Info of current slab caches---------------\n");
-    for(i=0; i<slab_cache_list.max_units; i++){
-        if(cur_node->ptr != 0){
-            show_slab_cache((slab_cache*)cur_node->ptr);
-        }
-        cur_node = cur_node + 1;
-    }
-}
 
-void visual_varmem(){
-    vmem_node* cur_vnode;
-    int32_t vnode_num;
-    cur_vnode = vmem_head;
-    vnode_num = 0;
-    printf("\n-------------Info about variable length memory allocation------------\n");
-    while(1){
-        vnode_num +=1;
-        printf("Variable length memory unit%d ---  free:%d  used:%d  address:%x\n", vnode_num, cur_vnode->free, cur_vnode->used, (uint32_t)cur_vnode->ptr);
-        cur_vnode = cur_vnode->next;
-        if(cur_vnode == vmem_head)
-            break;
-    }
-    printf("--------------------------------------------------------------\n");
-}
+
 
 /* 
     input: slab_cache* slab
@@ -332,3 +336,39 @@ void show_slab_cache(slab_cache* slab_cache){
     printf("Until now, %d units have been allocated\n", used_unit_num);
     printf("---------------------------------------------------------\n"); 
 }
+
+
+
+
+
+/* Visualize all the slab caches' information */
+void visual_slab_caches(){
+    /* Go through all the nodes in slab_cache_list and find those are used */
+    fmem_node* cur_node;
+    cur_node = slab_cache_list.node_base;
+    int32_t i;
+    printf("\n---------------Info of current slab caches---------------\n");
+    for(i=0; i<slab_cache_list.max_units; i++){
+        if(cur_node->ptr != 0){
+            show_slab_cache((slab_cache*)cur_node->ptr);
+        }
+        cur_node = cur_node + 1;
+    }
+}
+/* Visualize all the variable length memory information */
+void visual_varmem(){
+    vmem_node* cur_vnode;
+    int32_t vnode_num;
+    cur_vnode = vmem_head;
+    vnode_num = 0;
+    printf("\n-------------Info about variable length memory allocation------------\n");
+    while(1){
+        vnode_num +=1;
+        printf("Variable length memory unit%d ---  free:%d  used:%d  address:%x\n", vnode_num, cur_vnode->free, cur_vnode->used, (uint32_t)cur_vnode->ptr);
+        cur_vnode = cur_vnode->next;
+        if(cur_vnode == vmem_head)
+            break;
+    }
+    printf("--------------------------------------------------------------\n");
+}
+

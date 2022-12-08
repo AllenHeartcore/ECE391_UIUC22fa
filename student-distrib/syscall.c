@@ -439,12 +439,14 @@ void* user_malloc(int32_t size){
 
 /* Create a slab cache based on the name and size provided by user */
 void* user_slab_create(uint8_t* name ,int32_t size){
-    return slab_cache_create(name, size);
+    return slab_cache_create((char*)name, size);
 }
 
-/* Free a pointer provided by user */
+/* Free a pointer provided by user 
+    input: ptr -- pointer address
+    return: 0 for Fail and 1 for Success*/
 int32_t user_free(void* ptr){
-    if(ptr>=VAR_LEN_MEMORY_START)
+    if((uint32_t)ptr>=VAR_LEN_MEMORY_START)
         return free_varlen(ptr);
 
     /* Go through slab cache, find a needed one */
