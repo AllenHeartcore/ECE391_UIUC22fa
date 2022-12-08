@@ -33,9 +33,6 @@ int main(){
         content[j] = args[i];
     }
     content[j] = '\0';
-    ece391_fdputs(1, filename);
-    ece391_fdputs(1, (uint8_t*)"\n");
-    ece391_fdputs(1, content);
     if ((fd = ece391_open(filename)) == -1){
         ece391_fdputs(1, (uint8_t*)"Can not open this file.\n");
         return 2;
