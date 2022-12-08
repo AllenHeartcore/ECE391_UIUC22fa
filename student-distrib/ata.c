@@ -38,7 +38,7 @@ uint32_t ata_identify() {
 	return 0;
 }
 
-/* Read 512 bytes to given buffer
+/* Read a sector (512 bytes) to given buffer
  * RETURN VALUE: 1 if successful, 0 if error
  * */
 uint32_t _read_to_buf_pio28(uint8_t* buf) {
@@ -50,10 +50,10 @@ uint32_t _read_to_buf_pio28(uint8_t* buf) {
 	}
 
 	/* Read the whole 512-byte sector */
-	for (i = 0; i < 256; i++) {
+	for (i = 0; i < SECTOR_SIZE/2; i++) {
 		data = inw(ATA_DATA);
-		buf[i] = (uint8_t) (data & 0x00FF);
-		buf[i+1] = (uint8_t) (data & 0xFF00);
+		buf[2*i] = (uint8_t) (data & 0x00FF);
+		buf[2*i+1] = (uint8_t) (data & 0xFF00);
 	}
 
 	return 1;

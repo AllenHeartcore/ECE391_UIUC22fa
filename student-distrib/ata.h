@@ -24,6 +24,7 @@
 #define ATA_READ_SLAVE		0xF0
 #define ATA_CMD_READ		0x20
 #define LBA_MODE_28			28
+#define SECTOR_SIZE			512
 
 uint32_t ata_identify();
 uint32_t ata_read_pio28(uint32_t sector, uint8_t sec_count, uint8_t* buf);
