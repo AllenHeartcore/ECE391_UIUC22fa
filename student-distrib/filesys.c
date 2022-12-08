@@ -253,38 +253,25 @@ int32_t write_data(uint32_t inode_index, const uint8_t* buf, uint32_t length){
 	uint32_t bytes_to_write;
 	int32_t  cur_datablock_index;	// The index of current data block in data_blocks array
 
-	printf("write_data: inode_index = %d, length = %d, buf = %s\n",	// DEBUG
-		inode_index, length, buf);		// DEBUG
 	/* Sanity check */
 	if(inode_index > (boot_block->inode_num - 1) || buf == NULL)
 		return 0;
 
 	while (bytes_written < length) {
 		cur_datablock_index = _find_available_datablock_for(inode_index, &offset);
-		printf("contents of current data block:%s\n",		// DEBUG
-			(data_blocks[cur_datablock_index].data));		// DEBUG
-		printf("cur_datablock_index = %d, offset = %d\n",	// DEBGU
-			cur_datablock_index, offset);					// DEBUG
 		/* No available data block found */
 		if (cur_datablock_index == -1) {
 			return 0;
 		}
 		bytes_to_write = BLOCK_SIZE - offset > length - bytes_written ?
 				length - bytes_written : BLOCK_SIZE - offset;
-		printf("byte to write = %d\n", bytes_to_write);		//DEBUG
 		memcpy(&((data_blocks[cur_datablock_index].data)[offset]),
 			&(buf[bytes_written]), bytes_to_write);
 
 		/* Update relevant info */
 		bytes_written += bytes_to_write;
-		printf("data block %d before writing is %s\n", cur_datablock_index,				// DEBUG
-			datablock_track.used[cur_datablock_index] == 1 ? "used" : "not used");		// DEBUG
 		datablock_track.used[cur_datablock_index] = 1;
-		printf("data block %d after writing is %s\n", cur_datablock_index,				// DEBUG
-			datablock_track.used[cur_datablock_index] == 1 ? "used" : "not used");		// DEBUG
-		printf("file length before writing is %d\n", inodes[inode_index].len);			// DEBUG
 		inodes[inode_index].len += bytes_to_write;
-		printf("file length after writing is %d\n", inodes[inode_index].len);			// DEBUG
 		/* offset == 0 indicates we are writing to a new data block for
 		 * current inode thus updating the data_block array is needed */
 		if (offset == 0) {
@@ -292,9 +279,6 @@ int32_t write_data(uint32_t inode_index, const uint8_t* buf, uint32_t length){
 				+ BLOCK_SIZE - 1) / BLOCK_SIZE - 1] = cur_datablock_index;
 		}
 	}
-	printf("total bytes written = %d\n", bytes_written);			// DEBUG
-	printf("contents of current data block after writing:\n%s\n",	// DEBUG
-		(data_blocks[cur_datablock_index].data));					// DEBUG
 	return bytes_written;
 }
 

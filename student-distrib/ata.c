@@ -111,7 +111,6 @@ uint32_t ata_write_pio28(uint32_t sector, uint32_t sec_count, uint8_t* buf) {
 	uint32_t num_sec_written;
 	uint16_t data;
 	uint32_t status;
-	printf("Writing to sector %d\n", sector);			// DEBUG
 
 	/* Sanity check */
 	if (NULL == buf || sector > 0xFFFFFFF) {
@@ -129,12 +128,10 @@ uint32_t ata_write_pio28(uint32_t sector, uint32_t sec_count, uint8_t* buf) {
 		outb((uint8_t)((num_sec_written + sector) >> 16), ATA_LBA_HIGH);
 		outb(ATA_CMD_WRITE, ATA_STATUS);
 
-		printf("Waiting for DRQ\n");						// DEBUG
 
 		while(!(inb(ATA_STATUS) & ATA_DRQ_MASK)) {
 			/* Wait until DRQ to be set */
 		}
-		printf("DRQ set\n");								// DEBUG
 
 		for (i = 0; i < ATA_SECTOR_SIZE/2; i++) {
 			outw(((uint16_t*)buf)[i + ATA_SECTOR_SIZE * num_sec_written / 2],
