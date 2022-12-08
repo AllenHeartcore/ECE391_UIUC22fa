@@ -119,8 +119,7 @@ int32_t execute(const uint8_t* command) {
             command[i] == ' ';
          i++);
     for (j = 0; i < strlen((int8_t*)command) &&
-            command[i] != '\0' &&
-            command[i] != ' ';
+            command[i] != '\0';
          i++) {
         args[j++] = command[i];
     }
