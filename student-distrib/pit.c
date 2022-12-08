@@ -3,7 +3,9 @@
 #include "pit.h"
 #include "scheduler.h"
 #include "i8259.h"
+#include "signal.h"
 
+static int counter = 0;
 /*
  * pit_init
  *  DESCRIPTION: initialize the pit 
@@ -33,6 +35,12 @@ void pit_init(void)
 void pit_handler(void)
 {
     // end the interrupt to let the next interrupt work
+    counter++;
+    // evert 10 sec send a signal
+    if (counter == 1000){
+        send_signal(SIG_ALARM);
+        counter = 0;
+    }
     send_eoi(PIT_IRQ);
     scheduler();
 }

@@ -5,6 +5,7 @@
 #include "filesys.h"
 #include "terminal.h"
 #include "scheduler.h"
+#include "signal.h"
 
 #define MAX_PROCESS 6          // At most 6 processes and...
 #define MAX_OPENED_FILES 8     // 8 files can be concurrently opened
@@ -42,7 +43,9 @@ typedef struct file_desc_t
 typedef struct pcb
 {
     file_desc_t file_descs[8];
-    int32_t signal;
+    int signal[SIG_NUM];
+    int sig_mask[SIG_NUM];
+    void* signal_handler[SIG_NUM];
     uint32_t parent_pid;
     uint32_t cur_pid;
     int32_t ex_esp;  /* ESP for the process context when execute  */
