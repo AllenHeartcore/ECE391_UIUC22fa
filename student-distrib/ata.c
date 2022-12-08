@@ -43,7 +43,6 @@ uint32_t ata_identify() {
  * */
 uint32_t _read_to_buf_pio28(uint8_t* buf) {
 	uint32_t i;
-	uint16_t data;
 
 	if (NULL == buf) {
 		return 0;
@@ -51,9 +50,7 @@ uint32_t _read_to_buf_pio28(uint8_t* buf) {
 
 	/* Read the whole 512-byte sector */
 	for (i = 0; i < ATA_SECTOR_SIZE/2; i++) {
-		data = inw(ATA_DATA);
-		buf[2*i] = (uint8_t) (data & 0x00FF);
-		buf[2*i+1] = (uint8_t) (data & 0xFF00);
+		((uint16_t*)buf)[i] = inw(ATA_DATA);
 	}
 
 	return 1;
@@ -140,9 +137,9 @@ uint32_t ata_write_pio28(uint32_t sector, uint8_t sec_count, uint8_t* buf) {
 	}
 	printf("DRQ set\n");								// DEBUG
 
-	for (i = 0; i < ATA_SECTOR_SIZE * sec_count; i += 2) {
-		data = (((uint16_t)buf[i] << 8) | buf[i+1]);
-		outw(data, ATA_DATA);
+	for (i = 0; i < ATA_SECTOR_SIZE*sec_count/2; i++) {
+		outw(((uint16_t*)buf)[i], ATA_DATA);
+		ata_cache_flush();
 	}
 
 	return 1;

@@ -398,26 +398,30 @@ int ata_write_test() {
 	TEST_HEADER;
 	uint32_t i, j;
 	uint8_t flag;
-	uint8_t buf[ATA_SECTOR_SIZE] = { 0 };
-	uint8_t write_buf[ATA_SECTOR_SIZE];
-	ata_read_pio28(1, 1, buf);
+	uint8_t buf_read[ATA_SECTOR_SIZE] = { 0 };
+	uint8_t buf_write[ATA_SECTOR_SIZE];
+	uint32_t target_sec = 5000;
+
+	ata_read_pio28(target_sec, 1, buf_read);
 	printf("buf before writing:\n");
 	for (i = 0; i < ATA_SECTOR_SIZE; i++) {
-		printf("%x", buf[i]);
+		printf("%x", buf_read[i]);
 	}
 	printf("\n");
 
-	for (j = 0; j < ATA_SECTOR_SIZE; j++) {
-		write_buf[j] = 0x07;
+	for (j = 0; j < ATA_SECTOR_SIZE; j += 4) {
+		buf_write[j] = 0x12;
+		buf_write[j+1] = 0x34;
+		buf_write[j+2] = 0x56;
+		buf_write[j+3] = 0x78;
 	}
 
-	printf("write buf: %d\n", write_buf[ATA_SECTOR_SIZE-1]);
-	flag = ata_write_pio28(1, 1, write_buf);
+	flag = ata_write_pio28(target_sec, 1, buf_write);
 	printf("reading ...\n");
-	ata_read_pio28(1, 1, buf);
+	ata_read_pio28(target_sec, 1, buf_read);
 	printf("buf after writing:\n");
 	for (i = 0; i < ATA_SECTOR_SIZE; i++) {
-		printf("%x", buf[i]);
+		printf("%x", buf_read[i]);
 	}
 	printf("\n");
 	return flag;
