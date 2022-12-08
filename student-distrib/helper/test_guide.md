@@ -109,7 +109,8 @@
     <tr> <td rowspan="1"> <b>Ckpt. 4</b> </td> <td> Syscall (GV) </td> <td> <code>master</code> </td> <td align="center"> </td> <td align="center"> </td> <td align="center"> </td> <td align="center"> ○ </td> </tr>
     <tr> <td rowspan="2"> <b>Ckpt. 5</b> </td> <td> Multi Terminals </td> <td> <code>multi_terminal</code> </td> <td align="center"> ○ </td> <td align="center"> </td> <td align="center"> ○ </td> <td align="center"> </td> </tr>
     <tr> <td> Scheduling </td> <td> <code>multi_terminal</code> </td> <td align="center"> </td> <td align="center"> ○ </td> <td align="center"> ○ </td> <td align="center"> ○ </td> </tr>
-    <tr> <td rowspan="3"> <b>Extra</b> </td> <td> Dynamic Malloc </td> <td> <code>memory</code> </td> <td align="center"> </td> <td align="center"> </td> <td align="center"> ○ </td> <td align="center"> </td> </tr>
+    <tr> <td rowspan="4"> <b>Extra</b> </td> <td> Dynamic Malloc </td> <td> <code>memory</code> </td> <td align="center"> </td> <td align="center"> </td> <td align="center"> ○ </td> <td align="center"> </td> </tr>
     <tr> <td> Speaker </td> <td> <code>multi_terminal</code> </td> <td align="center"> ○ </td> <td align="center"> </td> <td align="center"> </td> <td align="center"> </td> </tr>
-    <tr> <td> </td> <td> <code></code> </td> <td align="center"> </td> <td align="center"> </td> <td align="center"> </td> <td align="center"> </td> </tr>
+    <tr> <td> Signal </td> <td> <code>signal</code> </td> <td align="center"> </td> <td align="center"> ○ </td> <td align="center"> </td> <td align="center"> </td> </tr>
+    <tr> <td> File Write </td> <td> <code>filesystem</code> </td> <td align="center"> </td> <td align="center"> ○ </td> <td align="center"> </td> <td align="center"> ○ </td> </tr>
 </table>
