@@ -373,19 +373,50 @@ int terminal_kbd_test_newline(int32_t write_nbytes) {
 /* Checkpoint 4 tests */
 /* Checkpoint 5 tests */
 
-int ata_test() {
+int ata_read_test() {
 	TEST_HEADER;
-	uint32_t i;
+	uint32_t i, j;
 	uint8_t flag;
-	uint8_t buf[512] = { 0 };
+	uint8_t buf[512*256] = { 0 };
 	printf("buf created:\n");
 	for (i = 0; i < 512; i++) {
 		printf("%x", buf[i]);
 	}
 	printf("\n");
-	flag = ata_read_pio28(1, 1, buf);
+	flag = ata_read_pio28(1, 0, buf);
 	printf("buf after reading:\n");
-	for (i = 0; i < 512; i++) {
+	for (i = 0; i < 4; i++) {
+		for (j = 0; j < 512; j++) {
+			printf("%x", buf[i*512+j]);
+		}
+		printf("\n");
+	}
+	return flag;
+}
+
+int ata_write_test() {
+	TEST_HEADER;
+	uint32_t i, j;
+	uint8_t flag;
+	uint8_t buf[ATA_SECTOR_SIZE] = { 0 };
+	uint8_t write_buf[ATA_SECTOR_SIZE];
+	ata_read_pio28(1, 1, buf);
+	printf("buf before writing:\n");
+	for (i = 0; i < ATA_SECTOR_SIZE; i++) {
+		printf("%x", buf[i]);
+	}
+	printf("\n");
+
+	for (j = 0; j < ATA_SECTOR_SIZE; j++) {
+		write_buf[j] = 0x07;
+	}
+
+	printf("write buf: %d\n", write_buf[ATA_SECTOR_SIZE-1]);
+	flag = ata_write_pio28(1, 1, write_buf);
+	printf("reading ...\n");
+	ata_read_pio28(1, 1, buf);
+	printf("buf after writing:\n");
+	for (i = 0; i < ATA_SECTOR_SIZE; i++) {
 		printf("%x", buf[i]);
 	}
 	printf("\n");
@@ -433,5 +464,5 @@ void launch_tests(){
 	// 			 : "eax", "ebx"
 	// 			 );
 
-	// TEST_OUTPUT("ata init test", ata_test());
+	TEST_OUTPUT("ata test", ata_write_test());
 }

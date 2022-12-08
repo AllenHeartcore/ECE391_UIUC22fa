@@ -20,14 +20,17 @@
 
 #define ATA_MASTER_SLAVEBIT	0x0
 #define ATA_SLAVE_SLAVEBIT	0x1
-#define ATA_READ_MASTER		0xE0
-#define ATA_READ_SLAVE		0xF0
+#define ATA_RW_MASTER		0xE0
+#define ATA_RW_SLAVE		0xF0
 #define ATA_CMD_READ		0x20
-#define LBA_MODE_28			28
-#define SECTOR_SIZE			512
+#define ATA_CMD_WRITE		0x30
+#define ATA_CMD_CACHE_FLUSH	0xE7
+#define ATA_SECTOR_SIZE		512
 
 uint32_t ata_identify();
+void ata_cache_flush();
 uint32_t ata_read_pio28(uint32_t sector, uint8_t sec_count, uint8_t* buf);
+uint32_t ata_write_pio28(uint32_t sector, uint8_t sec_count, uint8_t* buf);
 void ata_init();
 
 #endif /* _ATA_H */

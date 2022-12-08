@@ -50,7 +50,7 @@ uint32_t _read_to_buf_pio28(uint8_t* buf) {
 	}
 
 	/* Read the whole 512-byte sector */
-	for (i = 0; i < SECTOR_SIZE/2; i++) {
+	for (i = 0; i < ATA_SECTOR_SIZE/2; i++) {
 		data = inw(ATA_DATA);
 		buf[2*i] = (uint8_t) (data & 0x00FF);
 		buf[2*i+1] = (uint8_t) (data & 0xFF00);
@@ -64,9 +64,7 @@ uint32_t _read_to_buf_pio28(uint8_t* buf) {
  * RETURN VALUE: 1 if successful, 0 if error
  * */
 uint32_t ata_read_pio28(uint32_t sector, uint8_t sec_count, uint8_t* buf) {
-	int32_t i;
 	uint32_t status;
-	uint32_t data;
 	/* Sanity check */
 	if (NULL == buf || sector > 0xFFFFFFF) {
 		return 0;
@@ -76,9 +74,8 @@ uint32_t ata_read_pio28(uint32_t sector, uint8_t sec_count, uint8_t* buf) {
 	 * sec_count=0 is treated as if it is 256, which is specified in
 	 * 28 bit PIO mode */
 	do {
-		printf("%d ", sec_count);	// DEBUG
 		/* Set target sector and sector count */
-		outb(ATA_READ_MASTER | (ATA_MASTER_SLAVEBIT << 4) |
+		outb(ATA_RW_MASTER | (ATA_MASTER_SLAVEBIT << 4) |
 				((sector >> 24) & 0xF), ATA_DRIVE_SELECT);
 		outb(sec_count, ATA_SECTOR_COUNT);
 		outb((uint8_t)sector, ATA_LBA_LOW);
@@ -100,6 +97,53 @@ uint32_t ata_read_pio28(uint32_t sector, uint8_t sec_count, uint8_t* buf) {
 			}
 		}
 	} while (sec_count > 0);
+
+	return 1;
+}
+
+void ata_cache_flush() {
+	outb(ATA_MASTER_DRIVE, ATA_DRIVE_SELECT);
+	outb(ATA_CMD_CACHE_FLUSH, ATA_STATUS);
+	while (inb(ATA_STATUS) & ATA_BSY_MASK) {
+		/* Wait BSY to be cleared */
+	}
+}
+
+/*
+ * INPUT: buf -- length must be be multiples of 512 bytes
+ * */
+uint32_t ata_write_pio28(uint32_t sector, uint8_t sec_count, uint8_t* buf) {
+	uint32_t i;
+	uint16_t data;
+	uint32_t status;
+	printf("Writing to sector %d\n", sector);			// DEBUG
+
+	/* Sanity check */
+	if (NULL == buf || sector > 0xFFFFFFF) {
+		return 0;
+	}
+
+	/* Set target sector */
+	outb(ATA_RW_MASTER | (ATA_MASTER_SLAVEBIT << 4) |
+			((sector >> 24) & 0xF), ATA_DRIVE_SELECT);
+	outb(sec_count, ATA_SECTOR_COUNT);
+	outb((uint8_t)sector, ATA_LBA_LOW);
+	outb((uint8_t)(sector >> 8), ATA_LBA_MID);
+	outb((uint8_t)(sector >> 16), ATA_LBA_HIGH);
+	outb(ATA_CMD_WRITE, ATA_STATUS);
+
+	printf("Waiting for DRQ\n");						// DEBUG
+
+	while(!(inb(ATA_STATUS) & ATA_DRQ_MASK)) {
+		/* Wait until DRQ to be set */
+		printf("ata status: %d\n", inb(ATA_STATUS));	// DEBUG
+	}
+	printf("DRQ set\n");								// DEBUG
+
+	for (i = 0; i < ATA_SECTOR_SIZE * sec_count; i += 2) {
+		data = (((uint16_t)buf[i] << 8) | buf[i+1]);
+		outw(data, ATA_DATA);
+	}
 
 	return 1;
 }
