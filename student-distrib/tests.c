@@ -5,7 +5,8 @@
 #include "terminal.h"
 #include "filesys.h"
 #include "memory.h"
-
+#include "syscall.h"
+#include "ata.h"
 
 #define PASS 1
 #define FAIL 0
@@ -252,11 +253,23 @@ int close_file_test(){
 * Side Effects: None
 * Coverage: Write the file
 */
-int write_file_test(){
+int write_file_test(uint8_t *filename, uint8_t *buf, uint32_t len){
 	TEST_HEADER;
-	if (fwrite(0, NULL, 0) == 0)
-		return PASS;
-	return FAIL;
+	// printf("[TEST]: rying to write %d bytes \"%s\" to file %s\n",
+	// 	len, buf, filename);
+	int32_t fd = -1;
+	int32_t bytes_written;
+	uint8_t read_buf[1024] = {'\0'};
+	/* first open a file */
+	fd = open(filename);
+	if (-1 == fd)
+		return FAIL;
+	bytes_written = write(fd, buf, len);
+	// printf("[TEST]: bytes written: %d\n", bytes_written);
+	// read(fd, read_buf, 1024);
+	// printf("[TEST]: contents of the file after writing:\n");
+	// printf("%s\n", read_buf);
+	return bytes_written;
 }
 
 /*
@@ -361,6 +374,60 @@ int terminal_kbd_test_newline(int32_t write_nbytes) {
 /* Checkpoint 4 tests */
 /* Checkpoint 5 tests */
 
+int ata_read_test() {
+	TEST_HEADER;
+	uint32_t i, j;
+	uint8_t flag;
+	uint8_t buf[512*256] = { 0 };
+	printf("buf created:\n");
+	for (i = 0; i < 512; i++) {
+		printf("%x", buf[i]);
+	}
+	printf("\n");
+	flag = ata_read_pio28(1, 0, buf);
+	printf("buf after reading:\n");
+	for (i = 0; i < 4; i++) {
+		for (j = 0; j < 512; j++) {
+			printf("%x", buf[i*512+j]);
+		}
+		printf("\n");
+	}
+	return flag;
+}
+
+int ata_write_test() {
+	TEST_HEADER;
+	uint32_t i, j;
+	uint8_t flag;
+	uint8_t buf_read[ATA_SECTOR_SIZE] = { 0 };
+	uint8_t buf_write[ATA_SECTOR_SIZE];
+	uint32_t target_sec = 5000;
+
+	ata_read_pio28(target_sec, 1, buf_read);
+	printf("buf before writing:\n");
+	for (i = 0; i < ATA_SECTOR_SIZE; i++) {
+		printf("%x", buf_read[i]);
+	}
+	printf("\n");
+
+	for (j = 0; j < ATA_SECTOR_SIZE; j += 4) {
+		buf_write[j] = 0x12;
+		buf_write[j+1] = 0x34;
+		buf_write[j+2] = 0x56;
+		buf_write[j+3] = 0x78;
+	}
+
+	flag = ata_write_pio28(target_sec, 1, buf_write);
+	printf("reading ...\n");
+	ata_read_pio28(target_sec, 1, buf_read);
+	printf("buf after writing:\n");
+	for (i = 0; i < ATA_SECTOR_SIZE; i++) {
+		printf("%x", buf_read[i]);
+	}
+	printf("\n");
+	return flag;
+}
+
 
 /* Memory allocation test
  * 
@@ -445,7 +512,7 @@ void launch_tests(){
 	// sleep(1);
 	// TEST_OUTPUT("read_file_test", read_file_test());
 	// sleep(1);
-	// TEST_OUTPUT("write_file_test", write_file_test());
+	// TEST_OUTPUT("write_file_test", write_file_test("frame0.txt", "sb", 2));
 	// sleep(1);
 	// TEST_OUTPUT("read_file_name_test", read_file_name_test((uint8_t*)"frame0.txt"));
 	// sleep(4);
@@ -460,13 +527,12 @@ void launch_tests(){
 
 	/* Checkpoint 3 tests */
 	// uint8_t cmd[128] = "ls";
-	// asm volatile("movl %0, %%ebx; \n
-	// 			  movl $1, %%eax; \n
+	// asm volatile("movl %0, %%ebx; \n\
+	// 			  movl $1, %%eax; \n\
 	// 			  int $0x80;"
 	// 			 :
 	// 			 : "r" (cmd)
 	// 			 : "eax", "ebx"
 	// 			 );
-	TEST_OUTPUT("memory_allocation_test", memory_allocation_test());
-	slab_cache_test();
+	TEST_OUTPUT("ata test", ata_write_test());
 }
