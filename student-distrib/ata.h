@@ -26,7 +26,7 @@
 #define LBA_MODE_28			28
 
 uint32_t ata_identify();
-uint32_t ata_read_pio28(uint32_t sector, uint32_t sec_count, uint8_t* buf);
+uint32_t ata_read_pio28(uint32_t sector, uint8_t sec_count, uint8_t* buf);
 void ata_init();
 
 #endif /* _ATA_H */

@@ -63,17 +63,20 @@ uint32_t _read_to_buf_pio28(uint8_t* buf) {
  * INPUT: buf -- length must be be multiples of 512 bytes
  * RETURN VALUE: 1 if successful, 0 if error
  * */
-uint32_t ata_read_pio28(uint32_t sector, uint32_t sec_count, uint8_t* buf) {
+uint32_t ata_read_pio28(uint32_t sector, uint8_t sec_count, uint8_t* buf) {
 	int32_t i;
 	uint32_t status;
 	uint32_t data;
 	/* Sanity check */
-	if (NULL == buf || sec_count >= 0x400000 || sector > 0xFFFFFFF) {
+	if (NULL == buf || sector > 0xFFFFFFF) {
 		return 0;
 	}
 
-	while (sec_count > 0) { 
-
+	/* do ... while ... with sec_count of type 'uint8_t' ensures that
+	 * sec_count=0 is treated as if it is 256, which is specified in
+	 * 28 bit PIO mode */
+	do {
+		printf("%d ", sec_count);	// DEBUG
 		/* Set target sector and sector count */
 		outb(ATA_READ_MASTER | (ATA_MASTER_SLAVEBIT << 4) |
 				((sector >> 24) & 0xF), ATA_DRIVE_SELECT);
@@ -97,7 +100,7 @@ uint32_t ata_read_pio28(uint32_t sector, uint32_t sec_count, uint8_t* buf) {
 				}
 			}
 		}
-	}
+	} while (sec_count > 0);
 
 	return 1;
 }
