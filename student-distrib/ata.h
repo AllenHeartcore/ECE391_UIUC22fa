@@ -29,8 +29,7 @@
 
 uint32_t ata_identify();
 void ata_cache_flush();
-uint32_t ata_read_pio28(uint32_t sector, uint8_t sec_count, uint8_t* buf);
-uint32_t ata_write_pio28(uint32_t sector, uint8_t sec_count, uint8_t* buf);
-void ata_init();
+uint32_t ata_read_pio28(uint32_t sector, uint32_t sec_count, uint8_t* buf);
+uint32_t ata_write_pio28(uint32_t sector, uint32_t sec_count, uint8_t* buf);
 
 #endif /* _ATA_H */

@@ -445,7 +445,7 @@ void launch_tests(){
 	// sleep(1);
 	// TEST_OUTPUT("read_file_test", read_file_test());
 	// sleep(1);
-	TEST_OUTPUT("write_file_test", write_file_test("frame0.txt", "sb", 2));
+	// TEST_OUTPUT("write_file_test", write_file_test("frame0.txt", "sb", 2));
 	// sleep(1);
 	// TEST_OUTPUT("read_file_name_test", read_file_name_test((uint8_t*)"frame0.txt"));
 	// sleep(4);

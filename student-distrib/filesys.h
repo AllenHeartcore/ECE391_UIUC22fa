@@ -14,6 +14,9 @@
 #define DIR_TYPE 1  // Integer representing directory type
 #define FILE_TYPE 2 // Integer representing regular file type
 
+#define FILESYS_DISK_POS 5000 // File system is at sector 5000 in the hard drive
+#define FILESYS_DISK_FLAG_POS 3000 // Flag indicating file system exists in hard drive
+#define FILESYS_DISK_FLAG 0xAB
 
 
 
@@ -89,6 +92,6 @@ int32_t read_directory(uint8_t* buf, int index);
 /* function we care */
 int32_t dir_read();
 
-
+int32_t save_to_disk();
 
 #endif

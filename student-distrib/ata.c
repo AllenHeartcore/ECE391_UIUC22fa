@@ -60,21 +60,18 @@ uint32_t _read_to_buf_pio28(uint8_t* buf) {
  * INPUT: buf -- length must be be multiples of 512 bytes
  * RETURN VALUE: 1 if successful, 0 if error
  * */
-uint32_t ata_read_pio28(uint32_t sector, uint8_t sec_count, uint8_t* buf) {
+uint32_t ata_read_pio28(uint32_t sector, uint32_t sec_count, uint8_t* buf) {
 	uint32_t status;
 	/* Sanity check */
 	if (NULL == buf || sector > 0xFFFFFFF) {
 		return 0;
 	}
 
-	/* do ... while ... with sec_count of type 'uint8_t' ensures that
-	 * sec_count=0 is treated as if it is 256, which is specified in
-	 * 28 bit PIO mode */
-	do {
+	while (sec_count > 0) {
 		/* Set target sector and sector count */
 		outb(ATA_RW_MASTER | (ATA_MASTER_SLAVEBIT << 4) |
 				((sector >> 24) & 0xF), ATA_DRIVE_SELECT);
-		outb(sec_count, ATA_SECTOR_COUNT);
+		outb(1, ATA_SECTOR_COUNT);
 		outb((uint8_t)sector, ATA_LBA_LOW);
 		outb((uint8_t)(sector >> 8), ATA_LBA_MID);
 		outb((uint8_t)(sector >> 16), ATA_LBA_HIGH);
@@ -84,7 +81,7 @@ uint32_t ata_read_pio28(uint32_t sector, uint8_t sec_count, uint8_t* buf) {
 			status = inb(ATA_STATUS);
 			if (!(status & ATA_BSY_MASK) && (status & ATA_DRQ_MASK)) {
 				if (_read_to_buf_pio28(buf)) {
-					buf += 512;
+					buf += ATA_SECTOR_SIZE;
 					sector++;
 					sec_count--;
 					break;
@@ -93,7 +90,7 @@ uint32_t ata_read_pio28(uint32_t sector, uint8_t sec_count, uint8_t* buf) {
 				}
 			}
 		}
-	} while (sec_count > 0);
+	}
 
 	return 1;
 }
@@ -109,8 +106,9 @@ void ata_cache_flush() {
 /*
  * INPUT: buf -- length must be be multiples of 512 bytes
  * */
-uint32_t ata_write_pio28(uint32_t sector, uint8_t sec_count, uint8_t* buf) {
+uint32_t ata_write_pio28(uint32_t sector, uint32_t sec_count, uint8_t* buf) {
 	uint32_t i;
+	uint32_t num_sec_written;
 	uint16_t data;
 	uint32_t status;
 	printf("Writing to sector %d\n", sector);			// DEBUG
@@ -120,34 +118,31 @@ uint32_t ata_write_pio28(uint32_t sector, uint8_t sec_count, uint8_t* buf) {
 		return 0;
 	}
 
-	/* Set target sector */
-	outb(ATA_RW_MASTER | (ATA_MASTER_SLAVEBIT << 4) |
-			((sector >> 24) & 0xF), ATA_DRIVE_SELECT);
-	outb(sec_count, ATA_SECTOR_COUNT);
-	outb((uint8_t)sector, ATA_LBA_LOW);
-	outb((uint8_t)(sector >> 8), ATA_LBA_MID);
-	outb((uint8_t)(sector >> 16), ATA_LBA_HIGH);
-	outb(ATA_CMD_WRITE, ATA_STATUS);
+	num_sec_written = 0;
+	while (sec_count > num_sec_written) { 
+		/* Set target sector */
+		outb(ATA_RW_MASTER | (ATA_MASTER_SLAVEBIT << 4) |
+				(((num_sec_written + sector) >> 24) & 0xF), ATA_DRIVE_SELECT);
+		outb(1, ATA_SECTOR_COUNT);
+		outb((uint8_t)(num_sec_written + sector), ATA_LBA_LOW);
+		outb((uint8_t)((num_sec_written + sector) >> 8), ATA_LBA_MID);
+		outb((uint8_t)((num_sec_written + sector) >> 16), ATA_LBA_HIGH);
+		outb(ATA_CMD_WRITE, ATA_STATUS);
 
-	printf("Waiting for DRQ\n");						// DEBUG
+		printf("Waiting for DRQ\n");						// DEBUG
 
-	while(!(inb(ATA_STATUS) & ATA_DRQ_MASK)) {
-		/* Wait until DRQ to be set */
-		printf("ata status: %d\n", inb(ATA_STATUS));	// DEBUG
-	}
-	printf("DRQ set\n");								// DEBUG
+		while(!(inb(ATA_STATUS) & ATA_DRQ_MASK)) {
+			/* Wait until DRQ to be set */
+		}
+		printf("DRQ set\n");								// DEBUG
 
-	for (i = 0; i < ATA_SECTOR_SIZE*sec_count/2; i++) {
-		outw(((uint16_t*)buf)[i], ATA_DATA);
-		ata_cache_flush();
+		for (i = 0; i < ATA_SECTOR_SIZE/2; i++) {
+			outw(((uint16_t*)buf)[i + ATA_SECTOR_SIZE * num_sec_written / 2],
+				ATA_DATA);
+			ata_cache_flush();
+		}
+		num_sec_written++;
 	}
 
 	return 1;
-}
-
-void ata_init() {
-	uint32_t ata_ready;
-	uint8_t buf[512];
-	ata_ready = ata_identify();
-	ata_read_pio28(1, 1, buf);
 }

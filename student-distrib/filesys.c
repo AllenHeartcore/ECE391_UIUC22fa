@@ -2,6 +2,7 @@
 #include "x86_desc.h"
 #include "filesys.h"
 #include "syscall.h"
+#include "ata.h"
 
 
 boot_block_t* boot_block; // Pointer to the boot block
@@ -22,6 +23,22 @@ datablock_track_t datablock_track; // Tracks if a datablock is free
 void file_system_init(uint32_t file_add){
     uint32_t i, j;
     uint32_t num_datablocks;
+    uint8_t buf[ATA_SECTOR_SIZE];
+    uint32_t fs_length;
+    boot_block_t boot_block_check;
+
+    /* Check if file system disk flag is set */
+    ata_read_pio28(FILESYS_DISK_FLAG_POS, 1, buf);
+    if (((uint32_t*)buf)[0] == FILESYS_DISK_FLAG) {
+        /* Reload file system from disk if the flag is set */
+        /* Read bootblock first */
+        ata_read_pio28(FILESYS_DISK_POS, BLOCK_SIZE/ATA_SECTOR_SIZE,
+                (uint8_t*)(&boot_block_check));
+        fs_length = boot_block_check.inode_num + boot_block_check.data_blocks_num + 1;
+        /* Load the file system */
+        ata_read_pio28(FILESYS_DISK_POS,
+				fs_length * (BLOCK_SIZE / ATA_SECTOR_SIZE), (uint8_t*)file_add);
+    }
 
     boot_block = (boot_block_t*)file_add; // Find boot block
 
@@ -353,6 +370,7 @@ int32_t fwrite(int32_t fd, const void* buf, int32_t n_bytes){
     uint32_t inode = file_desc[fd].inode;
     uint32_t offset = file_desc[fd].file_position;
     if (write_data(inode, buf, n_bytes) == n_bytes) {
+        save_to_disk();
         return n_bytes;
     }
     return -1;
@@ -431,5 +449,17 @@ int32_t dir_close(int32_t fd){
 }
 
 
+int32_t save_to_disk(void) {
+	uint8_t buf[ATA_SECTOR_SIZE];
+	uint32_t fs_length = boot_block->inode_num + boot_block->data_blocks_num + 1;
 
+	/* Set flag */
+	memset(buf, FILESYS_DISK_FLAG, ATA_SECTOR_SIZE);
+	ata_write_pio28(FILESYS_DISK_FLAG_POS, 1, buf);
+	
+	/* Write to disk */
+	ata_write_pio28(FILESYS_DISK_POS,
+			fs_length * (BLOCK_SIZE / ATA_SECTOR_SIZE), (uint8_t*)boot_block);
+	return 0;
+}
 
