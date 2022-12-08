@@ -29,7 +29,7 @@ void file_system_init(uint32_t file_add){
 
     /* Check if file system disk flag is set */
     ata_read_pio28(FILESYS_DISK_FLAG_POS, 1, buf);
-    if (((uint32_t*)buf)[0] == FILESYS_DISK_FLAG) {
+    if (buf[0] == FILESYS_DISK_FLAG) {
         /* Reload file system from disk if the flag is set */
         /* Read bootblock first */
         ata_read_pio28(FILESYS_DISK_POS, BLOCK_SIZE/ATA_SECTOR_SIZE,
