@@ -86,17 +86,16 @@ uint32_t ata_read_pio28(uint32_t sector, uint8_t sec_count, uint8_t* buf) {
 		outb((uint8_t)(sector >> 16), ATA_LBA_HIGH);
 		outb(ATA_CMD_READ, ATA_STATUS);
 
-		/* Read Status Register for 15 times because the
-		 * drive needs some time to response */
-		for (i = 0; i < 15; i++) {
+		while (1) {
 			status = inb(ATA_STATUS);
 			if (!(status & ATA_BSY_MASK) && (status & ATA_DRQ_MASK)) {
 				if (_read_to_buf_pio28(buf)) {
+					buf += 512;
 					sector++;
 					sec_count--;
 					break;
 				} else {
-					return 0;
+					return 0;	/* error */
 				}
 			}
 		}
