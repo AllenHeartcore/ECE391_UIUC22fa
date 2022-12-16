@@ -1,0 +1,148 @@
+BUG Log for mp3 ---- ZinixOS Group
+
+----------- check point 1 -----------
+1. 15/10/2022
+    Description: When the system boot, the system will flash a second and close itself.
+    Reason: In enable_irq function, we used the wrong port for PIC.
+    Solution: Change the port.
+    Take Time: 2h
+
+2. 15/10/2022
+    Description: Invalid Opcode exception
+    Reason: Double Fault
+    Solution: Add while(1) loop.
+    Take Time: 1.5h
+
+3. 15/10/2022
+    Description: Keyboard won't work
+    Reason: When send_eoi, we used wrong port.
+    Solution:  Change 0xA1,0x21 to 0xA0,0x20.
+    Take Time:  1h
+
+4. 15/10/2022
+    Description: Invalid Opcode exception
+    Reason: This is actually the same reason above. send_eoi problem.
+    Solution: Change 0xA1,0x21 to 0xA0,0x20.
+    Take Time: 1h
+
+5. 15/10/2022
+    Description: When we test paging, the page fualt appeared
+    Reason: Our test code was wrong. We dereferenced the ptr out or range of our page.
+    Solution: Modiy for loop and pointer type in test code.
+    Take Time: 10min
+
+----------- check point 2 -----------
+1. 22/10/2022
+    Description: Scrolling shifts characters right by half of the size of the
+    screen.
+    Reason: Each character is 2 bytes, so we need to shift by 80*2 = 160 bytes.
+    Solution: Shift 80*2 = 160 bytes instead of 80 bytes for one line
+    in the scrolling loop in function terminal_scroll.
+
+2. 22/10/2022
+    Description: terminal_clear does not clear the whole screen
+    screen.
+    Reason: Each character is 2 bytes, so the size of the video memory
+    is NUM_ROWS * NUM_COLS * 2 bytes.
+    Solution: Fix the formula for calculating the size of the video
+    memory in function terminal_clear.
+
+3. 22/10/2022
+    Description: <CR> does not bring the cursor the next line.
+	Reason: We does not pass '\n' to function putc.
+	Solution: Pass '\n' to function putc.
+
+4. 22/10/2022
+    Description: RTC driver fails to catch virtual ("mod 0") interrupts.
+    Reason: We check for non-zero "mod" results
+    Solution: Check for zero "mod" results (happens every "freq" times).
+
+----------- check point 3 -----------
+1. 4/11/2022
+    Description: Page Fault when dereferencing `file_operation`
+    Reason: These pointers will be defaulted to 0x0, or NULL address
+    Solution: Let the 8 pointers point into a "file_op_init" array
+    Take Time: 20min
+
+2. 4/11/2022
+    Description: Page Fault at `iret` (in `execute`)
+    Reason: The executable image is not copied to user page
+    Solution: Add a `read_data` function to copy nearly 4MB data
+              into address 0x08048000
+    Take Time: 1.5h
+
+3. 4/11/2022
+    Description: `shell` passes 1 in the `filename` argument in `open`
+    Reason: The correct syscall should be `write`
+    Solution: Pad a zero in syscall jumptable to make `halt`
+              the 1st syscall, etc.
+    Take Time: 1h
+
+4. 4/11/2022
+    Description: Page Fault at `halt`
+    Reason: A typo causes us to pass -1 into get_pcb
+    Solution: Change `parent_pcb->cur_pid` to `cur_pcb->cur_pid`
+    Take Time: 30min
+
+5. 5/11/2022
+    Description: Page Fault after `halt`
+    Reason: A typo causes us to store current stack in TSS before returning
+    Solution: Change `cur_pcb->cur_pid` to `cur_pcb->parent_pid`
+    Take Time: 1h
+
+6. 5/11/2022
+    Description: "read_file", "write_file" pointers are clobbered
+    Reason: The "file_desc_t" object only holds a pointer to "file_op"
+    Solution: Include a full "file_op" object in "file_desc_t"
+    Take Time: 3h
+
+----------- check point 4 -----------
+1. 12/11/2022
+    Description: "File not found" when "cat <filename>" has trailing spaces
+    Reason: We did not trim the trailing spaces
+    Solution: Trim the first argument (stop at the next space)
+    Take Time: 20min
+
+2. 12/11/2022
+    Description: `grep` cannot open files
+    Reason: In Ckpt. 3, `ls` adds trailing '\n' to the filenames,
+            which prevents `grep` from identifying the right files;
+            but deleting this '\n' will cause the output of `ls` to cluster
+    Solution: Modify "read_data" to return the length of filename;
+            delete the trailing '\n' (and leave it to `ls`)
+    Take Time: 1h
+
+3. 12/11/2022
+    Description: "Expected identifier or '(' before numeric constant" in macros
+    Reason: The macro arguments and struct members share the same namespace
+    Solution: Rename the macro arguments. Specifically, add a leading '_'
+    Take Time: 30min
+
+4. 12/11/2022
+    Description: Page Fault on executing `fish`
+    Reason: Privilege level in corresponding PDE and PTE to 1
+    Take Time: 30min
+
+----------- check point 5 -----------
+1. 18/11/2022
+    Description: Keyboard buffer is partially echoed to the screen
+    Reason: When scheduler pauses a program, its corresponding terminal
+            is not switched back to the foreground
+    Solution: Implement `putc_force_to_vmem` to do the mapping
+    Take Time: 40min
+
+2. 18/11/2022
+    Description: One terminal's cursor can affect another
+    Reason: We still pass the global `screen_x`, `screen_y` in `lib.c` functions
+    Solution: Pass in `terms[current_term_id].cursor_x/y` instead
+    Take Time: 20min
+
+3. 18/11/2022
+    Description: Cursor position wrong under multiple terminal
+    Reason: We did not distinguish between current focused terminal
+        (current_term_id) and current running terminal (cur_sch_index) and
+        set the cursor position of the wrong terminal.
+    Solution: Add 'userkey' argument to distinguish a putc called by a
+        user keystroke and a putc called by a program, handle these two cases
+        differently.
+    Take Time: 1h
