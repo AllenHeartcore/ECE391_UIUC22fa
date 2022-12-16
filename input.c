@@ -1,0 +1,407 @@
+/*									tab:8
+ *
+ * input.c - source file for input control to maze game
+ *
+ * "Copyright (c) 2004-2011 by Steven S. Lumetta."
+ *
+ * Permission to use, copy, modify, and distribute this software and its
+ * documentation for any purpose, without fee, and without written agreement is
+ * hereby granted, provided that the above copyright notice and the following
+ * two paragraphs appear in all copies of this software.
+ *
+ * IN NO EVENT SHALL THE AUTHOR OR THE UNIVERSITY OF ILLINOIS BE LIABLE TO
+ * ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL
+ * DAMAGES ARISING OUT  OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION,
+ * EVEN IF THE AUTHOR AND/OR THE UNIVERSITY OF ILLINOIS HAS BEEN ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * THE AUTHOR AND THE UNIVERSITY OF ILLINOIS SPECIFICALLY DISCLAIM ANY
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE
+ * PROVIDED HEREUNDER IS ON AN "AS IS" BASIS, AND NEITHER THE AUTHOR NOR
+ * THE UNIVERSITY OF ILLINOIS HAS ANY OBLIGATION TO PROVIDE MAINTENANCE,
+ * SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS."
+ *
+ * Author:		Steve Lumetta
+ * Version:		7
+ * Creation Date:	Thu Sep  9 22:25:48 2004
+ * Filename:		input.c
+ * History:
+ *	SL	1	Thu Sep  9 22:25:48 2004
+ *		First written.
+ *	SL	2	Sat Sep 12 14:34:19 2009
+ *		Integrated original release back into main code base.
+ *	SL	3	Sun Sep 13 03:51:23 2009
+ *		Replaced parallel port with Tux controller code for demo.
+ *	SL	4	Sun Sep 13 12:49:02 2009
+ *		Changed init_input order slightly to avoid leaving keyboard
+ *              in odd state on failure.
+ *	SL	5	Sun Sep 13 16:30:32 2009
+ *		Added a reasonably robust direct Tux control for demo mode.
+ *	SL	6	Wed Sep 14 02:06:41 2011
+ *		Updated input control and test driver for adventure game.
+ *	SL	7	Wed Sep 14 17:07:38 2011
+ *		Added keyboard input support when using Tux kernel mode.
+ */
+
+#include <ctype.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/io.h>
+#include <sys/ioctl.h>
+#include <termio.h>
+#include <termios.h>
+#include <time.h>
+#include <unistd.h>
+
+#include "assert.h"
+#include "input.h"
+#include "module/tuxctl-ioctl.h"
+
+/* set to 1 and compile this file by itself to test functionality */
+#define TEST_INPUT_DRIVER 0
+
+/* set to 1 to use tux controller; otherwise, uses keyboard input */
+#define USE_TUX_CONTROLLER 0
+
+
+/* stores original terminal settings */
+static struct termios tio_orig;
+static int fd;
+
+
+/*
+ * init_input
+ *   DESCRIPTION: Initializes the input controller.  As both keyboard and
+ *                Tux controller control modes use the keyboard for the quit
+ *                command, this function puts stdin into character mode
+ *                rather than the usual terminal mode.
+ *   INPUTS: none
+ *   OUTPUTS: none
+ *   RETURN VALUE: 0 on success, -1 on failure
+ *   SIDE EFFECTS: changes terminal settings on stdin; prints an error
+ *                 message on failure
+ */
+int
+init_input ()
+{
+	struct termios tio_new;
+
+	/*
+	 * Set non-blocking mode so that stdin can be read without blocking
+	 * when no new keystrokes are available.
+	 */
+	if (fcntl (fileno (stdin), F_SETFL, O_NONBLOCK) != 0) {
+		perror ("fcntl to make stdin non-blocking");
+	return -1;
+	}
+
+	/*
+	 * Save current terminal attributes for stdin.
+	 */
+	if (tcgetattr (fileno (stdin), &tio_orig) != 0) {
+	perror ("tcgetattr to read stdin terminal settings");
+	return -1;
+	}
+
+	/*
+	 * Turn off canonical (line-buffered) mode and echoing of keystrokes
+	 * to the monitor.  Set minimal character and timing parameters so as
+	 * to prevent delays in delivery of keystrokes to the program.
+	 */
+	tio_new = tio_orig;
+	tio_new.c_lflag &= ~(ICANON | ECHO);
+	tio_new.c_cc[VMIN] = 1;
+	tio_new.c_cc[VTIME] = 0;
+	if (tcsetattr (fileno (stdin), TCSANOW, &tio_new) != 0) {
+	perror ("tcsetattr to set stdin terminal settings");
+	return -1;
+	}
+
+	init_tux ();
+
+	/* Return success. */
+	return 0;
+}
+
+static char typing[MAX_TYPED_LEN + 1] = {'\0'};
+
+const char*
+get_typed_command ()
+{
+	return typing;
+}
+
+void
+reset_typed_command ()
+{
+	typing[0] = '\0';
+}
+
+static int32_t
+valid_typing (char c)
+{
+	/* Valid typing include letters, numbers, space, and backspace/delete. */
+	return (isalpha (c) || isdigit (c) || ' ' == c || 8 == c || 127 == c);
+}
+
+static void
+typed_a_char (char c)
+{
+	int32_t len = strlen (typing);
+
+	if (8 == c || 127 == c) {
+		if (0 < len) {
+		typing[len - 1] = '\0';
+	}
+	} else if (MAX_TYPED_LEN > len) {
+	typing[len] = c;
+	typing[len + 1] = '\0';
+	}
+}
+
+/*
+ * get_command
+ *   DESCRIPTION: Reads a command from the input controller.  As some
+ *                controllers provide only absolute input (e.g., go
+ *                right), the current direction is needed as an input
+ *                to this routine.
+ *   INPUTS: cur_dir -- current direction of motion
+ *   OUTPUTS: none
+ *   RETURN VALUE: command issued by the input controller
+ *   SIDE EFFECTS: drains any keyboard input
+ */
+cmd_t
+get_command ()
+{
+#if (USE_TUX_CONTROLLER == 0) /* use keyboard control with arrow keys */
+	static int state = 0;             /* small FSM for arrow keys */
+#endif
+	static cmd_t command = CMD_NONE;
+	cmd_t pushed = CMD_NONE;
+	int ch;
+
+	/* Read all characters from stdin. */
+	while ((ch = getc (stdin)) != EOF) {
+
+	/* Backquote is used to quit the game. */
+	if (ch == '`')
+		return CMD_QUIT;
+
+#if (USE_TUX_CONTROLLER == 0) /* use keyboard control with arrow keys */
+	/*
+	 * Arrow keys deliver the byte sequence 27, 91, and 'A' to 'D';
+	 * we use a small finite state machine to identify them.
+	 *
+	 * Insert, home, and page up keys deliver 27, 91, '2'/'1'/'5' and
+	 * then a tilde.  We recognize the digits and don't check for the
+	 * tilde.
+	 */
+	switch (state) {
+		case 0:
+			if (27 == ch) {
+			state = 1;
+		} else if (valid_typing (ch)) {
+			typed_a_char (ch);
+		} else if (10 == ch || 13 == ch) {
+			pushed = CMD_TYPED;
+		}
+		break;
+		case 1:
+		if (91 == ch) {
+			state = 2;
+		} else {
+			state = 0;
+			if (valid_typing (ch)) {
+			/*
+			 * Note that we may be discarding an ESC (27), but
+			 * we don't use that as typed input anyway.
+			 */
+			typed_a_char (ch);
+			} else if (10 == ch || 13 == ch) {
+			pushed = CMD_TYPED;
+			}
+		}
+		break;
+		case 2:
+			if (ch >= 'A' && ch <= 'D') {
+			switch (ch) {
+			case 'A': pushed = CMD_UP; break;
+			case 'B': pushed = CMD_DOWN; break;
+			case 'C': pushed = CMD_RIGHT; break;
+			case 'D': pushed = CMD_LEFT; break;
+			}
+			state = 0;
+		} else if (ch == '1' || ch == '2' || ch == '5') {
+			switch (ch) {
+			case '2': pushed = CMD_MOVE_LEFT; break;
+			case '1': pushed = CMD_ENTER; break;
+			case '5': pushed = CMD_MOVE_RIGHT; break;
+			}
+			state = 3; /* Consume a '~'. */
+		} else {
+			state = 0;
+			if (valid_typing (ch)) {
+			/*
+			 * Note that we may be discarding an ESC (27) and
+			 * a bracket (91), but we don't use either as
+			 * typed input anyway.
+			 */
+			typed_a_char (ch);
+			} else if (10 == ch || 13 == ch) {
+			pushed = CMD_TYPED;
+			}
+		}
+		break;
+		case 3:
+		state = 0;
+			if ('~' == ch) {
+			/* Consume it silently. */
+		} else if (valid_typing (ch)) {
+			typed_a_char (ch);
+		} else if (10 == ch || 13 == ch) {
+			pushed = CMD_TYPED;
+		}
+		break;
+	}
+#else /* USE_TUX_CONTROLLER */
+	/* Tux controller mode; still need to support typed commands. */
+		if (valid_typing (ch)) {
+			typed_a_char (ch);
+		} else if (10 == ch || 13 == ch) {
+			pushed = CMD_TYPED;
+		}
+#endif /* USE_TUX_CONTROLLER */
+	}
+
+	/*
+	 * Once a direction is pushed, that command remains active
+	 * until a turn is taken.
+	 */
+	if (pushed == CMD_NONE) {
+		command = CMD_NONE;
+	}
+	return pushed;
+}
+
+/*
+ * shutdown_input
+ *   DESCRIPTION: Cleans up state associated with input control.  Restores
+ *                original terminal settings.
+ *   INPUTS: none
+ *   OUTPUTS: none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: restores original terminal settings
+ */
+void
+shutdown_input ()
+{
+	(void)tcsetattr (fileno (stdin), TCSANOW, &tio_orig);
+}
+
+
+// @@ CHECKPOINT 2: Tux I/O (helpers)
+
+void init_tux () {
+	int ldisc_num = N_MOUSE;
+	fd = open("/dev/ttyS0", O_RDWR | O_NOCTTY);
+	if (fd == -1) perror("open_port: Unable to open /dev/ttyS0 - ");
+	else {
+		ioctl(fd, TIOCSETD, &ldisc_num);
+		ioctl(fd, TUX_INIT, 0);
+	}
+}
+
+cmd_t get_command_from_tux () {
+	int buttons;
+	ioctl(fd, TUX_BUTTONS, &buttons);			// > < v ^ C B A S
+	switch (buttons) {							// active low
+		case 0xFD: return CMD_MOVE_LEFT;
+		case 0xFB: return CMD_ENTER;
+		case 0xF7: return CMD_MOVE_RIGHT;
+		case 0xEF: return CMD_UP;
+		case 0xDF: return CMD_DOWN;
+		case 0xBF: return CMD_LEFT;
+		case 0x7F: return CMD_RIGHT;
+		default: return CMD_NONE;
+	}
+}
+
+/*
+ * display_time_on_tux
+ *   DESCRIPTION: Show number of elapsed seconds as minutes:seconds
+ *                on the Tux controller's 7-segment displays.
+ *   INPUTS: num_seconds -- total seconds elapsed so far
+ *   OUTPUTS: none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: changes state of controller's display
+ */
+void display_time_on_tux (int num_seconds) {
+	int min, sec;
+	min = num_seconds / 60;
+	sec = num_seconds % 60;
+	min = (min / 10) * 16 + min % 10;			// convert to hex
+	sec = (sec / 10) * 16 + sec % 10;
+	ioctl(fd, TUX_SET_LED, 0x040F0000 | (min << 8) | sec);
+}
+
+
+#if (TEST_INPUT_DRIVER == 1)
+int
+main ()
+{
+	cmd_t last_cmd = CMD_NONE;
+	cmd_t cmd;
+	int i = 0;
+	time_t start_time;
+	static const char* const cmd_name[NUM_COMMANDS] = {
+		"none", "right", "left", "up", "down",
+	"move left", "enter", "move right", "typed command", "quit"
+	};
+
+	/* Grant ourselves permission to use ports 0-1023 */
+	if (ioperm (0, 1024, 1) == -1) {
+	perror ("ioperm");
+	return 3;
+	}
+
+	init_input ();
+	start_time = clock ();
+	while (1) {
+#if (USE_TUX_CONTROLLER == 0)
+		while ((cmd = get_command ()) == last_cmd);
+		last_cmd = cmd;
+		printf ("command issued: %s\n", cmd_name[cmd]);
+		if (cmd == CMD_QUIT)
+			break;
+#else
+		// cmd = get_command_from_tux ();
+		// if (cmd_name[cmd][0] != 'n') printf("%s\n", cmd_name[cmd]);
+
+		// display_time_on_tux(114);
+		// sleep(1);
+		// display_time_on_tux(514);
+		// sleep(1);
+		// display_time_on_tux(1919);
+		// sleep(1);
+		// display_time_on_tux(810);
+		// sleep(1);
+		// display_time_on_tux(889);
+		// sleep(1);
+		// display_time_on_tux(464);
+		// sleep(1);
+
+		// display_time_on_tux ((clock () - start_time) / CLOCKS_PER_SEC);
+		// ioctl(fd, TUX_SET_LED, 0x040F0000 | i++);
+		// sleep(.5);
+		display_time_on_tux(i++);
+		sleep(.5);
+#endif
+	}
+	shutdown_input ();
+	return 0;
+}
+#endif
+
