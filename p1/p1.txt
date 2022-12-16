@@ -1,0 +1,9 @@
+print/x solution
+
+x/4h $rsp
+
+info reg
+
+break ece.c:391
+
+target remote 127.0.0.1:1234

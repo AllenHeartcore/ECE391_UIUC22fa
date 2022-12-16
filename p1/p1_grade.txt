@@ -1,0 +1,5 @@
+3/5
+x/4rh $rsp should be 2 bytes also rsp is not a valid register in 32 bit: 
+https://stackoverflow.com/questions/43933379/what-do-the-e-and-r-prefixes-stand-for-in-the-names-of-intel-32-bit-and-64-bit-r
+
+The ip in target remote is incorrect: 127.0.0.1 is the ip of the local computer (your devel). 10.0.2.2 is the machine you should try and remote into (not the devel but the test)
