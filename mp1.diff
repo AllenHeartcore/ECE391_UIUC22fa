@@ -1,0 +1,299 @@
+diff -r -C 4 linux-2.6.22.5/drivers/char/Makefile mp1-linux/drivers/char/Makefile
+*** linux-2.6.22.5/drivers/char/Makefile	2011-09-01 09:13:50.326010900 -0500
+--- mp1-linux/drivers/char/Makefile	2011-08-29 15:54:53.203072800 -0500
+***************
+*** 6,14 ****
+  # This file contains the font map for the default (hardware) font
+  #
+  FONTMAPFILE = cp437.uni
+  
+! obj-y	 += mem.o random.o tty_io.o n_tty.o tty_ioctl.o
+  
+  obj-$(CONFIG_LEGACY_PTYS)	+= pty.o
+  obj-$(CONFIG_UNIX98_PTYS)	+= pty.o
+  obj-y				+= misc.o
+--- 6,14 ----
+  # This file contains the font map for the default (hardware) font
+  #
+  FONTMAPFILE = cp437.uni
+  
+! obj-y	 += mem.o random.o tty_io.o n_tty.o tty_ioctl.o mp1.o
+  
+  obj-$(CONFIG_LEGACY_PTYS)	+= pty.o
+  obj-$(CONFIG_UNIX98_PTYS)	+= pty.o
+  obj-y				+= misc.o
+diff -r -C 4 linux-2.6.22.5/drivers/char/rtc.c mp1-linux/drivers/char/rtc.c
+*** linux-2.6.22.5/drivers/char/rtc.c	2011-09-01 09:13:50.505968400 -0500
+--- mp1-linux/drivers/char/rtc.c	2011-09-01 09:14:18.026268700 -0500
+***************
+*** 100,107 ****
+--- 100,112 ----
+  #ifdef	CONFIG_HPET_RTC_IRQ
+  #undef	RTC_IRQ
+  #endif
+  
++ /* Declare the student functions external (they are in mp1.S) */
++ extern asmlinkage void mp1_rtc_tasklet(unsigned long);
++ extern asmlinkage int mp1_ioctl(unsigned long arg, unsigned int cmd);
++ static struct task_struct* missile_command_id = 0;
++  
+  #ifdef RTC_IRQ
+  static int rtc_has_irq = 1;
+  #endif
+  
+***************
+*** 224,232 ****
+--- 229,354 ----
+  	spin_unlock_irqrestore(&rtc_lock, flags);
+  	return uip;
+  }
+  
++ /* Global variable pointing to the upper-left character in
++  * the text-mode video buffer.  Used by mp1.S to write chars to the screen */
++ char *vmem_base_addr;
++ 
++ /* Since the actual copy_to_user and copy_from_user are C macros,
++  * we can't call them by that name directly from assembly. */
++ asmlinkage unsigned long 
++ mp1_copy_from_user(void *to, const void *from, unsigned long n)
++ {
++ 	unsigned long ret;
++ 	local_irq_enable();
++ 	ret = copy_from_user(to, from, n);
++ 	local_irq_disable();
++ 	return ret;
++ }
++ 
++ asmlinkage unsigned long 
++ mp1_copy_to_user(void *to, const void *from, unsigned long n)
++ {
++ 	unsigned long ret;
++ 	local_irq_enable();
++   	ret = copy_to_user(to, from, n);
++ 	local_irq_disable();
++ 	return ret;
++ }
++ 
++ /* Kernel wrappers for memory allocation */
++ asmlinkage void* mp1_malloc(unsigned long size)
++ {
++ 	void *ret;
++ 	local_irq_enable();
++     	ret = kmalloc(size, GFP_KERNEL);
++ 	local_irq_disable();
++ 	return ret;
++ }
++ 
++ asmlinkage void mp1_free(void *ptr)
++ {
++ 	local_irq_enable();
++ 	kfree(ptr);
++ 	local_irq_disable();
++ }
++ 
++ asmlinkage void mp1_notify_user(void)
++ {
++ 	send_sig_info(SIGUSR1, NULL, missile_command_id);
++ }
++ 
++ /* Given code to relieve students of a bit of the work */
++ 
++ /* Data declared in mp1.c */
++ extern char base_alive[3];
++ extern struct missile* mp1_missile_list;
++ extern int mp1_score;
++ 
++ /* explode_base()
++  * Test whether an explosion touches a base. If any bases die, update the
++  * base_alive[] array and return nonzero.
++  */
++ static int explode_base(int x, int y){
++ 	int bases_killed = 0;
++ 	if(y >= 23){
++ 		if(17 <= x && x <= 23){
++ 			if(base_alive[0])
++ 				bases_killed++;
++ 			base_alive[0] = 0;
++ 		}else
++ 		if(37 <= x && x <= 43){
++ 			if(base_alive[1])
++ 				bases_killed++;
++ 			base_alive[1] = 0;
++ 		}else
++ 		if(57 <= x && x <= 63){
++ 			if(base_alive[2])
++ 				bases_killed++;
++ 			base_alive[2] = 0;
++ 		}
++ 	}
++ 	return bases_killed;
++ }
++ 
++ /* missile_explode()
++  * Check to see whether an explosion causes any bases or missiles to explode.
++  * Enemy missiles ('e') can destroy bases - if this happens, return nonzero.
++  * Friendly missiles ('*') can destroy enemy missiles. If this happens, 
++  * update the mp1_score and return nonzero
++  */
++ asmlinkage int missile_explode(struct missile *m){
++ 	struct missile *i = mp1_missile_list;
++ 	int exploded = 0;
++ 	if(!m->exploded){
++ 		m->exploded = 50;
++ 	}
++ 	if(m->c == 'e'){
++ 		exploded += explode_base(m->x>>16, m->y>>16);
++ 	}
++ 
++ 	while(i){
++ 		if(i != m){
++ 			int dx, dy;
++ 			dx = (m->x>>16) - (i->x>>16);
++ 			dy = (m->y>>16) - (i->y>>16);
++ 			if(dx >= -2 && dx <= 2 && dy >= -1 && dy <= 1 &&
++ 			   i->exploded == 0 && i->c == 'e' && m->c == '*'){
++ 				mp1_score++;
++ 				exploded++;	
++ 				i->exploded = 50;
++ 			}
++ 		}
++ 		i = i->next;
++ 	}
++ 	return exploded;
++ }
++ 
+  #ifdef RTC_IRQ
++ /* Student's tasklet */
++ static DECLARE_TASKLET(mp1_rtc_tasklet_struct, mp1_rtc_tasklet, 0);
++ 
+  /*
+   *	A very tiny interrupt handler. It runs with IRQF_DISABLED set,
+   *	but there is possibility of conflicting with the set_rtc_mmss()
+   *	call (the rtc irq and the timer irq can easily run at the same
+***************
+*** 263,270 ****
+--- 385,395 ----
+  		mod_timer(&rtc_irq_timer, jiffies + HZ/rtc_freq + 2*HZ/100);
+  
+  	spin_unlock (&rtc_lock);
+  
++ 	/* Schedule the MP1 tasklet to run later */
++ 	tasklet_schedule(&mp1_rtc_tasklet_struct);
++ 
+  	/* Now do the rest of the actions */
+  	spin_lock(&rtc_task_lock);
+  	if (rtc_callback)
+  		rtc_callback->func(rtc_callback->private_data);
+***************
+*** 409,416 ****
+--- 534,546 ----
+  		case RTC_UIE_OFF:
+  		case RTC_UIE_ON:
+  		case RTC_IRQP_READ:
+  		case RTC_IRQP_SET:
++ 		case RTC_STARTGAME:
++ 		case RTC_ADDMISSILE:
++ 		case RTC_MOVEXHAIRS:
++ 		case RTC_GETSTATUS:
++ 		case RTC_ENDGAME:
+  			return -EINVAL;
+  		};
+  	}
+  #endif
+***************
+*** 692,699 ****
+--- 822,862 ----
+  
+  		epoch = arg;
+  		return 0;
+  	}
++ 
++ 	{ int ret;
++ 	case RTC_STARTGAME:
++ 		missile_command_id = current;
++ 		local_irq_disable();
++ 		ret = mp1_ioctl(arg, 0);
++ 		local_irq_enable();
++ 		return ret;
++ 
++ 	case RTC_ADDMISSILE:
++ 		local_irq_disable();
++ 		ret = mp1_ioctl(arg, 1);
++ 		local_irq_enable();
++ 		return ret;
++ 
++ 	case RTC_MOVEXHAIRS:
++ 		local_irq_disable();
++ 		ret = mp1_ioctl(arg, 2);
++ 		local_irq_enable();
++ 		return ret;
++ 
++ 	case RTC_GETSTATUS:
++ 		local_irq_disable();
++ 		ret = mp1_ioctl(arg, 3);
++ 		local_irq_enable();
++ 		return ret;
++ 
++ 	case RTC_ENDGAME:
++ 		local_irq_disable();
++ 		ret = mp1_ioctl(arg, 4);
++ 		local_irq_enable();
++ 		return ret;
++ 	}
+  	default:
+  		return -ENOTTY;
+  	}
+  	return copy_to_user((void __user *)arg, &wtime, sizeof wtime) ? -EFAULT : 0;
+***************
+*** 1093,1101 ****
+  #endif
+  
+  	(void) init_sysctl();
+  
+! 	printk(KERN_INFO "Real Time Clock Driver v" RTC_VERSION "\n");
+  
+  	return 0;
+  }
+  
+--- 1256,1268 ----
+  #endif
+  
+  	(void) init_sysctl();
+  
+! 	/* Map video memory into the kernel's virtual address space */
+! 	vmem_base_addr = ioremap(0xb8000, 4000);
+! 
+! 	printk(KERN_INFO "Real Time Clock Driver v" RTC_VERSION 
+! 			 " Modified for ECE391 MP1\n");
+  
+  	return 0;
+  }
+  
+diff -r -C 4 linux-2.6.22.5/include/linux/rtc.h mp1-linux/include/linux/rtc.h
+*** linux-2.6.22.5/include/linux/rtc.h	2011-09-01 09:13:57.235070100 -0500
+--- mp1-linux/include/linux/rtc.h	2011-08-29 15:55:10.586024400 -0500
+***************
+*** 209,213 ****
+--- 209,230 ----
+  irqreturn_t rtc_interrupt(int irq, void *dev_id);
+  
+  #endif /* __KERNEL__ */
+  
++ /* MP1 stuff  - MJM ; 2.6.22.5 update by SSL */
++ 
++ #define RTC_STARTGAME 	_IO('M', 0x13) 
++ #define RTC_ADDMISSILE 	_IO('M', 0x14)  
++ #define RTC_MOVEXHAIRS	_IO('M', 0x15)
++ #define RTC_GETSTATUS 	_IO('M', 0x16)
++ #define RTC_ENDGAME 	_IO('M', 0x17)
++ 
++ struct missile {
++     struct missile* next;
++     int x, y;
++     int vx, vy;
++     int dest_x, dest_y;
++     int exploded;
++     char c;
++ } __attribute__((packed));
++ 
+  #endif /* _LINUX_RTC_H_ */
