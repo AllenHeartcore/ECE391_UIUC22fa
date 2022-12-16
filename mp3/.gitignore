@@ -112,8 +112,5 @@ dkms.conf
 *.qcow
 source/
 
-*.pdf
 .vscode/
 Makefile.dep
-bootimg
-*.img
