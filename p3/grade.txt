@@ -1,0 +1,8 @@
+It is a beautiful piece of code. :)
+But you miss one thing:
+
+-1: did not check juice number before biscuit_num--
+
+Check the question, you need to finish all the juice before eating biscuits.
+
+17/18
