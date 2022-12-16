@@ -4,7 +4,6 @@
 # Object files
 *.o
 *.ko
-*.obj
 *.elf
 
 # Linker output
@@ -53,7 +52,4 @@ dkms.conf
 
 adventure
 input
-tr
-mp2photo
-mp2object
 .vscode/*
